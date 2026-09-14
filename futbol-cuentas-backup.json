@@ -5700,14 +5700,14 @@
       "createdAt": "2026-09-14T21:41:02.723Z"
     },
     {
-      "id": "1789422483379165",
+      "id": "1789422550688608",
       "playerIds": [
-        "1753137591854"
+        "1753138827941"
       ],
-      "amount": 20,
+      "amount": 16,
       "matchType": "F7",
       "reason": "Pago",
-      "createdAt": "2026-09-14T21:48:03.382Z"
+      "createdAt": "2026-09-14T21:49:10.689Z"
     }
   ],
   "generalTransactions": [
@@ -6217,6 +6217,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-14T21:48:04.097Z",
+  "exportDate": "2026-09-14T21:49:11.409Z",
   "version": "2.0"
 }
