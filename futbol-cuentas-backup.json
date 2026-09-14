@@ -706,7 +706,9 @@
       "name": "Ibon",
       "type": "F7",
       "isRegular": true,
-      "createdAt": "2026-07-27T22:25:05.591Z"
+      "createdAt": "2026-07-27T22:25:05.591Z",
+      "skill": "medio",
+      "position": "medio"
     },
     {
       "id": "1789338541805",
@@ -6117,6 +6119,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-14T21:53:12.951Z",
+  "exportDate": "2026-09-14T21:53:23.538Z",
   "version": "2.0"
 }
