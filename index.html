@@ -245,6 +245,16 @@ function todayStr(){
   return new Date().toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 }
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function b64EncodeUnicode(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64DecodeUnicode(str){ return decodeURIComponent(escape(atob(str.replace(/\n/g,'')))); }
+function timeAgo(date){
+  if(!date) return '';
+  const s = Math.floor((Date.now()-new Date(date).getTime())/1000);
+  if(s<60) return 'hace un momento';
+  if(s<3600) return `hace ${Math.floor(s/60)} min`;
+  if(s<86400) return `hace ${Math.floor(s/3600)} h`;
+  return `hace ${Math.floor(s/86400)} d`;
+}
 
 class App{
   constructor(){
@@ -263,7 +273,11 @@ class App{
     this.teamsResult = null;
     this.teamsSwapSel = null;
     this.movTab = 'jugador';
+    this.githubSync = JSON.parse(localStorage.getItem('githubSyncConfig') || 'null');
+    this.githubSyncStatus = null; // {ok:true/false, at:Date, error}
+    this._pushTimer = null;
     this.render();
+    if(this.githubSync){ this.pullFromGithub(true); }
   }
 
   load(){
@@ -275,6 +289,95 @@ class App{
     localStorage.setItem('football-players', JSON.stringify(this.players));
     localStorage.setItem('football-transactions', JSON.stringify(this.transactions));
     localStorage.setItem('football-general-transactions', JSON.stringify(this.generalTransactions));
+    this.scheduleGithubPush();
+  }
+
+  /* ---------------- SINCRONIZACIÓN CON GITHUB ---------------- */
+  saveGithubConfig(cfg){
+    this.githubSync = cfg;
+    localStorage.setItem('githubSyncConfig', JSON.stringify(cfg));
+  }
+  clearGithubConfig(){
+    if(!confirm('¿Desconectar la sincronización con GitHub? Tus datos locales no se borran.')) return;
+    this.githubSync = null;
+    this.githubSyncStatus = null;
+    localStorage.removeItem('githubSyncConfig');
+    this.render();
+  }
+  githubApiUrl(){
+    const {owner, repo, path} = this.githubSync;
+    return `https://api.github.com/repos/${owner}/${repo}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
+  }
+  scheduleGithubPush(){
+    if(!this.githubSync) return;
+    clearTimeout(this._pushTimer);
+    this._pushTimer = setTimeout(()=>this.pushToGithub(), 700);
+  }
+  async pullFromGithub(silent){
+    if(!this.githubSync) return;
+    const {branch, token} = this.githubSync;
+    try{
+      const res = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch||'main')}`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
+      });
+      if(res.status === 404){
+        // El archivo aún no existe en el repo: lo creamos con lo que tengamos en este dispositivo
+        this.githubSync.sha = null;
+        this.saveGithubConfig(this.githubSync);
+        await this.pushToGithub();
+        return;
+      }
+      if(res.status === 401 || res.status === 403) throw new Error('Token inválido o sin permisos');
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const data = await res.json();
+      this.githubSync.sha = data.sha;
+      this.saveGithubConfig(this.githubSync);
+      const json = JSON.parse(b64DecodeUnicode(data.content));
+      this.players = json.players || [];
+      this.transactions = json.transactions || [];
+      this.generalTransactions = json.generalTransactions || [];
+      localStorage.setItem('football-players', JSON.stringify(this.players));
+      localStorage.setItem('football-transactions', JSON.stringify(this.transactions));
+      localStorage.setItem('football-general-transactions', JSON.stringify(this.generalTransactions));
+      this.githubSyncStatus = {ok:true, at:new Date()};
+      if(!silent) this.toast('Sincronizado con GitHub');
+      this.render();
+    }catch(err){
+      this.githubSyncStatus = {ok:false, error: err.message, at:new Date()};
+      if(!silent) this.toast('No se pudo sincronizar: '+err.message);
+      this.render();
+    }
+  }
+  async pushToGithub(){
+    if(!this.githubSync) return;
+    const {branch, token} = this.githubSync;
+    const payload = { players:this.players, transactions:this.transactions, generalTransactions:this.generalTransactions, footballs:[], exportDate:new Date().toISOString(), version:'2.0' };
+    const body = {
+      message: 'Actualización desde la app · ' + new Date().toLocaleString('es-ES'),
+      content: b64EncodeUnicode(JSON.stringify(payload, null, 2)),
+      branch: branch || 'main',
+    };
+    if(this.githubSync.sha) body.sha = this.githubSync.sha;
+    const headers = { Authorization: `Bearer ${token}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' };
+    try{
+      let res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) });
+      if(res.status === 409){
+        // Alguien (otro dispositivo) escribió antes: refrescamos el sha y reintentamos una vez
+        const fresh = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch||'main')}`, { headers });
+        if(fresh.ok){ const fd = await fresh.json(); body.sha = fd.sha; }
+        res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) });
+      }
+      if(res.status === 401 || res.status === 403) throw new Error('Token inválido o sin permisos');
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const rd = await res.json();
+      this.githubSync.sha = rd.content.sha;
+      this.saveGithubConfig(this.githubSync);
+      this.githubSyncStatus = {ok:true, at:new Date()};
+    }catch(err){
+      this.githubSyncStatus = {ok:false, error: err.message, at:new Date()};
+      this.toast('No se pudo guardar en GitHub');
+    }
+    this.render();
   }
 
   toast(msg){ this.toastMsg = msg; this.render(); setTimeout(()=>{ this.toastMsg=null; this.render(); }, 1800); }
@@ -828,9 +931,59 @@ class App{
   }
 
   /* -------- AJUSTES -------- */
+  renderGithubSyncBox(){
+    if(!this.githubSync){
+      return `
+        <div class="ticket neutral" style="cursor:default;display:block">
+          <div style="font-size:13px;line-height:1.5;margin-bottom:10px">Guarda los datos en tu repo de GitHub para que se sincronicen automáticamente entre el móvil, el ordenador, etc. Necesitas un <b>token de acceso personal</b> con permiso de escritura sobre ese repo.</div>
+          <label>Usuario u organización</label>
+          <input type="text" id="ghOwner" placeholder="ividat84" value="${this.githubSync?.owner||''}" />
+          <label>Repositorio</label>
+          <input type="text" id="ghRepo" placeholder="CuentasFutbito" value="${this.githubSync?.repo||''}" />
+          <label>Archivo dentro del repo</label>
+          <input type="text" id="ghPath" placeholder="futbol-cuentas-backup.json" value="futbol-cuentas-backup.json" />
+          <label>Rama</label>
+          <input type="text" id="ghBranch" placeholder="main" value="main" />
+          <label>Token de acceso personal</label>
+          <input type="password" id="ghToken" placeholder="github_pat_..." />
+          <button class="btn btn-primary btn-block" style="margin-top:14px" onclick="app.submitGithubConfig()">Guardar y sincronizar</button>
+        </div>
+      `;
+    }
+    const s = this.githubSyncStatus;
+    const statusLine = s
+      ? (s.ok ? `✅ Sincronizado ${timeAgo(s.at)}` : `⚠️ Error: ${escapeHtml(s.error)} (${timeAgo(s.at)})`)
+      : 'Sincronizando…';
+    return `
+      <div class="ticket ${s && !s.ok ? 'debt':'credit'}" style="cursor:default;display:block">
+        <div class="name">${escapeHtml(this.githubSync.owner)}/${escapeHtml(this.githubSync.repo)}</div>
+        <div class="sub">${escapeHtml(this.githubSync.path)} · rama ${escapeHtml(this.githubSync.branch||'main')}</div>
+        <div class="sub" style="margin-top:6px">${statusLine}</div>
+      </div>
+      <div class="field-row" style="margin-top:8px">
+        <button class="btn btn-outline" onclick="app.pullFromGithub(false)">Sincronizar ahora</button>
+        <button class="btn btn-danger" onclick="app.clearGithubConfig()">Desconectar</button>
+      </div>
+    `;
+  }
+  submitGithubConfig(){
+    const owner = document.getElementById('ghOwner').value.trim();
+    const repo = document.getElementById('ghRepo').value.trim();
+    const path = document.getElementById('ghPath').value.trim() || 'futbol-cuentas-backup.json';
+    const branch = document.getElementById('ghBranch').value.trim() || 'main';
+    const token = document.getElementById('ghToken').value.trim();
+    if(!owner || !repo || !token){ this.toast('Rellena usuario, repositorio y token'); return; }
+    this.saveGithubConfig({owner, repo, path, branch, token, sha:null});
+    this.render();
+    this.pullFromGithub(false);
+  }
+
   renderAjustes(){
     return `
-      <div class="section-title">Copia de seguridad</div>
+      <div class="section-title">Sincronización con GitHub</div>
+      ${this.renderGithubSyncBox()}
+
+      <div class="section-title" style="margin-top:24px">Copia de seguridad manual</div>
       <button class="btn btn-outline btn-block" onclick="app.exportBackup()">${ICONS.download} Exportar backup (JSON)</button>
       <input type="file" id="importFile" accept="application/json" style="display:none" onchange="app.importBackup(this.files[0])" />
       <button class="btn btn-outline btn-block" onclick="document.getElementById('importFile').click()">${ICONS.upload} Importar backup</button>
