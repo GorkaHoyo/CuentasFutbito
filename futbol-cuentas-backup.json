@@ -552,7 +552,9 @@
       "name": "Velez",
       "type": "F7",
       "isRegular": true,
-      "createdAt": "2025-07-21T23:02:28.784Z"
+      "createdAt": "2025-07-21T23:02:28.784Z",
+      "skill": "medio",
+      "position": "delantero"
     },
     {
       "id": "1757285426766",
@@ -6217,6 +6219,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-14T21:49:11.409Z",
+  "exportDate": "2026-09-14T21:50:22.414Z",
   "version": "2.0"
 }
