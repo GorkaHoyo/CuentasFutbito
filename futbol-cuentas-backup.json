@@ -679,7 +679,9 @@
       "name": "Asier Pardo",
       "type": "F7",
       "isRegular": true,
-      "createdAt": "2026-02-24T22:13:25.545Z"
+      "createdAt": "2026-02-24T22:13:25.545Z",
+      "skill": "medio",
+      "position": "defensa"
     },
     {
       "id": "1773613092442",
@@ -6111,6 +6113,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-14T21:51:57.216Z",
+  "exportDate": "2026-09-14T21:52:22.069Z",
   "version": "2.0"
 }
