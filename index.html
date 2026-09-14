@@ -551,16 +551,9 @@ class App{
     const jugadoresSum = [...credit, ...debt].reduce((s,x)=>s+x.b, 0);
     const balance = bote + jugadoresSum;
 
-    const DPR = 2, W = 720, PAD = 28, rowH = 46, sectionHeaderH = 44, sectionGap = 22;
-    const headerH = 118, scoreboardH = 132, footerH = 40;
-    const colsFor = n => n > 8 ? 2 : 1;
-    const sectionHeight = n => n === 0 ? sectionHeaderH + rowH : sectionHeaderH + Math.ceil(n/colsFor(n))*rowH;
-
-    const H = headerH + scoreboardH + sectionGap
-      + sectionHeight(credit.length) + sectionGap
-      + sectionHeight(neutral.length) + sectionGap
-      + sectionHeight(debt.length) + sectionGap
-      + footerH + PAD;
+    // Lienzo con proporción de pantalla de móvil: todo cabe en una sola imagen, sin scroll.
+    const DPR = 2, W = 675, H = 1200, PAD = 22;
+    const headerH = 84, scoreboardH = 102, sectionGap = 12, neutralLineH = 34, footerH = 22;
 
     const canvas = document.createElement('canvas');
     canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
@@ -570,110 +563,157 @@ class App{
     ctx.fillStyle = '#F6F2E9';
     ctx.fillRect(0,0,W,H);
 
-    // header
+    // ---- header ----
     ctx.fillStyle = '#0F3D2E';
     ctx.fillRect(0,0,W,headerH);
     ctx.fillStyle = '#E8A33D';
     ctx.fillRect(0, headerH-4, W, 4);
     ctx.textAlign = 'left';
     ctx.fillStyle = '#F6F2E9';
-    ctx.font = '700 30px Oswald';
-    ctx.fillText('⚽ CUENTAS F5·F7', PAD, 52);
-    ctx.font = '600 19px Oswald';
+    ctx.font = '700 26px Oswald';
+    ctx.fillText('⚽ CUENTAS F5·F7', PAD, 42);
+    ctx.font = '600 16px Oswald';
     ctx.fillStyle = '#CFE0D6';
-    ctx.fillText(`Resumen · ${matchType}`, PAD, 80);
-    const dateStr = new Date().toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-    ctx.font = '400 14px -apple-system, sans-serif';
+    ctx.fillText(`Resumen · ${matchType}`, PAD, 65);
+    const dateStr = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'});
+    ctx.textAlign = 'right';
+    ctx.font = '400 13px -apple-system, sans-serif';
     ctx.fillStyle = '#9FC2AC';
-    ctx.fillText(dateStr, PAD, 102);
+    ctx.fillText(dateStr, W-PAD, 65);
+    ctx.textAlign = 'left';
 
     let y = headerH;
-    // scoreboard
+    // ---- scoreboard ----
     ctx.fillStyle = '#154934';
-    ctx.fillRect(PAD, y+14, W-PAD*2, scoreboardH-28);
+    ctx.fillRect(PAD, y+12, W-PAD*2, scoreboardH-22);
     const cellW = (W-PAD*2)/3;
     const cls = v => v>0.001 ? '#8FE3B0' : (v<-0.001 ? '#FF9B92' : '#F6F2E9');
     const stats = [
-      {label:'BOTE', value:bote, txt:fmtPlain(bote)},
-      {label:'JUGADORES', value:jugadoresSum, txt:fmt(jugadoresSum)},
-      {label:'BALANCE', value:balance, txt:fmtPlain(balance)},
+      {label:'BOTE', txt:fmtPlain(bote), value:bote},
+      {label:'JUGADORES', txt:fmt(jugadoresSum), value:jugadoresSum},
+      {label:'BALANCE', txt:fmtPlain(balance), value:balance},
     ];
     ctx.textAlign = 'center';
     stats.forEach((s,i)=>{
       const cx = PAD + cellW*i + cellW/2;
-      ctx.font = '600 12px Oswald';
+      ctx.font = '600 11px Oswald';
       ctx.fillStyle = '#9FC2AC';
-      ctx.fillText(s.label, cx, y+38);
-      ctx.font = '700 28px "Space Mono"';
+      ctx.fillText(s.label, cx, y+34);
+      ctx.font = '700 24px "Space Mono"';
       ctx.fillStyle = cls(s.value);
-      ctx.fillText(s.txt, cx, y+76);
+      ctx.fillText(s.txt, cx, y+66);
       if(i<2){
         ctx.strokeStyle = 'rgba(255,255,255,.15)';
-        ctx.beginPath(); ctx.moveTo(PAD+cellW*(i+1), y+22); ctx.lineTo(PAD+cellW*(i+1), y+scoreboardH-36); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(PAD+cellW*(i+1), y+20); ctx.lineTo(PAD+cellW*(i+1), y+scoreboardH-24); ctx.stroke();
       }
     });
     ctx.textAlign = 'left';
     y += scoreboardH + sectionGap;
 
-    const drawSection = (title, color, items) => {
-      ctx.font = '700 19px Oswald';
+    // ---- reparto del espacio restante: deuda primero y con más peso, crédito después ----
+    const fixedBottom = neutralLineH + sectionGap + footerH + 6;
+    const available = H - y - fixedBottom - sectionGap*2; // huecos: tras deuda y tras crédito
+    const debtAlloc = Math.round(available * 0.56);
+    const creditAlloc = available - debtAlloc;
+
+    // calcula nº de columnas y alto de fila para que la lista quepa SIEMPRE en el hueco asignado.
+    // 1º intenta con los topes "bonitos" (minRowH/maxRowH/maxCols); si aun así no cabe, sigue
+    // añadiendo columnas y reduce la fila por debajo del mínimo hasta que quepa con seguridad.
+    function fitList(n, alloc, minRowH, maxRowH, maxCols){
+      if(n === 0) return {cols:1, rows:1, rowH:minRowH};
+      for(let cols=1; cols<=maxCols; cols++){
+        const rows = Math.ceil(n/cols);
+        if(rows*minRowH <= alloc){
+          return {cols, rows, rowH: Math.min(maxRowH, alloc/rows)};
+        }
+      }
+      // No cupo ni con el máximo de columnas "bonito": seguimos ampliando columnas
+      // hasta un tope duro, aceptando una fila más pequeña que minRowH si hace falta.
+      const hardMaxCols = maxCols + 3;
+      for(let cols=maxCols+1; cols<=hardMaxCols; cols++){
+        const rows = Math.ceil(n/cols);
+        if(rows*10 <= alloc){ return {cols, rows, rowH: alloc/rows}; }
+      }
+      const rows = Math.ceil(n/hardMaxCols);
+      return {cols:hardMaxCols, rows, rowH: Math.max(6, alloc/rows)};
+    }
+    const sectionHeaderH = 26;
+
+    const drawList = (title, color, items, alloc, minRowH, maxRowH, maxCols, nameFontPx, amtFontPx) => {
+      ctx.font = `700 ${Math.max(15, Math.round(nameFontPx*0.92))}px Oswald`;
       ctx.fillStyle = color;
-      ctx.beginPath(); ctx.arc(PAD+6, y+16, 6, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(PAD+5, y+11, 5, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#12241B';
-      ctx.fillText(title.toUpperCase(), PAD+22, y+22);
-      ctx.font = '400 15px Oswald';
+      ctx.fillText(title.toUpperCase(), PAD+18, y+16);
+      ctx.font = '400 12px Oswald';
       ctx.fillStyle = '#6E7C73';
       ctx.textAlign = 'right';
-      ctx.fillText(`${items.length}`, W-PAD, y+22);
+      ctx.fillText(`${items.length}`, W-PAD, y+16);
       ctx.textAlign = 'left';
       y += sectionHeaderH;
+
+      const fit = fitList(items.length, alloc - sectionHeaderH, minRowH, maxRowH, maxCols);
       if(items.length === 0){
-        ctx.font = '400 15px -apple-system, sans-serif';
+        ctx.font = '400 14px -apple-system, sans-serif';
         ctx.fillStyle = '#9AA69E';
-        ctx.fillText('—', PAD, y+28);
-        y += rowH;
+        ctx.fillText('—', PAD, y+20);
+        y += minRowH;
         return;
       }
-      const cols = colsFor(items.length);
-      const colW = (W-PAD*2-((cols-1)*16))/cols;
-      const rows = Math.ceil(items.length/cols);
+      // la letra escala con el alto de fila real: si hay que encoger filas, encoge la letra con ellas
+      nameFontPx = Math.max(9, Math.min(nameFontPx, Math.round(fit.rowH*0.42)));
+      amtFontPx = Math.max(9, Math.min(amtFontPx, Math.round(fit.rowH*0.42)));
+      const gap = 12;
+      const colW = (W-PAD*2-((fit.cols-1)*gap))/fit.cols;
       for(let i=0;i<items.length;i++){
-        const col = Math.floor(i/rows);
-        const rowIdx = i % rows;
-        const rx = PAD + col*(colW+16);
-        const ry = y + rowIdx*rowH;
+        const col = Math.floor(i/fit.rows);
+        const rowIdx = i % fit.rows;
+        const rx = PAD + col*(colW+gap);
+        const ry = y + rowIdx*fit.rowH;
+        const pillH = fit.rowH - Math.min(8, fit.rowH*0.18);
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(rx, ry+5, colW, rowH-11);
+        ctx.fillRect(rx, ry+2, colW, pillH);
         ctx.fillStyle = color;
-        ctx.fillRect(rx, ry+5, 4, rowH-11);
-        const baseline = ry + rowH/2 + 6;
-        ctx.font = '500 16px -apple-system, sans-serif';
+        ctx.fillRect(rx, ry+2, 4, pillH);
+        const baseline = ry + 2 + pillH/2 + nameFontPx*0.34;
+        ctx.font = `600 ${nameFontPx}px -apple-system, sans-serif`;
         ctx.fillStyle = '#12241B';
         let name = items[i].p.name;
-        const maxTextW = colW - 116;
+        const maxTextW = colW - (amtFontPx*4.6 + 22);
         while(ctx.measureText(name).width > maxTextW && name.length > 1){ name = name.slice(0,-1); }
         if(name !== items[i].p.name) name += '…';
-        ctx.fillText(name, rx+14, baseline);
-        ctx.font = '700 16px "Space Mono"';
+        ctx.fillText(name, rx+12, baseline);
+        ctx.font = `700 ${amtFontPx}px "Space Mono"`;
         ctx.textAlign = 'right';
         ctx.fillStyle = items[i].b>0.001 ? '#2D8659' : (items[i].b<-0.001 ? '#C3423F' : '#6E7C73');
-        ctx.fillText(fmt(items[i].b), rx+colW-14, baseline);
+        ctx.fillText(fmt(items[i].b), rx+colW-10, baseline);
         ctx.textAlign = 'left';
       }
-      y += rows*rowH;
+      y += fit.rows*fit.rowH;
     };
 
-    drawSection('Con crédito', '#2D8659', credit);
+    // DEUDA primero, filas más grandes
+    drawList('Con deuda', '#C3423F', debt, debtAlloc, 30, 40, 2, 16, 16);
     y += sectionGap;
-    drawSection('Al día', '#9AA69E', neutral);
-    y += sectionGap;
-    drawSection('Con deuda', '#C3423F', debt);
+    // CRÉDITO después, algo más compacto
+    drawList('Con crédito', '#2D8659', credit, creditAlloc, 22, 30, 3, 13, 13);
     y += sectionGap;
 
-    ctx.textAlign = 'center';
-    ctx.font = '400 12px -apple-system, sans-serif';
+    // AL DÍA: solo una línea resumen, no ocupa la lista completa
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(PAD, y, W-PAD*2, neutralLineH);
     ctx.fillStyle = '#9AA69E';
-    ctx.fillText(`Generado automáticamente el ${new Date().toLocaleString('es-ES')}`, W/2, y+18);
+    ctx.fillRect(PAD, y, 4, neutralLineH);
+    ctx.font = '600 14px Oswald';
+    ctx.fillStyle = '#4B5750';
+    ctx.fillText(`✅  ${neutral.length} jugador${neutral.length===1?'':'es'} al día`, PAD+14, y+neutralLineH/2+5);
+    y += neutralLineH + sectionGap;
+
+    // ---- footer ----
+    ctx.textAlign = 'center';
+    ctx.font = '400 11px -apple-system, sans-serif';
+    ctx.fillStyle = '#9AA69E';
+    ctx.fillText(`Generado automáticamente el ${new Date().toLocaleString('es-ES')}`, W/2, y+12);
     ctx.textAlign = 'left';
 
     canvas.toBlob((blob)=>{
