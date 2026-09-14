@@ -1,0 +1,1011 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0F3D2E" />
+<meta name="description" content="Cuentas de los partidos de F5 y F7" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<title>Cuentas F5·F7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pitch-dark:#0F3D2E;
+    --pitch:#154934;
+    --turf:#2D8659;
+    --turf-soft:#DDEEE3;
+    --chalk:#F6F2E9;
+    --paper:#FFFFFF;
+    --ink:#12241B;
+    --muted:#6E7C73;
+    --line:#E3DDCB;
+    --gold:#E8A33D;
+    --gold-soft:#FBEAD1;
+    --debt:#C3423F;
+    --debt-soft:#FBE4E1;
+    --credit:#2D8659;
+    --radius-card:14px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background:var(--chalk);
+    color:var(--ink);
+    min-height:100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1,h2,h3,.headline,.nav-label,.tab-label,.btn,.chip,.stat-label{
+    font-family:"Oswald", -apple-system, sans-serif;
+  }
+  .mono{ font-family:"Space Mono", monospace; font-variant-numeric: tabular-nums; }
+  #app{ max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; background:var(--chalk); position:relative; }
+
+  /* ---------- HEADER ---------- */
+  .topbar{
+    background:var(--pitch-dark);
+    color:var(--chalk);
+    padding:14px 16px 10px;
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:3px solid var(--gold);
+  }
+  .topbar .brand{ display:flex; align-items:center; gap:8px; }
+  .topbar .brand svg{ width:24px; height:24px; }
+  .topbar h1{ font-size:17px; font-weight:600; letter-spacing:.3px; margin:0; }
+  .topbar .date{ font-size:11px; color:#B9C9BE; margin-top:1px; }
+  .match-switch{ display:flex; background:rgba(255,255,255,.08); border-radius:20px; padding:3px; }
+  .match-switch button{
+    border:0; background:transparent; color:#CFE0D6; font-family:"Oswald"; font-size:13px; font-weight:600;
+    padding:6px 14px; border-radius:16px; cursor:pointer;
+  }
+  .match-switch button.active{ background:var(--gold); color:var(--pitch-dark); }
+
+  /* ---------- SCOREBOARD ---------- */
+  .scoreboard{
+    background:var(--pitch);
+    color:var(--chalk);
+    margin:12px 16px 4px;
+    border-radius:10px;
+    display:grid; grid-template-columns:1fr 1fr 1fr;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+  .scoreboard .cell{ padding:12px 6px; text-align:center; border-right:1px solid rgba(255,255,255,.12); }
+  .scoreboard .cell:last-child{ border-right:none; }
+  .scoreboard .stat-label{ font-size:10px; letter-spacing:.08em; color:#9FC2AC; margin-bottom:4px; text-transform:uppercase; }
+  .scoreboard .stat-value{ font-size:20px; font-weight:700; }
+  .pos{ color:#8FE3B0; } .neg{ color:#FF9B92; } .neu{ color:var(--chalk); }
+
+  /* ---------- CONTENT ---------- */
+  .content{ flex:1; padding:14px 16px 90px; overflow-y:auto; }
+  .section-title{
+    display:flex; align-items:center; gap:8px; margin:18px 0 8px; font-size:13px; font-weight:600;
+    letter-spacing:.03em; color:var(--muted);
+  }
+  .section-title .dot{ width:8px; height:8px; border-radius:50%; }
+  .section-title .count{ margin-left:auto; color:var(--muted); font-weight:400; font-size:12px; }
+
+  /* ticket-stub player row */
+  .ticket{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-left:4px solid var(--line);
+    border-radius:8px;
+    padding:10px 12px;
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:7px;
+    cursor:pointer;
+  }
+  .ticket.credit{ border-left-color:var(--credit); }
+  .ticket.debt{ border-left-color:var(--debt); }
+  .ticket.neutral{ border-left-color:var(--line); }
+  .ticket .name{ font-size:14.5px; font-weight:500; }
+  .ticket .sub{ font-size:11px; color:var(--muted); margin-top:1px; }
+  .ticket .amt{ font-size:15px; font-weight:700; }
+  .amt.pos{ color:var(--credit); } .amt.neg{ color:var(--debt); } .amt.zero{ color:var(--muted); }
+
+  .empty-state{ text-align:center; padding:30px 10px; color:var(--muted); font-size:13px; }
+
+  /* ---------- BOTTOM NAV ---------- */
+  .bottom-nav{
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:480px;
+    background:var(--paper); border-top:1px solid var(--line);
+    display:flex; padding-bottom:var(--safe-bottom);
+    z-index:50;
+  }
+  .bottom-nav button{
+    flex:1; background:none; border:0; padding:9px 2px 8px; display:flex; flex-direction:column; align-items:center; gap:3px;
+    color:var(--muted); cursor:pointer;
+  }
+  .bottom-nav button svg{ width:21px; height:21px; }
+  .bottom-nav button.active{ color:var(--pitch); }
+  .bottom-nav .tab-label{ font-size:10px; font-weight:500; }
+
+  /* ---------- BUTTONS ---------- */
+  .btn{
+    font-size:14px; font-weight:600; border-radius:9px; padding:11px 16px; border:0; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn-primary{ background:var(--pitch); color:#fff; width:100%; }
+  .btn-gold{ background:var(--gold); color:var(--pitch-dark); width:100%; }
+  .btn-outline{ background:transparent; color:var(--pitch); border:1.5px solid var(--pitch); }
+  .btn-danger{ background:transparent; color:var(--debt); border:1.5px solid var(--debt); }
+  .btn-block{ width:100%; margin-top:6px; }
+  .fab{
+    position:fixed; bottom:calc(66px + var(--safe-bottom)); left:50%; transform:translateX(148px);
+    width:52px; height:52px; border-radius:50%; background:var(--gold); color:var(--pitch-dark);
+    border:0; box-shadow:0 4px 10px rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; z-index:40;
+  }
+  .fab svg{ width:24px; height:24px; }
+
+  /* ---------- INPUTS ---------- */
+  label{ font-size:12px; font-weight:600; color:var(--muted); display:block; margin:12px 0 5px; text-transform:uppercase; letter-spacing:.03em; }
+  input[type=text], input[type=number], input[type=search], select, textarea{
+    width:100%; padding:11px 12px; border:1.5px solid var(--line); border-radius:9px; font-size:15px;
+    background:var(--paper); color:var(--ink); font-family:inherit;
+  }
+  input:focus, select:focus, textarea:focus{ outline:2px solid var(--turf); outline-offset:1px; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row > div{ flex:1; }
+  .chip-group{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{
+    border:1.5px solid var(--line); background:var(--paper); border-radius:20px; padding:7px 14px; font-size:13px; font-weight:600;
+    cursor:pointer; color:var(--ink);
+  }
+  .chip.active{ background:var(--pitch); border-color:var(--pitch); color:#fff; }
+  .chip.gold-active.active{ background:var(--gold); border-color:var(--gold); color:var(--pitch-dark); }
+  .sign-toggle{ display:flex; border-radius:9px; overflow:hidden; border:1.5px solid var(--line); }
+  .sign-toggle button{ flex:1; padding:11px; border:0; background:var(--paper); font-family:"Oswald"; font-weight:700; font-size:16px; cursor:pointer; color:var(--muted); }
+  .sign-toggle button.active.plus{ background:var(--turf-soft); color:var(--credit); }
+  .sign-toggle button.active.minus{ background:var(--debt-soft); color:var(--debt); }
+
+  .checklist{ max-height:220px; overflow-y:auto; border:1.5px solid var(--line); border-radius:9px; }
+  .checklist label{ display:flex; align-items:center; gap:10px; padding:9px 12px; margin:0; text-transform:none; letter-spacing:0; font-weight:400; font-size:14px; color:var(--ink); border-bottom:1px solid var(--line); }
+  .checklist label:last-child{ border-bottom:none; }
+  .checklist input[type=checkbox]{ width:17px; height:17px; accent-color:var(--pitch); }
+
+  /* ---------- MODAL / SHEET ---------- */
+  .sheet-backdrop{ position:fixed; inset:0; background:rgba(15,61,46,.45); z-index:100; display:flex; align-items:flex-end; justify-content:center; }
+  .sheet{
+    background:var(--chalk); width:100%; max-width:480px; border-radius:18px 18px 0 0;
+    max-height:88vh; overflow-y:auto; padding:8px 18px calc(20px + var(--safe-bottom));
+    animation: slideUp .18s ease-out;
+  }
+  @keyframes slideUp{ from{ transform:translateY(16px); opacity:.6;} to{ transform:translateY(0); opacity:1;} }
+  .sheet-handle{ width:36px; height:4px; background:var(--line); border-radius:3px; margin:8px auto 6px; }
+  .sheet h2{ font-size:18px; margin:6px 0 2px; }
+  .sheet .close-x{ position:absolute; right:16px; top:14px; background:none; border:0; font-size:20px; color:var(--muted); cursor:pointer; }
+
+  /* ---------- TOP TABS (secondary nav within a page) ---------- */
+  .subtabs{ display:flex; gap:6px; margin-bottom:12px; }
+  .subtabs button{ flex:1; }
+
+  /* ---------- Jugadores/Historial rows ---------- */
+  .row-actions{ display:flex; gap:6px; }
+  .icon-btn{ background:none; border:0; padding:4px; cursor:pointer; color:var(--muted); }
+  .icon-btn svg{ width:17px; height:17px; }
+  .search-bar{ margin-bottom:10px; }
+  .filter-bar{ display:flex; gap:7px; margin-bottom:12px; overflow-x:auto; padding-bottom:2px; }
+
+  /* Teams */
+  .team-card{ background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; }
+  .team-card h3{ font-size:14px; margin:0 0 8px; display:flex; justify-content:space-between; color:var(--pitch); }
+  .team-player{ display:flex; justify-content:space-between; padding:7px 4px; border-bottom:1px dashed var(--line); font-size:14px; cursor:pointer; }
+  .team-player:last-child{ border-bottom:none; }
+  .team-player.selected{ background:var(--gold-soft); border-radius:6px; }
+  .lvl-badge{ font-size:10px; background:var(--turf-soft); color:var(--credit); padding:2px 6px; border-radius:8px; font-weight:700; }
+
+  .toast{
+    position:fixed; bottom:calc(78px + var(--safe-bottom)); left:50%; transform:translateX(-50%);
+    background:var(--pitch-dark); color:#fff; padding:10px 18px; border-radius:20px; font-size:13px; z-index:200;
+    box-shadow:0 4px 12px rgba(0,0,0,.3);
+  }
+
+  ::-webkit-scrollbar{ width:0; height:0; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const ICONS = {
+  ball: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9.5"/><path d="M12 6.5l4 3-1.5 4.7h-5L8 9.5z"/><path d="M12 2.5v4M2.7 9l3.7 1M4 17l3.5-2.5M20 17l-3.5-2.5M21.3 9l-3.7 1M9 21l1-4M15 21l-1-4"/></svg>`,
+  home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`,
+  users: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.5 2.9-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.2 14.2c2.7.3 4.8 2.4 4.8 5.8"/></svg>`,
+  euro: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M17 5.5c-1.3-1-2.7-1.5-4.3-1.5-4 0-7.2 3.6-7.2 8s3.2 8 7.2 8c1.6 0 3-.5 4.3-1.5"/><path d="M3.5 10.5h9M3.5 13.5h8"/></svg>`,
+  shirts: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3L3 6.5 5.5 10 8 8.5V21h8V8.5l2.5 1.5L21 6.5 16 3c-.8 1.3-2.3 2-4 2s-3.2-.7-4-2z"/></svg>`,
+  gear: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.7 7.7 0 000-3l2-1.6-2-3.4-2.4.7a7.8 7.8 0 00-2.6-1.5L14 2h-4l-.4 2.7a7.8 7.8 0 00-2.6 1.5l-2.4-.7-2 3.4 2 1.6a7.7 7.7 0 000 3l-2 1.6 2 3.4 2.4-.7c.75.65 1.63 1.15 2.6 1.5L10 22h4l.4-2.7a7.8 7.8 0 002.6-1.5l2.4.7 2-3.4z"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`,
+  edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>`,
+  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>`,
+  download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/></svg>`,
+  upload: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21V9m0 0l-4 4m4-4l4 4M4 5h16"/></svg>`,
+  share: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="18" cy="5" r="2.3"/><circle cx="6" cy="12" r="2.3"/><circle cx="18" cy="19" r="2.3"/><path d="M8 10.8l8-4.4M8 13.2l8 4.4"/></svg>`,
+  shuffle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h3.5L15 18h6M14.5 6H21M3 18h3.5L11 12"/><path d="M18.5 3.5L21 6l-2.5 2.5M18.5 15.5L21 18l-2.5 2.5"/></svg>`,
+};
+
+const SKILL_WEIGHT = { bajo:1, medio:2, alto:3, muy_alto:4 };
+const SKILL_LABEL = { bajo:'Bajo', medio:'Medio', alto:'Alto', muy_alto:'Muy alto' };
+const POSITIONS = ['portero','defensa','medio','delantero'];
+
+function uid(){ return Date.now().toString() + Math.floor(Math.random()*1000); }
+function fmt(n){
+  const v = Math.round((n + Number.EPSILON) * 100) / 100;
+  const sign = v > 0 ? '+' : '';
+  return sign + v.toFixed(2) + '€';
+}
+function fmtPlain(n){ return (Math.round((n+Number.EPSILON)*100)/100).toFixed(2) + '€'; }
+function todayStr(){
+  return new Date().toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+class App{
+  constructor(){
+    this.load();
+    this.page = 'resumen';
+    this.matchFilter = 'F7';
+    this.modal = null;
+    this.toastMsg = null;
+    this.jugFilterType = '';
+    this.jugFilterRegular = '';
+    this.jugSearch = '';
+    this.histSearch = '';
+    this.histMatchFilter = '';
+    this.teamsMatchType = 'F7';
+    this.teamsPresent = new Set();
+    this.teamsResult = null;
+    this.teamsSwapSel = null;
+    this.movTab = 'jugador';
+    this.render();
+  }
+
+  load(){
+    this.players = JSON.parse(localStorage.getItem('football-players') || '[]');
+    this.transactions = JSON.parse(localStorage.getItem('football-transactions') || '[]');
+    this.generalTransactions = JSON.parse(localStorage.getItem('football-general-transactions') || '[]');
+  }
+  save(){
+    localStorage.setItem('football-players', JSON.stringify(this.players));
+    localStorage.setItem('football-transactions', JSON.stringify(this.transactions));
+    localStorage.setItem('football-general-transactions', JSON.stringify(this.generalTransactions));
+  }
+
+  toast(msg){ this.toastMsg = msg; this.render(); setTimeout(()=>{ this.toastMsg=null; this.render(); }, 1800); }
+
+  /* ---------------- CALC ---------------- */
+  getPlayerBalance(playerId, matchType){
+    const player = this.players.find(p=>p.id===playerId);
+    if(!player) return 0;
+    let balance = 0;
+    this.transactions.forEach(t=>{
+      if(!t.playerIds.includes(playerId)) return;
+      if(player.type === 'F5/F7'){ if(t.matchType === matchType) balance += t.amount; }
+      else if(player.type === matchType && t.matchType === matchType){ balance += t.amount; }
+    });
+    return balance;
+  }
+  getPlayerTotalBalance(playerId){
+    let balance = 0;
+    this.transactions.forEach(t=>{ if(t.playerIds.includes(playerId)) balance += t.amount; });
+    return balance;
+  }
+  getTotalPot(matchType){
+    return this.generalTransactions.filter(t=>t.matchType===matchType).reduce((s,t)=>s+t.amount,0);
+  }
+  getPlayersForMatch(matchType){
+    return this.players.filter(p=>{
+      if(matchType==='F5') return p.type==='F5' || p.type==='F5/F7';
+      if(matchType==='F7') return p.type==='F7' || p.type==='F5/F7';
+      return false;
+    }).sort((a,b)=>a.name.localeCompare(b.name));
+  }
+  classify(matchType){
+    const players = this.getPlayersForMatch(matchType);
+    const credit=[], neutral=[], debt=[];
+    players.forEach(p=>{
+      const b = this.getPlayerBalance(p.id, matchType);
+      if(b > 0.001) credit.push({p,b});
+      else if(b < -0.001) debt.push({p,b});
+      else neutral.push({p,b});
+    });
+    credit.sort((a,b)=>a.p.name.localeCompare(b.p.name));
+    neutral.sort((a,b)=>a.p.name.localeCompare(b.p.name));
+    debt.sort((a,b)=>a.p.name.localeCompare(b.p.name));
+    return {credit, neutral, debt};
+  }
+
+  /* ---------------- CRUD players ---------------- */
+  addPlayer(data){
+    this.players.push({ id:uid(), name:data.name.trim(), type:data.type, isRegular:data.isRegular, skill:data.skill||'medio', position:data.position||'', createdAt:new Date().toISOString() });
+    this.save(); this.closeModal(); this.toast('Jugador añadido');
+  }
+  updatePlayer(id, data){
+    const p = this.players.find(x=>x.id===id); if(!p) return;
+    Object.assign(p, data);
+    this.save(); this.closeModal(); this.toast('Jugador actualizado');
+  }
+  deletePlayer(id){
+    if(!confirm('¿Eliminar a este jugador? Si compartía un movimiento con otros jugadores, a ellos les seguirá contando igual.')) return;
+    this.players = this.players.filter(p=>p.id!==id);
+    // Si el movimiento era solo suyo, se borra. Si lo compartía con más gente,
+    // solo se le quita a él y el resto de jugadores conservan su parte intacta.
+    this.transactions = this.transactions
+      .map(t => t.playerIds.includes(id) ? {...t, playerIds: t.playerIds.filter(pid=>pid!==id)} : t)
+      .filter(t => t.playerIds.length > 0);
+    this.teamsPresent.delete(id);
+    this.save(); this.closeModal(); this.toast('Jugador eliminado');
+  }
+
+  /* ---------------- CRUD transactions ---------------- */
+  addTransaction(playerIds, amount, matchType, reason){
+    if(playerIds.length===0 || !amount) { this.toast('Falta jugador o importe'); return; }
+    this.transactions.push({ id:uid(), playerIds, amount:parseFloat(amount), matchType, reason:reason||'', createdAt:new Date().toISOString() });
+    this.save(); this.closeModal(); this.toast('Movimiento registrado');
+  }
+  updateTransaction(id, data){
+    const t = this.transactions.find(x=>x.id===id); if(!t) return;
+    Object.assign(t, data);
+    this.save(); this.closeModal(); this.toast('Movimiento actualizado');
+  }
+  deleteTransaction(id){
+    if(!confirm('¿Eliminar este movimiento?')) return;
+    this.transactions = this.transactions.filter(t=>t.id!==id);
+    this.save(); this.closeModal(); this.toast('Movimiento eliminado');
+  }
+  addGeneralTransaction(amount, matchType, reason){
+    if(!amount){ this.toast('Falta el importe'); return; }
+    this.generalTransactions.push({ id:uid(), amount:parseFloat(amount), matchType, reason:reason||'', createdAt:new Date().toISOString() });
+    this.save(); this.closeModal(); this.toast('Movimiento del bote registrado');
+  }
+  deleteGeneralTransaction(id){
+    if(!confirm('¿Eliminar este movimiento del bote?')) return;
+    this.generalTransactions = this.generalTransactions.filter(t=>t.id!==id);
+    this.save(); this.closeModal(); this.toast('Movimiento eliminado');
+  }
+
+  /* ---------------- IMPORT / EXPORT ---------------- */
+  exportBackup(){
+    const data = { players:this.players, transactions:this.transactions, generalTransactions:this.generalTransactions, footballs:[], exportDate:new Date().toISOString(), version:'2.0' };
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `futbol-cuentas-backup-${new Date().toISOString().slice(0,10)}.json`;
+    a.click(); URL.revokeObjectURL(url);
+    this.toast('Backup exportado');
+  }
+  importBackup(file){
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      try{
+        const data = JSON.parse(e.target.result);
+        if(!confirm('Esto reemplazará todos los datos actuales. ¿Continuar?')) return;
+        this.players = data.players || [];
+        this.transactions = data.transactions || [];
+        this.generalTransactions = data.generalTransactions || [];
+        this.save(); this.render(); this.toast('Datos importados');
+      }catch(err){ alert('El archivo no es un backup válido.'); }
+    };
+    reader.readAsText(file);
+  }
+
+  /* ---------------- TEAMS ---------------- */
+  generateTeams(balanced){
+    const ids = Array.from(this.teamsPresent);
+    let pool = ids.map(id=>{
+      const p = this.players.find(x=>x.id===id);
+      if(!p) return null;
+      return { id:p.id, name:p.name, weight: SKILL_WEIGHT[p.skill] || 2, position:p.position||'' };
+    }).filter(Boolean);
+    if(pool.length < 2){ this.toast('Selecciona al menos 2 jugadores'); return; }
+    // shuffle first for variety among equal weights
+    pool.sort(()=>Math.random()-0.5);
+    if(balanced) pool.sort((a,b)=>b.weight-a.weight);
+    const teamA=[], teamB=[]; let sumA=0, sumB=0;
+    pool.forEach(pl=>{
+      if(balanced){
+        if(sumA <= sumB){ teamA.push(pl); sumA += pl.weight; } else { teamB.push(pl); sumB += pl.weight; }
+      } else {
+        if(teamA.length <= teamB.length){ teamA.push(pl); } else { teamB.push(pl); }
+      }
+    });
+    this.teamsResult = { teamA, teamB };
+    this.teamsSwapSel = null;
+    this.render();
+  }
+  swapTeamPlayer(team, idx){
+    if(!this.teamsSwapSel){ this.teamsSwapSel = {team, idx}; this.render(); return; }
+    const sel = this.teamsSwapSel;
+    if(sel.team === team && sel.idx === idx){ this.teamsSwapSel = null; this.render(); return; }
+    const a = sel.team==='A' ? this.teamsResult.teamA : this.teamsResult.teamB;
+    const b = team==='A' ? this.teamsResult.teamA : this.teamsResult.teamB;
+    const tmp = a[sel.idx]; a[sel.idx] = b[idx]; b[idx] = tmp;
+    this.teamsSwapSel = null;
+    this.render();
+  }
+  async ensureFonts(){
+    try{
+      await Promise.all([
+        document.fonts.load('700 32px Oswald'),
+        document.fonts.load('600 20px Oswald'),
+        document.fonts.load('400 16px Oswald'),
+        document.fonts.load('700 24px "Space Mono"'),
+        document.fonts.load('400 16px "Space Mono"'),
+      ]);
+    }catch(e){}
+  }
+
+  async exportSummaryImage(matchType){
+    await this.ensureFonts();
+    const bote = this.getTotalPot(matchType);
+    const {credit, neutral, debt} = this.classify(matchType);
+    const jugadoresSum = [...credit, ...debt].reduce((s,x)=>s+x.b, 0);
+    const balance = bote + jugadoresSum;
+
+    const DPR = 2, W = 720, PAD = 28, rowH = 46, sectionHeaderH = 44, sectionGap = 22;
+    const headerH = 118, scoreboardH = 132, footerH = 40;
+    const colsFor = n => n > 8 ? 2 : 1;
+    const sectionHeight = n => n === 0 ? sectionHeaderH + rowH : sectionHeaderH + Math.ceil(n/colsFor(n))*rowH;
+
+    const H = headerH + scoreboardH + sectionGap
+      + sectionHeight(credit.length) + sectionGap
+      + sectionHeight(neutral.length) + sectionGap
+      + sectionHeight(debt.length) + sectionGap
+      + footerH + PAD;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(DPR, DPR);
+
+    ctx.fillStyle = '#F6F2E9';
+    ctx.fillRect(0,0,W,H);
+
+    // header
+    ctx.fillStyle = '#0F3D2E';
+    ctx.fillRect(0,0,W,headerH);
+    ctx.fillStyle = '#E8A33D';
+    ctx.fillRect(0, headerH-4, W, 4);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#F6F2E9';
+    ctx.font = '700 30px Oswald';
+    ctx.fillText('⚽ CUENTAS F5·F7', PAD, 52);
+    ctx.font = '600 19px Oswald';
+    ctx.fillStyle = '#CFE0D6';
+    ctx.fillText(`Resumen · ${matchType}`, PAD, 80);
+    const dateStr = new Date().toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    ctx.font = '400 14px -apple-system, sans-serif';
+    ctx.fillStyle = '#9FC2AC';
+    ctx.fillText(dateStr, PAD, 102);
+
+    let y = headerH;
+    // scoreboard
+    ctx.fillStyle = '#154934';
+    ctx.fillRect(PAD, y+14, W-PAD*2, scoreboardH-28);
+    const cellW = (W-PAD*2)/3;
+    const cls = v => v>0.001 ? '#8FE3B0' : (v<-0.001 ? '#FF9B92' : '#F6F2E9');
+    const stats = [
+      {label:'BOTE', value:bote, txt:fmtPlain(bote)},
+      {label:'JUGADORES', value:jugadoresSum, txt:fmt(jugadoresSum)},
+      {label:'BALANCE', value:balance, txt:fmtPlain(balance)},
+    ];
+    ctx.textAlign = 'center';
+    stats.forEach((s,i)=>{
+      const cx = PAD + cellW*i + cellW/2;
+      ctx.font = '600 12px Oswald';
+      ctx.fillStyle = '#9FC2AC';
+      ctx.fillText(s.label, cx, y+38);
+      ctx.font = '700 28px "Space Mono"';
+      ctx.fillStyle = cls(s.value);
+      ctx.fillText(s.txt, cx, y+76);
+      if(i<2){
+        ctx.strokeStyle = 'rgba(255,255,255,.15)';
+        ctx.beginPath(); ctx.moveTo(PAD+cellW*(i+1), y+22); ctx.lineTo(PAD+cellW*(i+1), y+scoreboardH-36); ctx.stroke();
+      }
+    });
+    ctx.textAlign = 'left';
+    y += scoreboardH + sectionGap;
+
+    const drawSection = (title, color, items) => {
+      ctx.font = '700 19px Oswald';
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(PAD+6, y+16, 6, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#12241B';
+      ctx.fillText(title.toUpperCase(), PAD+22, y+22);
+      ctx.font = '400 15px Oswald';
+      ctx.fillStyle = '#6E7C73';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${items.length}`, W-PAD, y+22);
+      ctx.textAlign = 'left';
+      y += sectionHeaderH;
+      if(items.length === 0){
+        ctx.font = '400 15px -apple-system, sans-serif';
+        ctx.fillStyle = '#9AA69E';
+        ctx.fillText('—', PAD, y+28);
+        y += rowH;
+        return;
+      }
+      const cols = colsFor(items.length);
+      const colW = (W-PAD*2-((cols-1)*16))/cols;
+      const rows = Math.ceil(items.length/cols);
+      for(let i=0;i<items.length;i++){
+        const col = Math.floor(i/rows);
+        const rowIdx = i % rows;
+        const rx = PAD + col*(colW+16);
+        const ry = y + rowIdx*rowH;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(rx, ry+5, colW, rowH-11);
+        ctx.fillStyle = color;
+        ctx.fillRect(rx, ry+5, 4, rowH-11);
+        const baseline = ry + rowH/2 + 6;
+        ctx.font = '500 16px -apple-system, sans-serif';
+        ctx.fillStyle = '#12241B';
+        let name = items[i].p.name;
+        const maxTextW = colW - 116;
+        while(ctx.measureText(name).width > maxTextW && name.length > 1){ name = name.slice(0,-1); }
+        if(name !== items[i].p.name) name += '…';
+        ctx.fillText(name, rx+14, baseline);
+        ctx.font = '700 16px "Space Mono"';
+        ctx.textAlign = 'right';
+        ctx.fillStyle = items[i].b>0.001 ? '#2D8659' : (items[i].b<-0.001 ? '#C3423F' : '#6E7C73');
+        ctx.fillText(fmt(items[i].b), rx+colW-14, baseline);
+        ctx.textAlign = 'left';
+      }
+      y += rows*rowH;
+    };
+
+    drawSection('Con crédito', '#2D8659', credit);
+    y += sectionGap;
+    drawSection('Al día', '#9AA69E', neutral);
+    y += sectionGap;
+    drawSection('Con deuda', '#C3423F', debt);
+    y += sectionGap;
+
+    ctx.textAlign = 'center';
+    ctx.font = '400 12px -apple-system, sans-serif';
+    ctx.fillStyle = '#9AA69E';
+    ctx.fillText(`Generado automáticamente el ${new Date().toLocaleString('es-ES')}`, W/2, y+18);
+    ctx.textAlign = 'left';
+
+    canvas.toBlob((blob)=>{
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `cuentas-${matchType}-${new Date().toISOString().slice(0,10)}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      this.toast('Imagen exportada');
+    }, 'image/png');
+  }
+
+  shareTeams(){
+    const r = this.teamsResult; if(!r) return;
+    const sumA = r.teamA.reduce((s,p)=>s+p.weight,0), sumB = r.teamB.reduce((s,p)=>s+p.weight,0);
+    let txt = `⚽ EQUIPOS ${this.teamsMatchType}\n\n🔵 Equipo A\n` + r.teamA.map(p=>'- '+p.name).join('\n');
+    txt += `\n\n🔴 Equipo B\n` + r.teamB.map(p=>'- '+p.name).join('\n');
+    if(navigator.share){ navigator.share({ text: txt }).catch(()=>{}); }
+    else { navigator.clipboard.writeText(txt).then(()=>this.toast('Copiado al portapapeles')); }
+  }
+
+  /* ---------------- MODALS ---------------- */
+  openModal(type, payload){ this.modal = {type, payload: payload || {}}; this.render(); }
+  closeModal(){ this.modal = null; this.render(); }
+  setPage(p){ this.page = p; this.modal = null; this.render(); }
+
+  /* =====================================================================
+     RENDER
+  ===================================================================== */
+  render(){
+    const el = document.getElementById('app');
+    el.innerHTML = `
+      ${this.renderTopbar()}
+      <div class="content">${this.renderPage()}</div>
+      ${this.renderFab()}
+      ${this.renderBottomNav()}
+      ${this.modal ? this.renderModal() : ''}
+      ${this.toastMsg ? `<div class="toast">${escapeHtml(this.toastMsg)}</div>` : ''}
+    `;
+  }
+
+  renderTopbar(){
+    return `
+    <div class="topbar">
+      <div class="brand">${ICONS.ball}<div><h1>Cuentas F5·F7</h1><div class="date">${todayStr()}</div></div></div>
+      <div class="match-switch">
+        <button class="${this.matchFilter==='F5'?'active':''}" onclick="app.matchFilter='F5';app.render()">F5</button>
+        <button class="${this.matchFilter==='F7'?'active':''}" onclick="app.matchFilter='F7';app.render()">F7</button>
+      </div>
+    </div>`;
+  }
+
+  renderScoreboard(matchType){
+    const bote = this.getTotalPot(matchType);
+    const {credit, debt} = this.classify(matchType);
+    const jugadores = [...credit, ...debt].reduce((s,x)=>s+x.b,0);
+    const balance = bote + jugadores;
+    const cls = v => v>0.001?'pos':(v<-0.001?'neg':'neu');
+    return `
+    <div class="scoreboard">
+      <div class="cell"><div class="stat-label">Bote</div><div class="stat-value mono ${cls(bote)}">${fmtPlain(bote)}</div></div>
+      <div class="cell"><div class="stat-label">Jugadores</div><div class="stat-value mono ${cls(jugadores)}">${fmt(jugadores)}</div></div>
+      <div class="cell"><div class="stat-label">Balance</div><div class="stat-value mono ${cls(balance)}">${fmtPlain(balance)}</div></div>
+    </div>`;
+  }
+
+  renderPage(){
+    switch(this.page){
+      case 'resumen': return this.renderResumen();
+      case 'jugadores': return this.renderJugadores();
+      case 'movimientos': return this.renderMovimientos();
+      case 'equipos': return this.renderEquipos();
+      case 'ajustes': return this.renderAjustes();
+      default: return this.renderResumen();
+    }
+  }
+
+  /* -------- RESUMEN -------- */
+  renderResumen(){
+    const mt = this.matchFilter;
+    const {credit, neutral, debt} = this.classify(mt);
+    const row = (item, kind) => `
+      <div class="ticket ${kind}" onclick="app.openModal('quickTx', {playerId:'${item.p.id}', matchType:'${mt}'})">
+        <div><div class="name">${escapeHtml(item.p.name)}</div><div class="sub">${item.p.type}${item.p.isRegular?' · habitual':''}</div></div>
+        <div class="amt mono ${item.b>0?'pos':(item.b<0?'neg':'zero')}">${fmt(item.b)}</div>
+      </div>`;
+    return `
+      ${this.renderScoreboard(mt)}
+      <button class="btn btn-outline btn-block" style="margin:2px 0 4px" onclick="app.exportSummaryImage('${mt}')">${ICONS.download} Exportar imagen (${mt})</button>
+      <div class="section-title"><span class="dot" style="background:var(--credit)"></span>Con crédito<span class="count">${credit.length}</span></div>
+      ${credit.length? credit.map(i=>row(i,'credit')).join('') : `<div class="empty-state">Nadie tiene crédito todavía</div>`}
+      <div class="section-title"><span class="dot" style="background:var(--line)"></span>Al día<span class="count">${neutral.length}</span></div>
+      ${neutral.length? neutral.map(i=>row(i,'neutral')).join('') : `<div class="empty-state">—</div>`}
+      <div class="section-title"><span class="dot" style="background:var(--debt)"></span>Con deuda<span class="count">${debt.length}</span></div>
+      ${debt.length? debt.map(i=>row(i,'debt')).join('') : `<div class="empty-state">Nadie tiene deudas 🎉</div>`}
+    `;
+  }
+
+  /* -------- JUGADORES -------- */
+  renderJugadores(){
+    let list = this.players.slice();
+    if(this.jugSearch) list = list.filter(p=>p.name.toLowerCase().includes(this.jugSearch.toLowerCase()));
+    if(this.jugFilterType) list = list.filter(p=> p.type===this.jugFilterType || p.type==='F5/F7');
+    if(this.jugFilterRegular) list = list.filter(p=> String(p.isRegular)===this.jugFilterRegular);
+    list.sort((a,b)=>a.name.localeCompare(b.name));
+    return `
+      <input type="search" class="search-bar" placeholder="Buscar jugador..." value="${escapeHtml(this.jugSearch)}"
+        oninput="app.jugSearch=this.value; app.render()" />
+      <div class="filter-bar">
+        <button class="chip ${this.jugFilterType===''?'active':''}" onclick="app.jugFilterType='';app.render()">Todos</button>
+        <button class="chip ${this.jugFilterType==='F5'?'active':''}" onclick="app.jugFilterType='F5';app.render()">F5</button>
+        <button class="chip ${this.jugFilterType==='F7'?'active':''}" onclick="app.jugFilterType='F7';app.render()">F7</button>
+        <button class="chip ${this.jugFilterRegular==='true'?'active':''}" onclick="app.jugFilterRegular=app.jugFilterRegular==='true'?'':'true';app.render()">Habituales</button>
+      </div>
+      <div class="section-title">Jugadores<span class="count">${list.length}</span></div>
+      ${list.map(p=>{
+        const total = this.getPlayerTotalBalance(p.id);
+        return `<div class="ticket neutral" onclick="app.openModal('editPlayer',{id:'${p.id}'})">
+          <div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${p.type}${p.isRegular?' · habitual':' · esporádico'}${p.skill?' · '+SKILL_LABEL[p.skill]:''}</div></div>
+          <div class="amt mono ${total>0?'pos':(total<0?'neg':'zero')}">${fmt(total)}</div>
+        </div>`;
+      }).join('') || `<div class="empty-state">No hay jugadores. Añade el primero con el botón +.</div>`}
+    `;
+  }
+
+  /* -------- MOVIMIENTOS -------- */
+  renderMovimientos(){
+    return `
+      <div class="subtabs">
+        <button class="chip ${this.movTab==='jugador'?'active':''}" style="flex:1" onclick="app.movTab='jugador';app.render()">A jugadores</button>
+        <button class="chip ${this.movTab==='bote'?'active':''}" style="flex:1" onclick="app.movTab='bote';app.render()">Al bote</button>
+      </div>
+      ${this.movTab==='jugador' ? this.renderMovJugadorForm() : this.renderMovBoteForm()}
+    `;
+  }
+  renderMovJugadorForm(){
+    const mt = this._movMatchType || this.matchFilter;
+    const sign = this._movSign || 'plus';
+    const players = this.getPlayersForMatch(mt);
+    const sel = this._movSelected || new Set();
+    return `
+      <label>Tipo de partido</label>
+      <div class="chip-group">
+        <button class="chip ${mt==='F5'?'active':''}" onclick="app._movMatchType='F5';app.render()">F5</button>
+        <button class="chip ${mt==='F7'?'active':''}" onclick="app._movMatchType='F7';app.render()">F7</button>
+      </div>
+      <label>Jugadores</label>
+      <div class="checklist">
+        ${players.map(p=>`<label><input type="checkbox" value="${p.id}" ${sel.has(p.id)?'checked':''}
+          onchange="app.toggleMovPlayer('${p.id}')" />${escapeHtml(p.name)}</label>`).join('') || '<div class="empty-state">No hay jugadores de este tipo</div>'}
+      </div>
+      <label>Importe (por jugador)</label>
+      <div class="sign-toggle">
+        <button class="${sign==='plus'?'active plus':''}" onclick="app._movSign='plus';app.render()">+ Abona</button>
+        <button class="${sign==='minus'?'active minus':''}" onclick="app._movSign='minus';app.render()">− Carga</button>
+      </div>
+      <input type="number" step="0.01" min="0" id="movAmount" placeholder="0.00" value="${this._movAmount||''}"
+        oninput="app._movAmount=this.value" style="margin-top:8px" />
+      <label>Motivo (opcional)</label>
+      <input type="text" id="movReason" placeholder="Partido del sábado, balón..." value="${this._movReason||''}" oninput="app._movReason=this.value" />
+      <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitMovJugador()">Registrar movimiento</button>
+    `;
+  }
+  toggleMovPlayer(id){
+    if(!this._movSelected) this._movSelected = new Set();
+    if(this._movSelected.has(id)) this._movSelected.delete(id); else this._movSelected.add(id);
+  }
+  submitMovJugador(){
+    const mt = this._movMatchType || this.matchFilter;
+    const sel = Array.from(this._movSelected || []);
+    let amount = parseFloat(this._movAmount);
+    if(isNaN(amount)){ this.toast('Introduce un importe'); return; }
+    if((this._movSign||'plus')==='minus') amount = -Math.abs(amount); else amount = Math.abs(amount);
+    this.addTransaction(sel, amount, mt, this._movReason);
+    this._movSelected = new Set(); this._movAmount=''; this._movReason='';
+    this.render();
+  }
+  renderMovBoteForm(){
+    const mt = this._boteMatchType || this.matchFilter;
+    const sign = this._boteSign || 'plus';
+    return `
+      <label>Tipo de partido</label>
+      <div class="chip-group">
+        <button class="chip ${mt==='F5'?'active':''}" onclick="app._boteMatchType='F5';app.render()">F5</button>
+        <button class="chip ${mt==='F7'?'active':''}" onclick="app._boteMatchType='F7';app.render()">F7</button>
+      </div>
+      <label>Importe</label>
+      <div class="sign-toggle">
+        <button class="${sign==='plus'?'active plus':''}" onclick="app._boteSign='plus';app.render()">+ Ingreso</button>
+        <button class="${sign==='minus'?'active minus':''}" onclick="app._boteSign='minus';app.render()">− Gasto</button>
+      </div>
+      <input type="number" step="0.01" min="0" placeholder="0.00" value="${this._boteAmount||''}" oninput="app._boteAmount=this.value" style="margin-top:8px" />
+      <label>Motivo (opcional)</label>
+      <input type="text" placeholder="Balón, pista, sobrante..." value="${this._boteReason||''}" oninput="app._boteReason=this.value" />
+      <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitMovBote()">Registrar en el bote</button>
+      <div class="section-title" style="margin-top:24px">Últimos movimientos del bote</div>
+      ${this.generalTransactions.filter(t=>t.matchType===mt).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,8).map(t=>`
+        <div class="ticket neutral">
+          <div><div class="name">${escapeHtml(t.reason)||'Movimiento del bote'}</div><div class="sub">${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="amt mono ${t.amount>0?'pos':'neg'}">${fmt(t.amount)}</div>
+            <button class="icon-btn" onclick="event.stopPropagation();app.deleteGeneralTransaction('${t.id}')">${ICONS.trash}</button>
+          </div>
+        </div>`).join('') || '<div class="empty-state">Sin movimientos aún</div>'}
+    `;
+  }
+  submitMovBote(){
+    const mt = this._boteMatchType || this.matchFilter;
+    let amount = parseFloat(this._boteAmount);
+    if(isNaN(amount)){ this.toast('Introduce un importe'); return; }
+    if((this._boteSign||'plus')==='minus') amount = -Math.abs(amount); else amount = Math.abs(amount);
+    this.addGeneralTransaction(amount, mt, this._boteReason);
+    this._boteAmount=''; this._boteReason='';
+    this.render();
+  }
+
+  /* -------- EQUIPOS -------- */
+  renderEquipos(){
+    const mt = this.teamsMatchType;
+    const players = this.getPlayersForMatch(mt).sort((a,b)=>a.name.localeCompare(b.name));
+    const r = this.teamsResult;
+    return `
+      <label>Tipo de partido</label>
+      <div class="chip-group">
+        <button class="chip ${mt==='F5'?'active':''}" onclick="app.teamsMatchType='F5';app.teamsPresent=new Set();app.teamsResult=null;app.render()">F5</button>
+        <button class="chip ${mt==='F7'?'active':''}" onclick="app.teamsMatchType='F7';app.teamsPresent=new Set();app.teamsResult=null;app.render()">F7</button>
+      </div>
+      <label>Jugadores presentes hoy (${this.teamsPresent.size})</label>
+      <div class="checklist">
+        ${players.map(p=>`<label><input type="checkbox" ${this.teamsPresent.has(p.id)?'checked':''}
+          onchange="app.togglePresent('${p.id}')" />${escapeHtml(p.name)} <span class="lvl-badge" style="margin-left:auto">${SKILL_LABEL[p.skill]||'Medio'}</span></label>`).join('') || '<div class="empty-state">No hay jugadores de este tipo</div>'}
+      </div>
+      <div class="field-row" style="margin-top:14px">
+        <button class="btn btn-primary" onclick="app.generateTeams(true)">${ICONS.shuffle} Equilibrar</button>
+        <button class="btn btn-outline" onclick="app.generateTeams(false)">Aleatorio</button>
+      </div>
+      ${r ? this.renderTeamsResult(r) : ''}
+    `;
+  }
+  togglePresent(id){ if(this.teamsPresent.has(id)) this.teamsPresent.delete(id); else this.teamsPresent.add(id); this.render(); }
+  renderTeamsResult(r){
+    const sumA = r.teamA.reduce((s,p)=>s+p.weight,0), sumB = r.teamB.reduce((s,p)=>s+p.weight,0);
+    const teamBlock = (team, list, sum) => `
+      <div class="team-card">
+        <h3><span>Equipo ${team}</span><span class="mono" style="font-size:12px;color:var(--muted)">nivel ${sum}</span></h3>
+        ${list.map((p,i)=>`<div class="team-player ${this.teamsSwapSel && this.teamsSwapSel.team===team && this.teamsSwapSel.idx===i ? 'selected':''}"
+          onclick="app.swapTeamPlayer('${team}', ${i})">${escapeHtml(p.name)}<span class="lvl-badge">${p.weight}</span></div>`).join('')}
+      </div>`;
+    return `
+      <div class="section-title" style="margin-top:22px">Equipos generados <span class="count">toca dos jugadores para intercambiarlos</span></div>
+      ${teamBlock('A', r.teamA, sumA)}
+      ${teamBlock('B', r.teamB, sumB)}
+      <button class="btn btn-gold btn-block" onclick="app.shareTeams()">${ICONS.share} Compartir equipos</button>
+    `;
+  }
+
+  /* -------- AJUSTES -------- */
+  renderAjustes(){
+    return `
+      <div class="section-title">Copia de seguridad</div>
+      <button class="btn btn-outline btn-block" onclick="app.exportBackup()">${ICONS.download} Exportar backup (JSON)</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="app.importBackup(this.files[0])" />
+      <button class="btn btn-outline btn-block" onclick="document.getElementById('importFile').click()">${ICONS.upload} Importar backup</button>
+
+      <div class="section-title" style="margin-top:24px">Historial de movimientos</div>
+      ${this.renderHistorial()}
+
+      <div class="section-title" style="margin-top:24px">Instalar como app</div>
+      <div class="ticket neutral" style="cursor:default">
+        <div style="font-size:13px;line-height:1.5">En Chrome (Android) pulsa el menú ⋮ y elige <b>"Instalar app"</b> o <b>"Añadir a pantalla de inicio"</b>. No necesitas la Play Store: queda como un icono normal y se abre a pantalla completa.</div>
+      </div>
+
+      <div class="section-title" style="margin-top:24px">Datos</div>
+      <button class="btn btn-danger btn-block" onclick="app.resetAll()">Borrar todos los datos</button>
+    `;
+  }
+  resetAll(){
+    if(!confirm('Esto borrará TODOS los jugadores y movimientos de este dispositivo. ¿Seguro?')) return;
+    this.players=[]; this.transactions=[]; this.generalTransactions=[];
+    this.save(); this.render(); this.toast('Datos borrados');
+  }
+
+  renderHistorial(){
+    let all = [
+      ...this.transactions.map(t=>({...t, kind:'jugador'})),
+      ...this.generalTransactions.map(t=>({...t, kind:'bote'}))
+    ];
+    if(this.histMatchFilter) all = all.filter(t=>t.matchType===this.histMatchFilter);
+    if(this.histSearch){
+      const q = this.histSearch.toLowerCase();
+      all = all.filter(t=>{
+        const names = (t.playerIds||[]).map(id=>{ const p=this.players.find(x=>x.id===id); return p?p.name:''; }).join(' ').toLowerCase();
+        return names.includes(q) || (t.reason||'').toLowerCase().includes(q);
+      });
+    }
+    all.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    all = all.slice(0,40);
+    return `
+      <input type="search" class="search-bar" placeholder="Buscar en historial..." value="${escapeHtml(this.histSearch)}" oninput="app.histSearch=this.value;app.render()" />
+      <div class="filter-bar">
+        <button class="chip ${this.histMatchFilter===''?'active':''}" onclick="app.histMatchFilter='';app.render()">Todos</button>
+        <button class="chip ${this.histMatchFilter==='F5'?'active':''}" onclick="app.histMatchFilter='F5';app.render()">F5</button>
+        <button class="chip ${this.histMatchFilter==='F7'?'active':''}" onclick="app.histMatchFilter='F7';app.render()">F7</button>
+      </div>
+      ${all.map(t=>{
+        const names = t.kind==='jugador' ? (t.playerIds||[]).map(id=>{ const p=this.players.find(x=>x.id===id); return p?p.name:'(borrado)'; }).join(', ') : 'Bote general';
+        return `<div class="ticket ${t.amount>0?'credit':'debt'}">
+          <div><div class="name">${escapeHtml(names)}</div><div class="sub">${t.matchType} · ${escapeHtml(t.reason)||'sin motivo'} · ${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="amt mono ${t.amount>0?'pos':'neg'}">${fmt(t.amount)}</div>
+            <button class="icon-btn" onclick="app.${t.kind==='jugador'?'deleteTransaction':'deleteGeneralTransaction'}('${t.id}')">${ICONS.trash}</button>
+          </div>
+        </div>`;
+      }).join('') || '<div class="empty-state">Sin movimientos</div>'}
+    `;
+  }
+
+  /* -------- FAB + NAV -------- */
+  renderFab(){
+    if(this.page==='resumen') return `<button class="fab" onclick="app.setPage('movimientos')">${ICONS.plus}</button>`;
+    if(this.page==='jugadores') return `<button class="fab" onclick="app.openModal('addPlayer')">${ICONS.plus}</button>`;
+    return '';
+  }
+  renderBottomNav(){
+    const tabs = [
+      {id:'resumen', label:'Resumen', icon:ICONS.home},
+      {id:'jugadores', label:'Jugadores', icon:ICONS.users},
+      {id:'movimientos', label:'Movim.', icon:ICONS.euro},
+      {id:'equipos', label:'Equipos', icon:ICONS.shirts},
+      {id:'ajustes', label:'Ajustes', icon:ICONS.gear},
+    ];
+    return `<div class="bottom-nav">${tabs.map(t=>`
+      <button class="${this.page===t.id?'active':''}" onclick="app.setPage('${t.id}')">${t.icon}<span class="tab-label">${t.label}</span></button>
+    `).join('')}</div>`;
+  }
+
+  /* -------- MODALS -------- */
+  renderModal(){
+    const {type, payload} = this.modal;
+    let body = '';
+    if(type==='editPlayer' && !this.players.find(x=>x.id===payload.id)){
+      this.modal = null;
+      return '';
+    }
+    if(type==='addPlayer' || type==='editPlayer'){
+      const p = type==='editPlayer' ? this.players.find(x=>x.id===payload.id) : null;
+      body = `
+        <h2>${p?'Editar jugador':'Nuevo jugador'}</h2>
+        <label>Nombre</label>
+        <input type="text" id="pName" value="${p?escapeHtml(p.name):''}" placeholder="Nombre y apellido" />
+        <label>Tipo</label>
+        <div class="chip-group" id="pTypeGroup">
+          ${['F5','F7','F5/F7'].map(t=>`<button class="chip ${((p&&p.type===t)||(!p&&t==='F7'))?'active':''}" data-val="${t}" onclick="app.pickChip(this,'pTypeGroup')">${t}</button>`).join('')}
+        </div>
+        <label>Nivel</label>
+        <div class="chip-group" id="pSkillGroup">
+          ${Object.keys(SKILL_LABEL).map(s=>`<button class="chip ${((p&&p.skill===s)||(!p&&s==='medio'))?'active':''}" data-val="${s}" onclick="app.pickChip(this,'pSkillGroup')">${SKILL_LABEL[s]}</button>`).join('')}
+        </div>
+        <label>Posición</label>
+        <div class="chip-group" id="pPosGroup">
+          <button class="chip ${(!p||!p.position)?'active':''}" data-val="" onclick="app.pickChip(this,'pPosGroup')">-</button>
+          ${POSITIONS.map(pos=>`<button class="chip ${(p&&p.position===pos)?'active':''}" data-val="${pos}" onclick="app.pickChip(this,'pPosGroup')">${pos}</button>`).join('')}
+        </div>
+        <label>Habitual</label>
+        <div class="chip-group" id="pRegGroup">
+          <button class="chip ${(!p||p.isRegular)?'active':''}" data-val="true" onclick="app.pickChip(this,'pRegGroup')">Sí</button>
+          <button class="chip ${(p&&!p.isRegular)?'active':''}" data-val="false" onclick="app.pickChip(this,'pRegGroup')">Esporádico</button>
+        </div>
+        <button class="btn btn-primary btn-block" style="margin-top:18px" onclick="app.savePlayerForm(${p?`'${p.id}'`:'null'})">Guardar</button>
+        ${p?`<button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.deletePlayer('${p.id}')">Eliminar jugador</button>`:''}
+      `;
+    } else if(type==='quickTx'){
+      const p = this.players.find(x=>x.id===payload.playerId);
+      body = `
+        <h2>${escapeHtml(p.name)}</h2>
+        <div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:10px">Saldo actual ${payload.matchType}: <b class="mono">${fmt(this.getPlayerBalance(p.id,payload.matchType))}</b></div>
+        <label>Importe</label>
+        <div class="sign-toggle">
+          <button id="qtxPlus" class="active plus" onclick="app.qtxSign='plus';app.render()">+ Abona</button>
+          <button id="qtxMinus" class="${this.qtxSign==='minus'?'active minus':''}" onclick="app.qtxSign='minus';app.render()">− Carga</button>
+        </div>
+        <input type="number" step="0.01" min="0" id="qtxAmount" placeholder="0.00" style="margin-top:8px" />
+        <label>Motivo (opcional)</label>
+        <input type="text" id="qtxReason" placeholder="Partido, balón..." />
+        <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitQuickTx('${p.id}','${payload.matchType}')">Registrar</button>
+      `;
+    }
+    return `<div class="sheet-backdrop" onclick="if(event.target===this) app.closeModal()">
+      <div class="sheet"><div class="sheet-handle"></div><button class="close-x" onclick="app.closeModal()">✕</button>${body}</div>
+    </div>`;
+  }
+  pickChip(btn, groupId){
+    document.getElementById(groupId).querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  savePlayerForm(id){
+    const name = document.getElementById('pName').value.trim();
+    if(!name){ this.toast('Falta el nombre'); return; }
+    const type = document.querySelector('#pTypeGroup .chip.active').dataset.val;
+    const skill = document.querySelector('#pSkillGroup .chip.active').dataset.val;
+    const position = document.querySelector('#pPosGroup .chip.active').dataset.val;
+    const isRegular = document.querySelector('#pRegGroup .chip.active').dataset.val === 'true';
+    const data = {name, type, skill, position, isRegular};
+    if(id) this.updatePlayer(id, data); else this.addPlayer(data);
+  }
+  submitQuickTx(playerId, matchType){
+    let amount = parseFloat(document.getElementById('qtxAmount').value);
+    if(isNaN(amount)){ this.toast('Introduce un importe'); return; }
+    if((this.qtxSign||'plus')==='minus') amount = -Math.abs(amount); else amount = Math.abs(amount);
+    const reason = document.getElementById('qtxReason').value;
+    this.qtxSign = null;
+    this.addTransaction([playerId], amount, matchType, reason);
+  }
+}
+
+let app;
+window.addEventListener('DOMContentLoaded', ()=>{
+  app = new App();
+  window.app = app;
+  document.body.addEventListener('click', (e)=>{
+    if(e.target.closest('.fab') || e.target.closest('.bottom-nav')) return;
+  });
+});
+
+// Botón "Nuevo jugador" flotante en la pestaña Jugadores
+document.addEventListener('click', function(e){
+  const t = e.target.closest('[data-open-add-player]');
+  if(t) app.openModal('addPlayer');
+});
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
