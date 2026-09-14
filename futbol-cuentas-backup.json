@@ -517,7 +517,9 @@
       "name": "Sergio Jaba",
       "type": "F7",
       "isRegular": true,
-      "createdAt": "2025-07-21T23:00:13.941Z"
+      "createdAt": "2025-07-21T23:00:13.941Z",
+      "skill": "bajo",
+      "position": "medio"
     },
     {
       "id": "1753138827941",
@@ -714,7 +716,9 @@
       "name": "Oier",
       "type": "F7",
       "isRegular": true,
-      "createdAt": "2026-09-13T22:33:18.953Z"
+      "createdAt": "2026-09-13T22:33:18.953Z",
+      "skill": "medio",
+      "position": "defensa"
     }
   ],
   "transactions": [
@@ -6225,6 +6229,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-14T21:50:46.565Z",
+  "exportDate": "2026-09-14T21:51:15.668Z",
   "version": "2.0"
 }
