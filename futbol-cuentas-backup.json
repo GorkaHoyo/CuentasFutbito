@@ -524,7 +524,9 @@
       "name": "Sergio Martinez",
       "type": "F5/F7",
       "isRegular": true,
-      "createdAt": "2025-07-21T23:00:27.941Z"
+      "createdAt": "2025-07-21T23:00:27.941Z",
+      "skill": "medio",
+      "position": "medio"
     },
     {
       "id": "1753138871673",
@@ -6223,6 +6225,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-14T21:50:36.820Z",
+  "exportDate": "2026-09-14T21:50:46.565Z",
   "version": "2.0"
 }
