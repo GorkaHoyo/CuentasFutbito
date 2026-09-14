@@ -5698,6 +5698,16 @@
       "matchType": "F7",
       "reason": "Partido Lunes",
       "createdAt": "2026-09-14T21:41:02.723Z"
+    },
+    {
+      "id": "1789422483379165",
+      "playerIds": [
+        "1753137591854"
+      ],
+      "amount": 20,
+      "matchType": "F7",
+      "reason": "Pago",
+      "createdAt": "2026-09-14T21:48:03.382Z"
     }
   ],
   "generalTransactions": [
@@ -6207,6 +6217,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-14T21:41:03.424Z",
+  "exportDate": "2026-09-14T21:48:04.097Z",
   "version": "2.0"
 }
