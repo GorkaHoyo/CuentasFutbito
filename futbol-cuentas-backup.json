@@ -228,7 +228,9 @@
       "name": "Ibai",
       "type": "F7",
       "isRegular": false,
-      "createdAt": "2025-07-21T22:42:20.734Z"
+      "createdAt": "2025-07-21T22:42:20.734Z",
+      "skill": "muy_alto",
+      "position": "defensa"
     },
     {
       "id": "1753137754918",
@@ -6115,6 +6117,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-14T21:53:06.146Z",
+  "exportDate": "2026-09-14T21:53:12.951Z",
   "version": "2.0"
 }
