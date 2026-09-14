@@ -545,7 +545,9 @@
       "name": "Unai Urkijo",
       "type": "F5/F7",
       "isRegular": false,
-      "createdAt": "2025-07-21T23:02:03.592Z"
+      "createdAt": "2025-07-21T23:02:03.592Z",
+      "skill": "medio",
+      "position": "delantero"
     },
     {
       "id": "1753138948784",
@@ -6219,6 +6221,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-14T21:50:22.414Z",
+  "exportDate": "2026-09-14T21:50:28.909Z",
   "version": "2.0"
 }
