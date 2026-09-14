@@ -581,7 +581,9 @@
       "name": "Iñigo Vidaurrazaga",
       "type": "F5/F7",
       "isRegular": true,
-      "createdAt": "2025-09-14T18:13:00.811Z"
+      "createdAt": "2025-09-14T18:13:00.811Z",
+      "skill": "muy_alto",
+      "position": "defensa"
     },
     {
       "id": "1757947326419",
@@ -6119,6 +6121,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-14T21:53:23.538Z",
+  "exportDate": "2026-09-14T21:53:33.302Z",
   "version": "2.0"
 }
