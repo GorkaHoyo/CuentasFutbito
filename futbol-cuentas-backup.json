@@ -586,7 +586,9 @@
       "name": "Brou",
       "type": "F7",
       "isRegular": true,
-      "createdAt": "2025-09-15T14:42:06.419Z"
+      "createdAt": "2025-09-15T14:42:06.419Z",
+      "skill": "medio",
+      "position": "defensa"
     },
     {
       "id": "1759501139538",
@@ -6113,6 +6115,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-14T21:52:32.947Z",
+  "exportDate": "2026-09-14T21:52:39.980Z",
   "version": "2.0"
 }
