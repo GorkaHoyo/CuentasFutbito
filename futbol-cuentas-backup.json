@@ -174,7 +174,7 @@
       "type": "F7",
       "isRegular": true,
       "createdAt": "2025-07-21T22:39:51.854Z",
-      "skill": "medio",
+      "skill": "alto",
       "position": "delantero"
     },
     {
@@ -6115,6 +6115,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-14T21:52:39.980Z",
+  "exportDate": "2026-09-14T21:53:06.146Z",
   "version": "2.0"
 }
