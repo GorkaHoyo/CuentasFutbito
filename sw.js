@@ -1,4 +1,4 @@
-const CACHE = 'cuentas-f5f7-v1';
+const CACHE = 'cuentas-f5f7-v2';
 const ASSETS = ['./index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', (event) => {
@@ -17,20 +17,19 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Primero red: si hay conexión, siempre coge la versión más reciente del servidor
+// (y la guarda en caché de paso). Si no hay conexión, cae a la última copia guardada.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
-        .then((res) => {
-          if (res && res.status === 200) {
-            const copy = res.clone();
-            caches.open(CACHE).then((cache) => cache.put(event.request, copy));
-          }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(event.request)
+      .then((res) => {
+        if (res && res.status === 200) {
+          const copy = res.clone();
+          caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
