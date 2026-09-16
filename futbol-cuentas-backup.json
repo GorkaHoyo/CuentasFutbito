@@ -114,7 +114,8 @@
       "type": "F7",
       "isRegular": true,
       "createdAt": "2025-07-21T22:27:23.451Z",
-      "position": "defensa"
+      "position": "defensa",
+      "skill": "muy_bajo"
     },
     {
       "id": "1753136904337",
@@ -6175,6 +6176,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-16T20:38:51.830Z",
+  "exportDate": "2026-09-16T20:39:06.022Z",
   "version": "2.0"
 }
