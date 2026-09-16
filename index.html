@@ -236,6 +236,7 @@ const SKILL_LABEL = { muy_bajo:'Muy bajo', bajo:'Bajo', medio:'Medio', alto:'Alt
 const POSITIONS = ['portero','defensa','medio','delantero'];
 const POSITION_LABEL = { portero:'Portero', defensa:'Defensa', medio:'Medio', delantero:'Delantero', 'sin posición':'Sin posición' };
 const POSITION_ABBR = { portero:'POR', defensa:'DEF', medio:'MED', delantero:'DEL', 'sin posición':'-' };
+const POSITION_COLOR = { portero:'#E8A33D', defensa:'#2D8659', medio:'#2E6F9E', delantero:'#C23B7A', 'sin posición':'#8A8A8A' };
 
 function uid(){ return Date.now().toString() + Math.floor(Math.random()*1000); }
 function fmt(n){
@@ -509,11 +510,21 @@ class App{
   findPresentPerson(id){
     return this.players.find(x=>x.id===id) || this.teamsGuests.find(x=>x.id===id);
   }
+  presentWithoutPosition(){
+    return Array.from(this.teamsPresent)
+      .map(id=>this.findPresentPerson(id))
+      .filter(p=>p && !p.position);
+  }
   generateTeams(balanced){
     const ids = Array.from(this.teamsPresent);
     const required = this.requiredTeamSizes(this.teamsMatchType);
     if(!required.includes(ids.length)){
       this.toast(`Para ${this.teamsMatchType} hacen falta ${required.join(' o ')} jugadores presentes (ahora tienes ${ids.length})`);
+      return;
+    }
+    const missingPosition = this.presentWithoutPosition();
+    if(missingPosition.length > 0){
+      alert('Antes de generar los equipos, asigna una posición a estos jugadores:\n\n' + missingPosition.map(p=>'· '+p.name).join('\n'));
       return;
     }
     let pool = ids.map(id=>{
@@ -760,12 +771,22 @@ class App{
   async exportTeamsImage(){
     const r = this.teamsResult; if(!r) return;
     await this.ensureFonts();
-    const avg = list => list.length ? (list.reduce((s,p)=>s+p.weight,0)/list.length) : 0;
-    const avgRojo = avg(r.teamRojo), avgBlanco = avg(r.teamBlanco);
 
-    const DPR = 2, W = 675, PAD = 22, headerH = 84, teamHeaderH = 46, rowH = 34, footerH = 22, gapBetween = 18;
+    function roundRectPath(ctx,x,y,w,h,rad){
+      const r = Math.min(rad, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r);
+      ctx.arcTo(x,y,x+w,y,r);
+      ctx.closePath();
+    }
+
+    const DPR = 2, W = 800, PAD = 28, headerH = 96, cardHeaderH = 56, rowH = 42, cardPad = 12, footerH = 30, gapBetween = 22;
     const rows = Math.max(r.teamRojo.length, r.teamBlanco.length, 1);
-    const H = headerH + teamHeaderH + rows*rowH + gapBetween + footerH + PAD;
+    const cardH = cardHeaderH + rows*rowH + cardPad*2;
+    const H = headerH + cardH + footerH + PAD;
 
     const canvas = document.createElement('canvas');
     canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
@@ -775,77 +796,68 @@ class App{
     ctx.fillStyle = '#F6F2E9';
     ctx.fillRect(0,0,W,H);
 
-    // header
-    ctx.fillStyle = '#0F3D2E';
-    ctx.fillRect(0,0,W,headerH);
-    ctx.fillStyle = '#E8A33D';
-    ctx.fillRect(0, headerH-4, W, 4);
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#F6F2E9';
+    // header centrado
+    ctx.textAlign = 'center';
     ctx.font = '700 26px Oswald';
-    ctx.fillText('⚽ EQUIPOS', PAD, 42);
-    ctx.font = '600 16px Oswald';
-    ctx.fillStyle = '#CFE0D6';
-    ctx.fillText(`${this.teamsMatchType} · ${new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'})}`, PAD, 65);
+    ctx.fillStyle = '#12241B';
+    ctx.fillText(`⚽ EQUIPOS GENERADOS · ${this.teamsMatchType}`, W/2, 46);
+    ctx.font = '400 14px -apple-system, sans-serif';
+    ctx.fillStyle = '#6E7C73';
+    ctx.fillText(new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'}), W/2, 70);
     ctx.textAlign = 'left';
 
     let y = headerH;
     const colW = (W - PAD*2 - gapBetween)/2;
     const colXRojo = PAD, colXBlanco = PAD + colW + gapBetween;
 
-    // cabeceras de equipo
-    ctx.fillStyle = '#C3423F';
-    ctx.fillRect(colXRojo, y+8, colW, teamHeaderH-14);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.strokeStyle = '#12241B';
-    ctx.lineWidth = 2;
-    ctx.fillRect(colXBlanco, y+8, colW, teamHeaderH-14);
-    ctx.strokeRect(colXBlanco, y+8, colW, teamHeaderH-14);
+    const drawTeamCard = (label, list, x, bg, borderColor, titleColor) => {
+      // tarjeta
+      roundRectPath(ctx, x, y, colW, cardH, 14);
+      ctx.fillStyle = bg;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = borderColor;
+      ctx.stroke();
 
-    ctx.textAlign = 'center';
-    ctx.font = '700 17px Oswald';
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillText('ROJO', colXRojo+colW/2, y+31);
-    ctx.fillStyle = '#12241B';
-    ctx.fillText('BLANCO', colXBlanco+colW/2, y+31);
-    ctx.font = '600 11px "Space Mono"';
-    ctx.fillStyle = 'rgba(255,255,255,.85)';
-    ctx.fillText(`media ${avgRojo.toFixed(1)}`, colXRojo+colW/2, y+42);
-    ctx.fillStyle = 'rgba(18,36,27,.65)';
-    ctx.fillText(`media ${avgBlanco.toFixed(1)}`, colXBlanco+colW/2, y+42);
-    ctx.textAlign = 'left';
-    y += teamHeaderH;
+      // cabecera de la tarjeta
+      ctx.textAlign = 'center';
+      ctx.font = '700 20px Oswald';
+      ctx.fillStyle = titleColor;
+      ctx.fillText(label, x+colW/2, y+cardPad+28);
+      ctx.textAlign = 'left';
 
-    const drawTeamCol = (list, x, accent) => {
-      for(let i=0;i<rows;i++){
-        const ry = y + i*rowH;
-        ctx.fillStyle = i%2===0 ? '#FFFFFF' : '#EFEAE0';
-        ctx.fillRect(x, ry+2, colW, rowH-6);
-        if(!list[i]) continue;
-        ctx.fillStyle = accent;
-        ctx.fillRect(x, ry+2, 3, rowH-6);
-        ctx.font = '600 14px -apple-system, sans-serif';
-        ctx.fillStyle = '#12241B';
-        let name = list[i].name;
-        const maxTextW = colW - 62;
-        while(ctx.measureText(name).width > maxTextW && name.length > 1){ name = name.slice(0,-1); }
-        if(name !== list[i].name) name += '…';
-        ctx.fillText(name, x+10, ry+2+rowH/2-6+16-6);
-        ctx.font = '700 11px Oswald';
-        ctx.fillStyle = '#6E7C73';
-        ctx.textAlign = 'right';
-        ctx.fillText(POSITION_ABBR[list[i].position]||'-', x+colW-8, ry+2+rowH/2-6+16-6);
+      let ry = y + cardHeaderH + cardPad;
+      list.forEach(p=>{
+        const badgeColor = POSITION_COLOR[p.position] || '#8A8A8A';
+        const badgeW = 56, badgeH = 26;
+        roundRectPath(ctx, x+cardPad, ry+(rowH-badgeH)/2, badgeW, badgeH, 7);
+        ctx.fillStyle = badgeColor;
+        ctx.fill();
+        ctx.textAlign = 'center';
+        ctx.font = '700 12px Oswald';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(POSITION_ABBR[p.position]||'-', x+cardPad+badgeW/2, ry+rowH/2+4);
         ctx.textAlign = 'left';
-      }
+
+        ctx.font = '600 16px -apple-system, sans-serif';
+        ctx.fillStyle = '#12241B';
+        let name = p.name;
+        const maxTextW = colW - cardPad*2 - badgeW - 16;
+        while(ctx.measureText(name).width > maxTextW && name.length > 1){ name = name.slice(0,-1); }
+        if(name !== p.name) name += '…';
+        ctx.fillText(name, x+cardPad+badgeW+12, ry+rowH/2+5);
+        ry += rowH;
+      });
     };
-    drawTeamCol(r.teamRojo, colXRojo, '#C3423F');
-    drawTeamCol(r.teamBlanco, colXBlanco, '#12241B');
-    y += rows*rowH + gapBetween;
+
+    drawTeamCard('EQUIPO ROJO', r.teamRojo, colXRojo, '#FCE8E7', '#C3423F', '#C3423F');
+    drawTeamCard('EQUIPO BLANCO', r.teamBlanco, colXBlanco, '#FFFFFF', '#39434B', '#39434B');
+    y += cardH + gapBetween;
 
     ctx.textAlign = 'center';
     ctx.font = '400 11px -apple-system, sans-serif';
     ctx.fillStyle = '#9AA69E';
-    ctx.fillText(`Generado automáticamente el ${new Date().toLocaleString('es-ES')}`, W/2, y+12);
+    ctx.fillText('Generado con Cuentas F5·F7', W/2, y+2);
     ctx.textAlign = 'left';
 
     canvas.toBlob((blob)=>{
@@ -1075,7 +1087,9 @@ class App{
     const r = this.teamsResult;
     const required = this.requiredTeamSizes(mt);
     const count = this.teamsPresent.size;
-    const ok = required.includes(count);
+    const sizeOk = required.includes(count);
+    const missingPosition = this.presentWithoutPosition();
+    const ok = sizeOk && missingPosition.length === 0;
     return `
       <label>Tipo de partido</label>
       <div class="chip-group">
@@ -1083,18 +1097,19 @@ class App{
         <button class="chip ${mt==='F7'?'active':''}" onclick="app.teamsMatchType='F7';app.teamsPresent=new Set();app.teamsGuests=[];app.teamsResult=null;app.render()">F7</button>
       </div>
       <label>Jugadores presentes hoy
-        <span class="mono" style="text-transform:none;font-weight:700;color:${ok?'var(--credit)':'var(--debt)'}">${count} / ${required.join(' o ')}</span>
+        <span class="mono" style="text-transform:none;font-weight:700;color:${sizeOk?'var(--credit)':'var(--debt)'}">${count} / ${required.join(' o ')}</span>
       </label>
       <div class="checklist">
         ${players.map(p=>`<label><input type="checkbox" ${this.teamsPresent.has(p.id)?'checked':''}
-          onchange="app.togglePresent('${p.id}')" />${escapeHtml(p.name)} <span class="lvl-badge" style="margin-left:auto">${SKILL_LABEL[p.skill]||'Medio'}</span></label>`).join('') || '<div class="empty-state">No hay jugadores de este tipo</div>'}
+          onchange="app.togglePresent('${p.id}')" />${escapeHtml(p.name)}${p.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin posición</span>'} <span class="lvl-badge" style="margin-left:auto">${SKILL_LABEL[p.skill]||'Medio'}</span></label>`).join('') || '<div class="empty-state">No hay jugadores de este tipo</div>'}
         ${this.teamsGuests.map(g=>`<label><input type="checkbox" ${this.teamsPresent.has(g.id)?'checked':''}
-          onchange="app.togglePresent('${g.id}')" />${escapeHtml(g.name)} <span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Invitado</span>
+          onchange="app.togglePresent('${g.id}')" />${escapeHtml(g.name)} <span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Invitado</span>${g.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin posición</span>'}
           <span class="lvl-badge" style="margin-left:auto">${SKILL_LABEL[g.skill]||'Medio'}</span>
           <button class="icon-btn" onclick="event.preventDefault();app.removeGuest('${g.id}')">${ICONS.trash}</button></label>`).join('')}
       </div>
       <button class="btn btn-sm btn-outline" style="margin-top:8px" onclick="app.openModal('addGuest')">${ICONS.plus} Añadir invitado</button>
-      ${!ok ? `<div class="empty-state" style="text-align:left;padding:8px 2px">Para generar equipos de ${mt} hacen falta exactamente ${required.join(' o ')} jugadores presentes. Añade invitados si te faltan para completar.</div>` : ''}
+      ${!sizeOk ? `<div class="empty-state" style="text-align:left;padding:8px 2px">Para generar equipos de ${mt} hacen falta exactamente ${required.join(' o ')} jugadores presentes. Añade invitados si te faltan para completar.</div>` : ''}
+      ${sizeOk && missingPosition.length>0 ? `<div class="empty-state" style="text-align:left;padding:8px 2px;color:var(--debt)">Falta asignar posición a: ${missingPosition.map(p=>escapeHtml(p.name)).join(', ')}. Edítalos en Jugadores (o en el invitado) antes de generar equipos.</div>` : ''}
       <div class="field-row" style="margin-top:14px">
         <button class="btn btn-primary" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(true)">${ICONS.shuffle} Equilibrar</button>
         <button class="btn btn-outline" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(false)">Aleatorio</button>
@@ -1126,7 +1141,7 @@ class App{
       <div class="team-card" style="border-left:4px solid ${accent}">
         <h3><span>${label}</span><span class="mono" style="font-size:12px;color:var(--muted)">media ${average.toFixed(1)}</span></h3>
         ${list.map((p,i)=>`<div class="team-player ${this.teamsSwapSel && this.teamsSwapSel.team===team && this.teamsSwapSel.idx===i ? 'selected':''}"
-          onclick="app.swapTeamPlayer('${team}', ${i})"><span>${escapeHtml(p.name)} <span class="lvl-badge" style="background:var(--turf-soft);color:var(--muted)">${POSITION_ABBR[p.position]||'-'}</span></span><span class="lvl-badge">${p.weight}</span></div>`).join('') || '<div class="empty-state">Sin jugadores</div>'}
+          onclick="app.swapTeamPlayer('${team}', ${i})"><span>${escapeHtml(p.name)} <span class="lvl-badge" style="background:${POSITION_COLOR[p.position]||'#8A8A8A'};color:#fff">${POSITION_ABBR[p.position]||'-'}</span></span><span class="lvl-badge">${p.weight}</span></div>`).join('') || '<div class="empty-state">Sin jugadores</div>'}
       </div>`;
     return `
       <div class="section-title" style="margin-top:22px">Equipos generados <span class="count">toca dos jugadores para intercambiarlos</span></div>
