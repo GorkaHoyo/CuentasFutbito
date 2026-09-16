@@ -5,7 +5,9 @@
       "name": "Adrian",
       "type": "F7",
       "isRegular": true,
-      "createdAt": "2025-07-28T20:46:20.600Z"
+      "createdAt": "2025-07-28T20:46:20.600Z",
+      "skill": "medio",
+      "position": "medio"
     },
     {
       "id": "1753135878438",
@@ -6172,6 +6174,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-15T06:27:32.508Z",
+  "exportDate": "2026-09-16T20:35:29.186Z",
   "version": "2.0"
 }
