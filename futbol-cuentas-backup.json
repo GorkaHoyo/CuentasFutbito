@@ -610,7 +610,9 @@
       "name": "Carlos Aguilar",
       "type": "F5/F7",
       "isRegular": false,
-      "createdAt": "2025-10-04T09:00:32.872Z"
+      "createdAt": "2025-10-04T09:00:32.872Z",
+      "skill": "medio",
+      "position": "defensa"
     },
     {
       "id": "1759568445309",
@@ -6176,6 +6178,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-16T20:39:06.022Z",
+  "exportDate": "2026-09-16T20:39:31.166Z",
   "version": "2.0"
 }
