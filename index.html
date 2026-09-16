@@ -552,9 +552,15 @@ class App{
         if(teamRojo.length <= teamBlanco.length){ teamRojo.push(pl); } else { teamBlanco.push(pl); }
       });
     }
+    this.sortByPosition(teamRojo); this.sortByPosition(teamBlanco);
     this.teamsResult = { teamRojo, teamBlanco };
     this.teamsSwapSel = null;
     this.render();
+  }
+  sortByPosition(list){
+    const order = { portero:0, defensa:1, medio:2, delantero:3, 'sin posición':4 };
+    list.sort((a,b)=> (order[a.position] ?? 4) - (order[b.position] ?? 4));
+    return list;
   }
   swapTeamPlayer(team, idx){
     if(!this.teamsSwapSel){ this.teamsSwapSel = {team, idx}; this.render(); return; }
@@ -563,6 +569,7 @@ class App{
     const a = sel.team==='rojo' ? this.teamsResult.teamRojo : this.teamsResult.teamBlanco;
     const b = team==='rojo' ? this.teamsResult.teamRojo : this.teamsResult.teamBlanco;
     const tmp = a[sel.idx]; a[sel.idx] = b[idx]; b[idx] = tmp;
+    this.sortByPosition(this.teamsResult.teamRojo); this.sortByPosition(this.teamsResult.teamBlanco);
     this.teamsSwapSel = null;
     this.render();
   }
