@@ -273,6 +273,7 @@ class App{
     this.histMatchFilter = '';
     this.teamsMatchType = 'F7';
     this.teamsPresent = new Set();
+    this.teamsGuests = []; // invitados de hoy: solo para generar equipos, no se guardan en this.players
     this.teamsResult = null;
     this.teamsSwapSel = null;
     this.movTab = 'jugador';
@@ -502,10 +503,21 @@ class App{
   }
 
   /* ---------------- TEAMS ---------------- */
+  requiredTeamSizes(matchType){
+    return matchType === 'F5' ? [10] : [14, 16];
+  }
+  findPresentPerson(id){
+    return this.players.find(x=>x.id===id) || this.teamsGuests.find(x=>x.id===id);
+  }
   generateTeams(balanced){
     const ids = Array.from(this.teamsPresent);
+    const required = this.requiredTeamSizes(this.teamsMatchType);
+    if(!required.includes(ids.length)){
+      this.toast(`Para ${this.teamsMatchType} hacen falta ${required.join(' o ')} jugadores presentes (ahora tienes ${ids.length})`);
+      return;
+    }
     let pool = ids.map(id=>{
-      const p = this.players.find(x=>x.id===id);
+      const p = this.findPresentPerson(id);
       if(!p) return null;
       return { id:p.id, name:p.name, weight: SKILL_WEIGHT[p.skill] || 3, position:p.position||'sin posición' };
     }).filter(Boolean);
@@ -1061,25 +1073,52 @@ class App{
     const mt = this.teamsMatchType;
     const players = this.getPlayersForMatch(mt).sort((a,b)=>a.name.localeCompare(b.name));
     const r = this.teamsResult;
+    const required = this.requiredTeamSizes(mt);
+    const count = this.teamsPresent.size;
+    const ok = required.includes(count);
     return `
       <label>Tipo de partido</label>
       <div class="chip-group">
-        <button class="chip ${mt==='F5'?'active':''}" onclick="app.teamsMatchType='F5';app.teamsPresent=new Set();app.teamsResult=null;app.render()">F5</button>
-        <button class="chip ${mt==='F7'?'active':''}" onclick="app.teamsMatchType='F7';app.teamsPresent=new Set();app.teamsResult=null;app.render()">F7</button>
+        <button class="chip ${mt==='F5'?'active':''}" onclick="app.teamsMatchType='F5';app.teamsPresent=new Set();app.teamsGuests=[];app.teamsResult=null;app.render()">F5</button>
+        <button class="chip ${mt==='F7'?'active':''}" onclick="app.teamsMatchType='F7';app.teamsPresent=new Set();app.teamsGuests=[];app.teamsResult=null;app.render()">F7</button>
       </div>
-      <label>Jugadores presentes hoy (${this.teamsPresent.size})</label>
+      <label>Jugadores presentes hoy
+        <span class="mono" style="text-transform:none;font-weight:700;color:${ok?'var(--credit)':'var(--debt)'}">${count} / ${required.join(' o ')}</span>
+      </label>
       <div class="checklist">
         ${players.map(p=>`<label><input type="checkbox" ${this.teamsPresent.has(p.id)?'checked':''}
           onchange="app.togglePresent('${p.id}')" />${escapeHtml(p.name)} <span class="lvl-badge" style="margin-left:auto">${SKILL_LABEL[p.skill]||'Medio'}</span></label>`).join('') || '<div class="empty-state">No hay jugadores de este tipo</div>'}
+        ${this.teamsGuests.map(g=>`<label><input type="checkbox" ${this.teamsPresent.has(g.id)?'checked':''}
+          onchange="app.togglePresent('${g.id}')" />${escapeHtml(g.name)} <span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Invitado</span>
+          <span class="lvl-badge" style="margin-left:auto">${SKILL_LABEL[g.skill]||'Medio'}</span>
+          <button class="icon-btn" onclick="event.preventDefault();app.removeGuest('${g.id}')">${ICONS.trash}</button></label>`).join('')}
       </div>
+      <button class="btn btn-sm btn-outline" style="margin-top:8px" onclick="app.openModal('addGuest')">${ICONS.plus} Añadir invitado</button>
+      ${!ok ? `<div class="empty-state" style="text-align:left;padding:8px 2px">Para generar equipos de ${mt} hacen falta exactamente ${required.join(' o ')} jugadores presentes. Añade invitados si te faltan para completar.</div>` : ''}
       <div class="field-row" style="margin-top:14px">
-        <button class="btn btn-primary" onclick="app.generateTeams(true)">${ICONS.shuffle} Equilibrar</button>
-        <button class="btn btn-outline" onclick="app.generateTeams(false)">Aleatorio</button>
+        <button class="btn btn-primary" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(true)">${ICONS.shuffle} Equilibrar</button>
+        <button class="btn btn-outline" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(false)">Aleatorio</button>
       </div>
       ${r ? this.renderTeamsResult(r) : ''}
     `;
   }
   togglePresent(id){ if(this.teamsPresent.has(id)) this.teamsPresent.delete(id); else this.teamsPresent.add(id); this.render(); }
+  removeGuest(id){
+    this.teamsGuests = this.teamsGuests.filter(g=>g.id!==id);
+    this.teamsPresent.delete(id);
+    this.render();
+  }
+  submitGuest(){
+    const name = document.getElementById('guestName').value.trim();
+    if(!name){ this.toast('Falta el nombre del invitado'); return; }
+    const skill = document.querySelector('#guestSkillGroup .chip.active').dataset.val;
+    const position = document.querySelector('#guestPosGroup .chip.active').dataset.val;
+    const guest = { id:'guest_'+uid(), name, skill, position };
+    this.teamsGuests.push(guest);
+    this.teamsPresent.add(guest.id);
+    this.closeModal();
+    this.toast('Invitado añadido para hoy');
+  }
   renderTeamsResult(r){
     const avg = list => list.length ? (list.reduce((s,p)=>s+p.weight,0)/list.length) : 0;
     const avgRojo = avg(r.teamRojo), avgBlanco = avg(r.teamBlanco);
@@ -1285,6 +1324,23 @@ class App{
         <label>Motivo (opcional)</label>
         <input type="text" id="qtxReason" placeholder="Partido, balón..." />
         <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitQuickTx('${p.id}','${payload.matchType}')">Registrar</button>
+      `;
+    } else if(type==='addGuest'){
+      body = `
+        <h2>Jugador invitado</h2>
+        <div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:6px">Solo se usa para generar los equipos de hoy — no se guarda en tu lista de jugadores.</div>
+        <label>Nombre</label>
+        <input type="text" id="guestName" placeholder="Nombre del invitado" />
+        <label>Nivel</label>
+        <div class="chip-group" id="guestSkillGroup">
+          ${Object.keys(SKILL_LABEL).map(s=>`<button class="chip ${s==='medio'?'active':''}" data-val="${s}" onclick="app.pickChip(this,'guestSkillGroup')">${SKILL_LABEL[s]}</button>`).join('')}
+        </div>
+        <label>Posición</label>
+        <div class="chip-group" id="guestPosGroup">
+          <button class="chip active" data-val="" onclick="app.pickChip(this,'guestPosGroup')">-</button>
+          ${POSITIONS.map(pos=>`<button class="chip" data-val="${pos}" onclick="app.pickChip(this,'guestPosGroup')">${pos}</button>`).join('')}
+        </div>
+        <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitGuest()">Añadir a la lista de hoy</button>
       `;
     }
     return `<div class="sheet-backdrop" onclick="if(event.target===this) app.closeModal()">
