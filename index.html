@@ -136,6 +136,7 @@
   .btn-outline{ background:transparent; color:var(--pitch); border:1.5px solid var(--pitch); }
   .btn-danger{ background:transparent; color:var(--debt); border:1.5px solid var(--debt); }
   .btn-block{ width:100%; margin-top:6px; }
+  .btn-sm{ font-size:12.5px; padding:7px 12px; width:auto; flex:1; }
   .fab{
     position:fixed; bottom:calc(66px + var(--safe-bottom)); left:50%; transform:translateX(148px);
     width:52px; height:52px; border-radius:50%; background:var(--gold); color:var(--pitch-dark);
@@ -230,9 +231,11 @@ const ICONS = {
   shuffle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h3.5L15 18h6M14.5 6H21M3 18h3.5L11 12"/><path d="M18.5 3.5L21 6l-2.5 2.5M18.5 15.5L21 18l-2.5 2.5"/></svg>`,
 };
 
-const SKILL_WEIGHT = { bajo:1, medio:2, alto:3, muy_alto:4 };
-const SKILL_LABEL = { bajo:'Bajo', medio:'Medio', alto:'Alto', muy_alto:'Muy alto' };
+const SKILL_WEIGHT = { muy_bajo:1, bajo:2, medio:3, alto:4, muy_alto:5 };
+const SKILL_LABEL = { muy_bajo:'Muy bajo', bajo:'Bajo', medio:'Medio', alto:'Alto', muy_alto:'Muy alto' };
 const POSITIONS = ['portero','defensa','medio','delantero'];
+const POSITION_LABEL = { portero:'Portero', defensa:'Defensa', medio:'Medio', delantero:'Delantero', 'sin posición':'Sin posición' };
+const POSITION_ABBR = { portero:'POR', defensa:'DEF', medio:'MED', delantero:'DEL', 'sin posición':'-' };
 
 function uid(){ return Date.now().toString() + Math.floor(Math.random()*1000); }
 function fmt(n){
@@ -504,21 +507,29 @@ class App{
     let pool = ids.map(id=>{
       const p = this.players.find(x=>x.id===id);
       if(!p) return null;
-      return { id:p.id, name:p.name, weight: SKILL_WEIGHT[p.skill] || 2, position:p.position||'' };
+      return { id:p.id, name:p.name, weight: SKILL_WEIGHT[p.skill] || 3, position:p.position||'sin posición' };
     }).filter(Boolean);
     if(pool.length < 2){ this.toast('Selecciona al menos 2 jugadores'); return; }
-    // shuffle first for variety among equal weights
-    pool.sort(()=>Math.random()-0.5);
-    if(balanced) pool.sort((a,b)=>b.weight-a.weight);
-    const teamA=[], teamB=[]; let sumA=0, sumB=0;
-    pool.forEach(pl=>{
-      if(balanced){
-        if(sumA <= sumB){ teamA.push(pl); sumA += pl.weight; } else { teamB.push(pl); sumB += pl.weight; }
-      } else {
-        if(teamA.length <= teamB.length){ teamA.push(pl); } else { teamB.push(pl); }
-      }
-    });
-    this.teamsResult = { teamA, teamB };
+    const teamRojo=[], teamBlanco=[]; let sumRojo=0, sumBlanco=0;
+    if(balanced){
+      // Se equilibra grupo a grupo por posición (para que ambos equipos queden
+      // parecidos también en demarcaciones), y dentro de cada grupo por nivel.
+      const byPos = {};
+      pool.forEach(p=>{ (byPos[p.position] = byPos[p.position] || []).push(p); });
+      Object.values(byPos).forEach(group=>{
+        group.sort(()=>Math.random()-0.5);
+        group.sort((a,b)=>b.weight-a.weight);
+        group.forEach(pl=>{
+          if(sumRojo <= sumBlanco){ teamRojo.push(pl); sumRojo += pl.weight; } else { teamBlanco.push(pl); sumBlanco += pl.weight; }
+        });
+      });
+    } else {
+      pool.sort(()=>Math.random()-0.5);
+      pool.forEach(pl=>{
+        if(teamRojo.length <= teamBlanco.length){ teamRojo.push(pl); } else { teamBlanco.push(pl); }
+      });
+    }
+    this.teamsResult = { teamRojo, teamBlanco };
     this.teamsSwapSel = null;
     this.render();
   }
@@ -526,8 +537,8 @@ class App{
     if(!this.teamsSwapSel){ this.teamsSwapSel = {team, idx}; this.render(); return; }
     const sel = this.teamsSwapSel;
     if(sel.team === team && sel.idx === idx){ this.teamsSwapSel = null; this.render(); return; }
-    const a = sel.team==='A' ? this.teamsResult.teamA : this.teamsResult.teamB;
-    const b = team==='A' ? this.teamsResult.teamA : this.teamsResult.teamB;
+    const a = sel.team==='rojo' ? this.teamsResult.teamRojo : this.teamsResult.teamBlanco;
+    const b = team==='rojo' ? this.teamsResult.teamRojo : this.teamsResult.teamBlanco;
     const tmp = a[sel.idx]; a[sel.idx] = b[idx]; b[idx] = tmp;
     this.teamsSwapSel = null;
     this.render();
@@ -728,11 +739,111 @@ class App{
 
   shareTeams(){
     const r = this.teamsResult; if(!r) return;
-    const sumA = r.teamA.reduce((s,p)=>s+p.weight,0), sumB = r.teamB.reduce((s,p)=>s+p.weight,0);
-    let txt = `⚽ EQUIPOS ${this.teamsMatchType}\n\n🔵 Equipo A\n` + r.teamA.map(p=>'- '+p.name).join('\n');
-    txt += `\n\n🔴 Equipo B\n` + r.teamB.map(p=>'- '+p.name).join('\n');
+    let txt = `⚽ EQUIPOS ${this.teamsMatchType}\n\n🔴 Equipo Rojo\n` + r.teamRojo.map(p=>`- ${p.name} (${POSITION_ABBR[p.position]||'-'})`).join('\n');
+    txt += `\n\n⚪ Equipo Blanco\n` + r.teamBlanco.map(p=>`- ${p.name} (${POSITION_ABBR[p.position]||'-'})`).join('\n');
     if(navigator.share){ navigator.share({ text: txt }).catch(()=>{}); }
     else { navigator.clipboard.writeText(txt).then(()=>this.toast('Copiado al portapapeles')); }
+  }
+
+  async exportTeamsImage(){
+    const r = this.teamsResult; if(!r) return;
+    await this.ensureFonts();
+    const avg = list => list.length ? (list.reduce((s,p)=>s+p.weight,0)/list.length) : 0;
+    const avgRojo = avg(r.teamRojo), avgBlanco = avg(r.teamBlanco);
+
+    const DPR = 2, W = 675, PAD = 22, headerH = 84, teamHeaderH = 46, rowH = 34, footerH = 22, gapBetween = 18;
+    const rows = Math.max(r.teamRojo.length, r.teamBlanco.length, 1);
+    const H = headerH + teamHeaderH + rows*rowH + gapBetween + footerH + PAD;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(DPR, DPR);
+
+    ctx.fillStyle = '#F6F2E9';
+    ctx.fillRect(0,0,W,H);
+
+    // header
+    ctx.fillStyle = '#0F3D2E';
+    ctx.fillRect(0,0,W,headerH);
+    ctx.fillStyle = '#E8A33D';
+    ctx.fillRect(0, headerH-4, W, 4);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#F6F2E9';
+    ctx.font = '700 26px Oswald';
+    ctx.fillText('⚽ EQUIPOS', PAD, 42);
+    ctx.font = '600 16px Oswald';
+    ctx.fillStyle = '#CFE0D6';
+    ctx.fillText(`${this.teamsMatchType} · ${new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long'})}`, PAD, 65);
+    ctx.textAlign = 'left';
+
+    let y = headerH;
+    const colW = (W - PAD*2 - gapBetween)/2;
+    const colXRojo = PAD, colXBlanco = PAD + colW + gapBetween;
+
+    // cabeceras de equipo
+    ctx.fillStyle = '#C3423F';
+    ctx.fillRect(colXRojo, y+8, colW, teamHeaderH-14);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.strokeStyle = '#12241B';
+    ctx.lineWidth = 2;
+    ctx.fillRect(colXBlanco, y+8, colW, teamHeaderH-14);
+    ctx.strokeRect(colXBlanco, y+8, colW, teamHeaderH-14);
+
+    ctx.textAlign = 'center';
+    ctx.font = '700 17px Oswald';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText('ROJO', colXRojo+colW/2, y+31);
+    ctx.fillStyle = '#12241B';
+    ctx.fillText('BLANCO', colXBlanco+colW/2, y+31);
+    ctx.font = '600 11px "Space Mono"';
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    ctx.fillText(`media ${avgRojo.toFixed(1)}`, colXRojo+colW/2, y+42);
+    ctx.fillStyle = 'rgba(18,36,27,.65)';
+    ctx.fillText(`media ${avgBlanco.toFixed(1)}`, colXBlanco+colW/2, y+42);
+    ctx.textAlign = 'left';
+    y += teamHeaderH;
+
+    const drawTeamCol = (list, x, accent) => {
+      for(let i=0;i<rows;i++){
+        const ry = y + i*rowH;
+        ctx.fillStyle = i%2===0 ? '#FFFFFF' : '#EFEAE0';
+        ctx.fillRect(x, ry+2, colW, rowH-6);
+        if(!list[i]) continue;
+        ctx.fillStyle = accent;
+        ctx.fillRect(x, ry+2, 3, rowH-6);
+        ctx.font = '600 14px -apple-system, sans-serif';
+        ctx.fillStyle = '#12241B';
+        let name = list[i].name;
+        const maxTextW = colW - 62;
+        while(ctx.measureText(name).width > maxTextW && name.length > 1){ name = name.slice(0,-1); }
+        if(name !== list[i].name) name += '…';
+        ctx.fillText(name, x+10, ry+2+rowH/2-6+16-6);
+        ctx.font = '700 11px Oswald';
+        ctx.fillStyle = '#6E7C73';
+        ctx.textAlign = 'right';
+        ctx.fillText(POSITION_ABBR[list[i].position]||'-', x+colW-8, ry+2+rowH/2-6+16-6);
+        ctx.textAlign = 'left';
+      }
+    };
+    drawTeamCol(r.teamRojo, colXRojo, '#C3423F');
+    drawTeamCol(r.teamBlanco, colXBlanco, '#12241B');
+    y += rows*rowH + gapBetween;
+
+    ctx.textAlign = 'center';
+    ctx.font = '400 11px -apple-system, sans-serif';
+    ctx.fillStyle = '#9AA69E';
+    ctx.fillText(`Generado automáticamente el ${new Date().toLocaleString('es-ES')}`, W/2, y+12);
+    ctx.textAlign = 'left';
+
+    canvas.toBlob((blob)=>{
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `equipos-${this.teamsMatchType}-${new Date().toISOString().slice(0,10)}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      this.toast('Imagen exportada');
+    }, 'image/png');
   }
 
   /* ---------------- MODALS ---------------- */
@@ -745,6 +856,14 @@ class App{
   ===================================================================== */
   render(){
     const el = document.getElementById('app');
+    // Guardamos la posición de scroll para restaurarla tras redibujar (si no, cada
+    // cambio -p.ej. marcar una casilla- "resetea" la lista al principio y parece
+    // que el elemento se mueve, cuando en realidad es solo el scroll el que salta).
+    const prevContent = el.querySelector('.content');
+    const contentScroll = prevContent ? prevContent.scrollTop : 0;
+    const prevChecklist = el.querySelector('.checklist');
+    const checklistScroll = prevChecklist ? prevChecklist.scrollTop : null;
+
     el.innerHTML = `
       ${this.renderTopbar()}
       <div class="content">${this.renderPage()}</div>
@@ -753,6 +872,13 @@ class App{
       ${this.modal ? this.renderModal() : ''}
       ${this.toastMsg ? `<div class="toast">${escapeHtml(this.toastMsg)}</div>` : ''}
     `;
+
+    const newContent = el.querySelector('.content');
+    if(newContent) newContent.scrollTop = contentScroll;
+    if(checklistScroll !== null){
+      const newChecklist = el.querySelector('.checklist');
+      if(newChecklist) newChecklist.scrollTop = checklistScroll;
+    }
   }
 
   renderTopbar(){
@@ -802,7 +928,7 @@ class App{
       </div>`;
     return `
       ${this.renderScoreboard(mt)}
-      <button class="btn btn-outline btn-block" style="margin:2px 0 4px" onclick="app.exportSummaryImage('${mt}')">${ICONS.download} Exportar imagen (${mt})</button>
+      <button class="btn btn-sm btn-outline" onclick="app.exportSummaryImage('${mt}')">${ICONS.download} Exportar imagen (${mt})</button>
       <div class="section-title"><span class="dot" style="background:var(--credit)"></span>Con crédito<span class="count">${credit.length}</span></div>
       ${credit.length? credit.map(i=>row(i,'credit')).join('') : `<div class="empty-state">Nadie tiene crédito todavía</div>`}
       <div class="section-title"><span class="dot" style="background:var(--line)"></span>Al día<span class="count">${neutral.length}</span></div>
@@ -955,18 +1081,22 @@ class App{
   }
   togglePresent(id){ if(this.teamsPresent.has(id)) this.teamsPresent.delete(id); else this.teamsPresent.add(id); this.render(); }
   renderTeamsResult(r){
-    const sumA = r.teamA.reduce((s,p)=>s+p.weight,0), sumB = r.teamB.reduce((s,p)=>s+p.weight,0);
-    const teamBlock = (team, list, sum) => `
-      <div class="team-card">
-        <h3><span>Equipo ${team}</span><span class="mono" style="font-size:12px;color:var(--muted)">nivel ${sum}</span></h3>
+    const avg = list => list.length ? (list.reduce((s,p)=>s+p.weight,0)/list.length) : 0;
+    const avgRojo = avg(r.teamRojo), avgBlanco = avg(r.teamBlanco);
+    const teamBlock = (team, label, list, average, accent) => `
+      <div class="team-card" style="border-left:4px solid ${accent}">
+        <h3><span>${label}</span><span class="mono" style="font-size:12px;color:var(--muted)">media ${average.toFixed(1)}</span></h3>
         ${list.map((p,i)=>`<div class="team-player ${this.teamsSwapSel && this.teamsSwapSel.team===team && this.teamsSwapSel.idx===i ? 'selected':''}"
-          onclick="app.swapTeamPlayer('${team}', ${i})">${escapeHtml(p.name)}<span class="lvl-badge">${p.weight}</span></div>`).join('')}
+          onclick="app.swapTeamPlayer('${team}', ${i})"><span>${escapeHtml(p.name)} <span class="lvl-badge" style="background:var(--turf-soft);color:var(--muted)">${POSITION_ABBR[p.position]||'-'}</span></span><span class="lvl-badge">${p.weight}</span></div>`).join('') || '<div class="empty-state">Sin jugadores</div>'}
       </div>`;
     return `
       <div class="section-title" style="margin-top:22px">Equipos generados <span class="count">toca dos jugadores para intercambiarlos</span></div>
-      ${teamBlock('A', r.teamA, sumA)}
-      ${teamBlock('B', r.teamB, sumB)}
-      <button class="btn btn-gold btn-block" onclick="app.shareTeams()">${ICONS.share} Compartir equipos</button>
+      ${teamBlock('rojo', '🔴 Equipo Rojo', r.teamRojo, avgRojo, '#C3423F')}
+      ${teamBlock('blanco', '⚪ Equipo Blanco', r.teamBlanco, avgBlanco, '#12241B')}
+      <div class="field-row" style="margin-top:6px">
+        <button class="btn btn-sm btn-outline" onclick="app.exportTeamsImage()">${ICONS.download} Exportar imagen</button>
+        <button class="btn btn-sm btn-gold" onclick="app.shareTeams()">${ICONS.share} Compartir texto</button>
+      </div>
     `;
   }
 
@@ -991,19 +1121,23 @@ class App{
       `;
     }
     const s = this.githubSyncStatus;
-    const statusLine = s
-      ? (s.ok ? `✅ Sincronizado ${timeAgo(s.at)}` : `⚠️ Error: ${escapeHtml(s.error)} (${timeAgo(s.at)})`)
+    const pending = s && !s.ok;
+    const cloudLine = s
+      ? (s.ok ? `✅ Sincronizado con la nube ${timeAgo(s.at)}` : `⚠️ Sin sincronizar: ${escapeHtml(s.error)} (${timeAgo(s.at)})`)
       : 'Sincronizando…';
     return `
-      <div class="ticket ${s && !s.ok ? 'debt':'credit'}" style="cursor:default;display:block">
+      <div class="ticket ${pending ? 'debt':'credit'}" style="cursor:default;display:block">
         <div class="name">${escapeHtml(this.githubSync.owner)}/${escapeHtml(this.githubSync.repo)}</div>
         <div class="sub">${escapeHtml(this.githubSync.path)} · rama ${escapeHtml(this.githubSync.branch||'main')}</div>
-        <div class="sub" style="margin-top:6px">${statusLine}</div>
+        <div class="sub" style="margin-top:8px">📱 Guardado en este dispositivo</div>
+        <div class="sub">${cloudLine}</div>
+        ${pending ? `<div class="sub" style="margin-top:4px;color:var(--muted)">Tus últimos cambios están a salvo en el móvil. En cuanto haya conexión con GitHub se subirán solos, o pulsa "Reintentar" para forzarlo ahora.</div>` : ''}
       </div>
       <div class="field-row" style="margin-top:8px">
-        <button class="btn btn-outline" onclick="app.pullFromGithub(false)">Sincronizar ahora</button>
-        <button class="btn btn-danger" onclick="app.clearGithubConfig()">Desconectar</button>
+        <button class="btn btn-outline" onclick="app.pullFromGithub(false)">Descargar de la nube</button>
+        ${pending ? `<button class="btn btn-primary" onclick="app.pushToGithub()">Reintentar subida</button>` : ''}
       </div>
+      <button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.clearGithubConfig()">Desconectar</button>
     `;
   }
   submitGithubConfig(){
@@ -1024,9 +1158,11 @@ class App{
       ${this.renderGithubSyncBox()}
 
       <div class="section-title" style="margin-top:24px">Copia de seguridad manual</div>
-      <button class="btn btn-outline btn-block" onclick="app.exportBackup()">${ICONS.download} Exportar backup (JSON)</button>
-      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="app.importBackup(this.files[0])" />
-      <button class="btn btn-outline btn-block" onclick="document.getElementById('importFile').click()">${ICONS.upload} Importar backup</button>
+      <div class="field-row">
+        <button class="btn btn-sm btn-outline" onclick="app.exportBackup()">${ICONS.download} Exportar JSON</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none" onchange="app.importBackup(this.files[0])" />
+        <button class="btn btn-sm btn-outline" onclick="document.getElementById('importFile').click()">${ICONS.upload} Importar JSON</button>
+      </div>
 
       <div class="section-title" style="margin-top:24px">Historial de movimientos</div>
       ${this.renderHistorial()}
@@ -1199,6 +1335,14 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
+
+// Si se pierde la conexión y vuelve, reintenta subir automáticamente cualquier
+// cambio que se quedó guardado solo en local por no haber podido sincronizar.
+window.addEventListener('online', ()=>{
+  if(window.app && app.githubSync && app.githubSyncStatus && !app.githubSyncStatus.ok){
+    app.pushToGithub();
+  }
+});
 </script>
 </body>
 </html>
