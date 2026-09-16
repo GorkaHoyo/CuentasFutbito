@@ -279,7 +279,8 @@
       "type": "F7",
       "isRegular": true,
       "createdAt": "2025-07-21T22:44:29.905Z",
-      "skill": "alto"
+      "skill": "alto",
+      "position": "medio"
     },
     {
       "id": "1753137888877",
@@ -6178,6 +6179,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-16T20:39:38.440Z",
+  "exportDate": "2026-09-16T20:58:44.342Z",
   "version": "2.0"
 }
