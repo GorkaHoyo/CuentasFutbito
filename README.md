@@ -1,67 +1,331 @@
-# Registro de Horas
+# ⚽ Cuentas F5·F7
 
-App web (lista para convertir en PWA / instalar en el móvil) para llevar el registro diario de horas de trabajo por proyecto, comparando **horas trabajadas** con **horas imputadas** en el sistema corporativo, y sincronizando los datos en un repositorio de GitHub.
+App para gestionar el bote y las cuentas (créditos y deudas) de un grupo de
+fútbol F5/F7 entre amigos: quién ha pagado de más, quién debe, cuánto hay en
+el bote, generación de equipos equilibrados, y exportación de resúmenes como
+imagen para compartir en el grupo de WhatsApp.
 
-## Qué incluye
+Funciona como **PWA (Progressive Web App)**: se instala desde el navegador,
+sin pasar por Play Store ni necesitar permisos especiales en el móvil, y
+puede **sincronizar los datos automáticamente con GitHub** para que estén
+disponibles desde cualquier dispositivo.
 
-- `index.html` — la app (pestañas: Registro diario, Semana, Mes, Año, Rango, Proyectos, Configuración)
-- `app.js` — toda la lógica
-- `manifest.json` + `sw.js` — para poder instalarla como PWA (Android/desktop) y usarla offline
-- `icon-192.png`, `icon-512.png` — iconos de la app
-- `data.json` — datos iniciales (proyectos con el saldo de horas imputadas a día de hoy, sacado del sistema corporativo, y el desfase conocido de E-MAR)
+## Índice
 
-## Cómo funciona
+- [¿Qué hace la app?](#qué-hace-la-app)
+- [Contenido del repositorio](#contenido-del-repositorio)
+- [Instalación como app (PWA)](#instalación-como-app-pwa)
+- [Sincronización de datos con GitHub](#sincronización-de-datos-con-github)
+- [Guía de uso](#guía-de-uso)
+- [Modelo de datos](#modelo-de-datos)
+- [Preguntas frecuentes / problemas comunes](#preguntas-frecuentes--problemas-comunes)
 
-- Cada día se registra: hora de entrada, hora de salida, minutos de comida, otras pausas y horas extra (nocturnas o en otro momento), y luego una o varias líneas de **proyecto + horas trabajadas + horas imputadas + descripción de la tarea**.
-- La app calcula la "jornada" (entrada→salida menos pausas más extra) y la compara con la suma de horas repartidas entre proyectos, para que cuadren.
-- Por defecto, horas imputadas = horas trabajadas en cada línea; si el sistema corporativo no te deja imputar más en un proyecto ese trimestre, edita el campo "Horas imputadas" a mano (se desacopla del campo trabajadas) y la diferencia queda registrada como **desfase** de ese proyecto.
-- La pestaña **Año** y la pestaña **Proyectos** muestran, para cada proyecto, el total trabajado, el total imputado y el desfase acumulado (incluyendo el saldo inicial que ya traía cada proyecto antes de usar la app), con un aviso de "desfases pendientes de imputar" para que sepas qué regularizar la primera semana del siguiente trimestre/semestre.
-- Los proyectos se pueden crear, renombrar, desactivar (dejan de aparecer como opción nueva pero se conserva su histórico) o borrar.
+---
 
-### Datos iniciales cargados
+## ¿Qué hace la app?
 
-En `data.json` ya están dados de alta los proyectos con su saldo de horas **imputadas** acumuladas hasta la semana pasada (lo que aparecía en el sistema corporativo), tomado de las capturas que compartiste. El proyecto **E-MAR** además lleva un desfase inicial de **2,75 h** (trabajadas por encima de imputadas). A partir del lunes de esta semana, los días se registran ya con detalle día a día en la app.
+<details open>
+<summary><strong>Ver descripción</strong></summary>
 
-## Cómo desplegarlo
+- Lleva la cuenta de **quién ha pagado de más (crédito)** y **quién debe
+  (deuda)** en el grupo, separado por tipo de partido (**F5** y **F7**).
+- Lleva un **bote común** (ingresos y gastos generales: balón, pista, etc.),
+  independiente del saldo de cada jugador.
+- Genera **equipos equilibrados** por nivel a partir de los jugadores que
+  vayan a jugar ese día, con opción de intercambiar jugadores entre equipos.
+- **Exporta una imagen** del resumen (bote, créditos, deudas) lista para
+  compartir por WhatsApp, con las deudas destacadas primero.
+- **Se instala como app** en el móvil (Android/iOS) sin pasar por ninguna
+  tienda de aplicaciones.
+- Puede **sincronizarse automáticamente con un repositorio de GitHub**, para
+  que los datos estén disponibles desde varios dispositivos.
 
-1. Crea un repositorio en GitHub (por ejemplo `RegistroHoras`, público para poder usar GitHub Pages gratis, igual que hiciste con `CuentasFutbito`).
-2. Sube todos los ficheros de esta carpeta a la raíz del repo (o a una carpeta y ajusta la ruta en Pages).
-3. En el repo, ve a **Settings → Pages**, elige la rama (`main`) y la carpeta raíz. Guarda: en un par de minutos tendrás la URL pública (`https://<usuario>.github.io/<repo>/`).
-4. Abre esa URL en el móvil y, desde el menú del navegador, elige "Añadir a pantalla de inicio" / "Instalar app" para tenerla como una PWA.
+</details>
 
-## Sincronización con GitHub (guardar los datos en el repo)
+## Contenido del repositorio
 
-La app puede guardar automáticamente el fichero `data.json` en tu repositorio cada vez que registras un día, igual que hace la app de Cuentas Futbol.
+<details open>
+<summary><strong>Ver archivos</strong></summary>
 
-1. Crea un **Personal Access Token** en GitHub: `Settings → Developer settings → Personal access tokens → Fine-grained tokens`, con permiso de **lectura y escritura sobre "Contents"** solo para el repo de esta app (o un token clásico con scope `repo` si prefieres uno más simple).
-2. En la app, ve a la pestaña **Configuración** y rellena: usuario/organización, nombre del repositorio, rama (`main`), ruta del fichero (`data.json`) y pega el token.
-3. Pulsa **Guardar configuración** y luego **⬇ Cargar desde GitHub** la primera vez (o **⬆ Subir a GitHub** si quieres que el repo se quede con lo que tengas en local ahora mismo).
-4. A partir de ahí, con "Auto-sync al guardar" activado, cada vez que guardes un día se subirá automáticamente al repo unos segundos después.
+| Archivo | Para qué sirve |
+|---|---|
+| `index.html` | La app en sí: toda la interfaz y la lógica (jugadores, movimientos, equipos, exportar imagen, sincronización con GitHub). Es el único archivo que hay que actualizar cuando se hacen mejoras. |
+| `manifest.json` | Le dice al navegador el nombre de la app, su icono y que se abra a pantalla completa al instalarla. |
+| `sw.js` | Service worker: permite que la app funcione sin conexión y que las actualizaciones se vean al abrirla. |
+| `icon.svg` | Icono que se muestra en la pantalla de inicio una vez instalada. |
+| `*.json` (por ejemplo `futbol-cuentas-backup.json`) | Archivo de datos: jugadores y movimientos. Es el archivo con el que se sincroniza la app (ver más abajo). No es código, son los datos reales del grupo. |
 
-**Importante sobre el token:** se guarda solo en el `localStorage` de tu navegador, nunca se envía a ningún sitio salvo a la API de GitHub. Si usas la app desde varios dispositivos, tendrás que configurar el token en cada uno (y usar "Cargar desde GitHub" al entrar para traer lo último). Si compartes el ordenador con alguien, no dejes el token guardado.
+> Los 4 primeros archivos (`index.html`, `manifest.json`, `sw.js`, `icon.svg`)
+> tienen que estar siempre **sueltos en la raíz del repositorio**, no dentro
+> de una subcarpeta, y con esos nombres exactos.
 
-## Copia de seguridad local
+</details>
 
-En Configuración también hay botones para **exportar** el `data.json` actual a un fichero descargable, o **importar** uno (por si quieres restaurar una copia o mover los datos manualmente sin usar GitHub).
+## Instalación como app (PWA)
 
-## Estructura del JSON
+<details>
+<summary><strong>Ver pasos completos</strong></summary>
+
+Un PWA no es un `.apk`: es una página web que el propio navegador deja
+"instalar" como si fuera una app normal. Para que esto funcione, la app tiene
+que servirse por **HTTPS** — no vale abrir el `index.html` descargado
+directamente desde el móvil.
+
+### Opción A — GitHub Pages
+
+```mermaid
+flowchart TD
+    A["Repositorio en GitHub<br/>(con los 4 archivos en la raíz)"] --> B{"¿Es público?"}
+    B -- No --> C["Hazlo público<br/>Settings → General → Danger Zone → Change visibility"]
+    C --> D
+    B -- Sí --> D["Settings → Pages"]
+    D --> E["Source: Deploy from a branch<br/>Branch: main · Folder: / (root)"]
+    E --> F["Save"]
+    F --> G["Espera 1-2 min<br/>URL: usuario.github.io/repo/"]
+    G --> H["Abre esa URL en el móvil"]
+```
+
+1. Sube los 4 archivos de la app a un repositorio de GitHub.
+2. **Importante:** con cuenta gratuita, GitHub Pages **solo funciona en
+   repositorios públicos**. Si el tuyo es privado, Pages no se activa y
+   te dará error 404 al intentar abrir la web — hazlo público desde
+   **Settings → General → Danger Zone → Change repository visibility**.
+3. Ve a **Settings → Pages**.
+4. En **Source**, elige **Deploy from a branch**, rama `main`, carpeta
+   `/ (root)`, y pulsa **Save**.
+5. Espera 1-2 minutos. GitHub te da una URL tipo
+   `https://TU-USUARIO.github.io/TU-REPO/`.
+
+### Opción B — Netlify Drop (si prefieres no hacer público el repo de código)
+
+1. Entra en [app.netlify.com/drop](https://app.netlify.com/drop) (sin
+   cuenta).
+2. Arrastra los 4 archivos (`index.html`, `manifest.json`, `sw.js`,
+   `icon.svg`).
+3. Te da al momento una URL `https://algo-random.netlify.app` funcionando.
+
+### Instalar en el móvil
+
+1. Abre la URL (de GitHub Pages o Netlify) en Chrome, Edge o Samsung
+   Internet.
+2. Toca el menú **⋮** → **"Instalar app"** o **"Añadir a pantalla de
+   inicio"** (a veces aparece directamente como aviso, sin tener que abrir
+   el menú).
+3. Aparece un icono nuevo en la pantalla de inicio. Ábrelo desde ahí (no
+   desde el navegador) para que se vea a pantalla completa.
+
+</details>
+
+## Sincronización de datos con GitHub
+
+<details>
+<summary><strong>Ver configuración completa</strong></summary>
+
+La app puede leer y escribir automáticamente un archivo `.json` en un
+repositorio de GitHub cada vez que se añade o edita algo, para que los datos
+estén disponibles desde cualquier dispositivo (móvil, ordenador, etc.).
+
+```mermaid
+flowchart LR
+    subgraph Dispositivo["Tu dispositivo"]
+        App["App (index.html)<br/>token guardado localmente"]
+    end
+    App -- "lee/escribe con el token" --> API["API de GitHub"]
+    API --> Repo["Archivo .json<br/>en un repositorio"]
+```
+
+### 1. Crea un token de acceso personal (solo para ese repositorio)
+
+1. En GitHub: icono de tu perfil (arriba a la derecha) → **Settings** →
+   **Developer settings** → **Personal access tokens** → **Fine-grained
+   tokens** → **Generate new token**.
+2. En **Repository access**, elige **Only select repositories** y marca
+   únicamente el repositorio donde quieras guardar los datos.
+3. En **Permissions → Repository permissions**, busca **Contents** y ponlo
+   en **Read and write**. No hace falta ningún otro permiso.
+4. Genera el token y cópialo (solo se muestra una vez).
+
+### 2. Configúralo en la app
+
+1. Abre la app → **Ajustes → Sincronización con GitHub**.
+2. Rellena:
+   - **Usuario u organización**: tu usuario de GitHub.
+   - **Repositorio**: el nombre del repo donde está (o quieres que esté)
+     el archivo de datos.
+   - **Archivo dentro del repo**: por ejemplo `futbol-cuentas-backup.json`.
+   - **Rama**: normalmente `main`.
+   - **Token**: el que has generado.
+3. Pulsa **Guardar y sincronizar**. Si el archivo ya existe en el repo, lo
+   descarga y carga los datos. Si no existe, lo crea con lo que haya en ese
+   momento en el dispositivo.
+4. A partir de ahí, cada movimiento que registres se sube solo a los
+   pocos segundos, y al abrir la app en otro dispositivo con la misma
+   configuración se descarga automáticamente lo último.
+
+### 🔒 Mantener los datos privados (recomendado)
+
+> El repositorio donde está el **código de la app** (`index.html`, etc.)
+> tiene que ser público para poder usar GitHub Pages gratis — pero **el
+> archivo de datos no tiene por qué estar en ese mismo repositorio**.
+
+Puedes usar dos repositorios distintos:
+
+- Uno **público**, solo con los 4 archivos de la app (no contiene ningún
+  dato real de jugadores).
+- Otro **privado**, que contenga únicamente el `.json` de datos, y que se
+  configure como destino de la sincronización en **Ajustes**.
+
+Así, el código sigue siendo accesible para que GitHub Pages funcione, pero
+los nombres y saldos del grupo solo los puede leer quien tenga el token, ya
+que un repositorio privado no es accesible ni por la web ni por la API de
+GitHub sin autenticación.
+
+> ⚠️ El token se guarda en el navegador de cada dispositivo donde lo
+> configures, y solo se usa para hablar directamente con la API de GitHub.
+> Puedes revocarlo en cualquier momento desde GitHub (Developer settings →
+> Tokens → Delete) y desconectarlo desde **Ajustes → Desconectar** en la
+> app. Si dos personas guardan cambios casi a la vez desde dos dispositivos,
+> gana el último en guardarse — no hay fusión automática de datos.
+
+</details>
+
+## Guía de uso
+
+<details>
+<summary><strong>Resumen</strong></summary>
+
+Pantalla principal. Arriba, un selector **F5 / F7** cambia todo lo que se ve
+por debajo a ese tipo de partido:
+
+- **Marcador** con tres cifras: **Bote** (dinero común), **Jugadores** (suma
+  de todos los saldos de jugadores) y **Balance** (la suma de ambos).
+- **Exportar imagen**: genera una imagen lista para compartir, con las
+  deudas destacadas primero.
+- Tres listas: **Con crédito** (a favor), **Al día** (saldo cero) y **Con
+  deuda**. Tocar un jugador abre un atajo para registrarle un movimiento
+  rápido.
+
+</details>
+
+<details>
+<summary><strong>Jugadores</strong></summary>
+
+Listado completo de jugadores, con buscador y filtros (F5 / F7 / habituales).
+Tocar un jugador abre su ficha para editarlo o eliminarlo. El botón **+**
+añade uno nuevo, con estos campos:
+
+- **Nombre**
+- **Tipo**: F5, F7, o ambos (F5/F7)
+- **Nivel**: bajo / medio / alto / muy alto — se usa para el generador de
+  equipos equilibrados
+- **Posición**: portero / defensa / medio / delantero (opcional)
+- **Habitual o esporádico**
+
+</details>
+
+<details>
+<summary><strong>Movimientos</strong></summary>
+
+Para registrar cargos o abonos. Tiene dos pestañas:
+
+- **A jugadores**: eliges tipo de partido, uno o varios jugadores (por
+  ejemplo, todos los que jugaron un partido), si el importe **suma** (abona)
+  o **resta** (carga), la cantidad y un motivo opcional. El importe se
+  aplica igual a cada jugador seleccionado.
+- **Al bote**: igual, pero para el dinero común (ingresos o gastos), no
+  ligado a un jugador concreto.
+
+</details>
+
+<details>
+<summary><strong>Equipos</strong></summary>
+
+Para repartir equipos el día del partido:
+
+1. Elige tipo de partido (F5/F7).
+2. Marca qué jugadores están presentes ese día.
+3. Pulsa **Equilibrar** (reparte según el nivel de cada uno) o **Aleatorio**.
+4. Toca dos jugadores (uno de cada equipo) para intercambiarlos manualmente.
+5. **Compartir equipos** copia el reparto como texto para pegarlo en
+   WhatsApp.
+
+</details>
+
+<details>
+<summary><strong>Ajustes</strong></summary>
+
+- **Sincronización con GitHub**: ver sección específica más arriba.
+- **Copia de seguridad manual**: exportar o importar un `.json` con todos
+  los datos, sin pasar por GitHub.
+- **Historial**: todos los movimientos (de jugadores y del bote), con
+  buscador y filtro por tipo de partido.
+- **Borrar todos los datos**: reinicia la app por completo (con
+  confirmación).
+
+</details>
+
+## Modelo de datos
+
+<details>
+<summary><strong>Ver estructura del archivo .json</strong></summary>
 
 ```json
 {
-  "meta": { "version": 1, "lastUpdated": "...", "baselineDate": "2026-09-14" },
-  "projects": [
-    { "id": "e-mar", "name": "E-MAR", "active": true, "color": "#f75f5f",
-      "carryOverImputadas": 300.12, "carryOverDesfase": 2.75 }
+  "players": [
+    { "id": "...", "name": "...", "type": "F7", "isRegular": true, "skill": "medio", "position": "" }
   ],
-  "entries": [
-    { "date": "2026-09-15", "entrada": "08:00", "salida": "17:00",
-      "comida": 45, "otros": 0, "extra": 0, "extraDesc": "",
-      "tasks": [
-        { "projectId": "e-mar", "trabajadas": 4, "imputadas": 4, "desc": "..." }
-      ]
-    }
-  ]
+  "transactions": [
+    { "id": "...", "playerIds": ["..."], "amount": -8, "matchType": "F7", "reason": "pista", "createdAt": "..." }
+  ],
+  "generalTransactions": [
+    { "id": "...", "amount": 30, "matchType": "F7", "reason": "balón", "createdAt": "..." }
+  ],
+  "footballs": [],
+  "exportDate": "...",
+  "version": "2.0"
 }
 ```
 
-`carryOverImputadas` es el saldo de horas imputadas que ya tenía el proyecto antes de empezar a usar la app; `carryOverDesfase` es el desfase (trabajadas − imputadas) que ya arrastraba en ese momento.
+- Un jugador con `type: "F5/F7"` participa en ambos tipos de partido; su
+  saldo se calcula por separado según el `matchType` de cada movimiento.
+- Un movimiento con varios `playerIds` aplica el mismo `amount` a cada uno
+  (por ejemplo, el coste de la pista repartido entre los asistentes).
+
+</details>
+
+## Preguntas frecuentes / problemas comunes
+
+<details>
+<summary><strong>Me da 404 al abrir la URL de GitHub Pages</strong></summary>
+
+- Comprueba que el repositorio es **público** (con cuenta gratuita, Pages no
+  funciona en repos privados).
+- Comprueba que los 4 archivos están **en la raíz** del repo, no dentro de
+  una subcarpeta.
+- En **Settings → Pages** debe aparecer "Your site is live at..." con una
+  marca verde. Si no, espera un par de minutos o repite el paso de elegir
+  rama `main` + `/(root)` y guardar.
+
+</details>
+
+<details>
+<summary><strong>Error "Token inválido o sin permisos"</strong></summary>
+
+- El permiso **Contents** del token tiene que estar en **Read and write**,
+  no en "Read-only".
+- En "Repository access" del token, comprueba que está seleccionado el
+  repositorio correcto.
+- Comprueba que el token no ha caducado (Settings → Developer settings →
+  Personal access tokens).
+- Vuelve a pegarlo entero en **Ajustes** — a veces se corta al copiarlo.
+
+</details>
+
+<details>
+<summary><strong>No veo los cambios después de actualizar index.html en GitHub</strong></summary>
+
+El `sw.js` incluido usa una estrategia "primero red": si hay conexión, coge
+siempre la versión más reciente al abrir la app. Si aun así no se actualiza,
+cierra del todo la app instalada y vuelve a abrirla.
+
+</details>
