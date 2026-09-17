@@ -3,7 +3,7 @@
     {
       "id": "1789631325008249",
       "name": "Gorka Hoyo",
-      "type": "F5",
+      "type": "F5/F7",
       "isRegular": true,
       "skill": "medio",
       "position": "defensa",
@@ -24,6 +24,6 @@
   ],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-17T07:49:02.665Z",
+  "exportDate": "2026-09-17T07:49:49.137Z",
   "version": "2.0"
 }
