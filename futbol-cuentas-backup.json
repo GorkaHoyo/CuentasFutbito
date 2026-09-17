@@ -24,7 +24,7 @@
       "id": "1789650639411794",
       "name": "Andoni Miranda",
       "type": "F7",
-      "isRegular": true,
+      "isRegular": false,
       "skill": "alto",
       "stamina": "medio",
       "position": "defensa",
@@ -44,6 +44,6 @@
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-17T13:11:05.945Z",
+  "exportDate": "2026-09-17T13:11:09.244Z",
   "version": "2.0"
 }
