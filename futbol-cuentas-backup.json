@@ -45,7 +45,7 @@
       "name": "Patxo",
       "type": "F5/F7",
       "isRegular": true,
-      "skill": "alto",
+      "skill": "medio",
       "stamina": "medio",
       "position": "medio",
       "createdAt": "2026-09-17T13:11:41.297Z"
@@ -54,6 +54,6 @@
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-17T13:11:59.921Z",
+  "exportDate": "2026-09-17T13:26:30.665Z",
   "version": "2.0"
 }
