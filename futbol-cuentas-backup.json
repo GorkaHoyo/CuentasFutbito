@@ -17,12 +17,13 @@
       "isRegular": false,
       "skill": "medio",
       "position": "medio",
-      "createdAt": "2026-09-17T07:51:09.093Z"
+      "createdAt": "2026-09-17T07:51:09.093Z",
+      "stamina": "medio"
     }
   ],
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-17T13:10:03.983Z",
+  "exportDate": "2026-09-17T13:10:09.491Z",
   "version": "2.0"
 }
