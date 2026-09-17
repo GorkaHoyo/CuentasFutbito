@@ -39,11 +39,21 @@
       "stamina": "medio",
       "position": "defensa",
       "createdAt": "2026-09-17T13:11:05.244Z"
+    },
+    {
+      "id": "1789650701297131",
+      "name": "Patxo",
+      "type": "F5",
+      "isRegular": true,
+      "skill": "alto",
+      "stamina": "medio",
+      "position": "medio",
+      "createdAt": "2026-09-17T13:11:41.297Z"
     }
   ],
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-17T13:11:15.875Z",
+  "exportDate": "2026-09-17T13:11:41.998Z",
   "version": "2.0"
 }
