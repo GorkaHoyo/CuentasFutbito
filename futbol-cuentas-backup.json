@@ -29,11 +29,21 @@
       "stamina": "medio",
       "position": "defensa",
       "createdAt": "2026-09-17T13:10:39.411Z"
+    },
+    {
+      "id": "1789650665244420",
+      "name": "Pablo",
+      "type": "F7",
+      "isRegular": true,
+      "skill": "medio",
+      "stamina": "medio",
+      "position": "defensa",
+      "createdAt": "2026-09-17T13:11:05.244Z"
     }
   ],
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-17T13:10:46.527Z",
+  "exportDate": "2026-09-17T13:11:05.945Z",
   "version": "2.0"
 }
