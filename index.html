@@ -80,8 +80,14 @@
   .scoreboard .stat-value{ font-size:20px; font-weight:700; }
   .pos{ color:#8FE3B0; } .neg{ color:#FF9B92; } .neu{ color:var(--chalk); }
 
-  /* ---------- CONTENT ---------- */
+  /* ---------- CONTENT & ANIMATIONS ---------- */
   .content{ flex:1; padding:14px 16px 90px; overflow-y:auto; }
+  .animate-fade { animation: pageFade 0.2s ease-out; }
+  @keyframes pageFade { 
+    from { opacity: 0; transform: translateY(4px); } 
+    to { opacity: 1; transform: translateY(0); } 
+  }
+  
   .section-title{
     display:flex; align-items:center; gap:8px; margin:18px 0 8px; font-size:13px; font-weight:600;
     letter-spacing:.03em; color:var(--muted);
@@ -264,6 +270,7 @@ class App{
   constructor(){
     this.load();
     this.page = 'resumen';
+    this.pageAnim = false; // Control de animación
     this.matchFilter = 'F5';
     this.modal = null;
     this.toastMsg = null;
@@ -272,14 +279,15 @@ class App{
     this.jugSearch = '';
     this.histSearch = '';
     this.histMatchFilter = '';
+    this.histLimit = 40; // Límite inicial historial
     this.teamsMatchType = 'F5';
     this.teamsPresent = new Set();
-    this.teamsGuests = []; // invitados de hoy: solo para generar equipos, no se guardan en this.players
+    this.teamsGuests = [];
     this.teamsResult = null;
     this.teamsSwapSel = null;
     this.movTab = 'jugador';
     this.githubSync = JSON.parse(localStorage.getItem('githubSyncConfig') || 'null');
-    this.githubSyncStatus = null; // {ok:true/false, at:Date, error}
+    this.githubSyncStatus = null;
     this._pushTimer = null;
     this.render();
     if(this.githubSync){ this.pullFromGithub(true); }
@@ -326,7 +334,6 @@ class App{
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
       });
       if(res.status === 404){
-        // El archivo aún no existe en el repo: lo creamos con lo que tengamos en este dispositivo
         this.githubSync.sha = null;
         this.saveGithubConfig(this.githubSync);
         await this.pushToGithub();
@@ -367,7 +374,6 @@ class App{
     try{
       let res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) });
       if(res.status === 409){
-        // Alguien (otro dispositivo) escribió antes: refrescamos el sha y reintentamos una vez
         const fresh = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch||'main')}`, { headers });
         if(fresh.ok){ const fd = await fresh.json(); body.sha = fd.sha; }
         res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) });
@@ -442,8 +448,6 @@ class App{
   deletePlayer(id){
     if(!confirm('¿Eliminar a este jugador? Si compartía un movimiento con otros jugadores, a ellos les seguirá contando igual.')) return;
     this.players = this.players.filter(p=>p.id!==id);
-    // Si el movimiento era solo suyo, se borra. Si lo compartía con más gente,
-    // solo se le quita a él y el resto de jugadores conservan su parte intacta.
     this.transactions = this.transactions
       .map(t => t.playerIds.includes(id) ? {...t, playerIds: t.playerIds.filter(pid=>pid!==id)} : t)
       .filter(t => t.playerIds.length > 0);
@@ -476,6 +480,9 @@ class App{
     if(!confirm('¿Eliminar este movimiento del bote?')) return;
     this.generalTransactions = this.generalTransactions.filter(t=>t.id!==id);
     this.save(); this.closeModal(); this.toast('Movimiento eliminado');
+  }
+  settleDebt(playerId, matchType, amount){
+    this.addTransaction([playerId], amount, matchType, 'Saldar deuda');
   }
 
   /* ---------------- IMPORT / EXPORT ---------------- */
@@ -535,8 +542,6 @@ class App{
     if(pool.length < 2){ this.toast('Selecciona al menos 2 jugadores'); return; }
     const teamRojo=[], teamBlanco=[]; let sumRojo=0, sumBlanco=0;
     if(balanced){
-      // Se equilibra grupo a grupo por posición (para que ambos equipos queden
-      // parecidos también en demarcaciones), y dentro de cada grupo por nivel.
       const byPos = {};
       pool.forEach(p=>{ (byPos[p.position] = byPos[p.position] || []).push(p); });
       Object.values(byPos).forEach(group=>{
@@ -592,7 +597,6 @@ class App{
     const jugadoresSum = [...credit, ...debt].reduce((s,x)=>s+x.b, 0);
     const balance = bote + jugadoresSum;
 
-    // Lienzo con proporción de pantalla de móvil: todo cabe en una sola imagen, sin scroll.
     const DPR = 2, W = 675, H = 1200, PAD = 22;
     const headerH = 84, scoreboardH = 102, sectionGap = 12, neutralLineH = 34, footerH = 22;
 
@@ -651,15 +655,11 @@ class App{
     ctx.textAlign = 'left';
     y += scoreboardH + sectionGap;
 
-    // ---- reparto del espacio restante: deuda primero y con más peso, crédito después ----
     const fixedBottom = neutralLineH + sectionGap + footerH + 6;
-    const available = H - y - fixedBottom - sectionGap*2; // huecos: tras deuda y tras crédito
+    const available = H - y - fixedBottom - sectionGap*2;
     const debtAlloc = Math.round(available * 0.56);
     const creditAlloc = available - debtAlloc;
 
-    // calcula nº de columnas y alto de fila para que la lista quepa SIEMPRE en el hueco asignado.
-    // 1º intenta con los topes "bonitos" (minRowH/maxRowH/maxCols); si aun así no cabe, sigue
-    // añadiendo columnas y reduce la fila por debajo del mínimo hasta que quepa con seguridad.
     function fitList(n, alloc, minRowH, maxRowH, maxCols){
       if(n === 0) return {cols:1, rows:1, rowH:minRowH};
       for(let cols=1; cols<=maxCols; cols++){
@@ -668,8 +668,6 @@ class App{
           return {cols, rows, rowH: Math.min(maxRowH, alloc/rows)};
         }
       }
-      // No cupo ni con el máximo de columnas "bonito": seguimos ampliando columnas
-      // hasta un tope duro, aceptando una fila más pequeña que minRowH si hace falta.
       const hardMaxCols = maxCols + 3;
       for(let cols=maxCols+1; cols<=hardMaxCols; cols++){
         const rows = Math.ceil(n/cols);
@@ -701,7 +699,6 @@ class App{
         y += minRowH;
         return;
       }
-      // la letra escala con el alto de fila real: si hay que encoger filas, encoge la letra con ellas
       nameFontPx = Math.max(9, Math.min(nameFontPx, Math.round(fit.rowH*0.42)));
       amtFontPx = Math.max(9, Math.min(amtFontPx, Math.round(fit.rowH*0.42)));
       const gap = 12;
@@ -733,14 +730,11 @@ class App{
       y += fit.rows*fit.rowH;
     };
 
-    // DEUDA primero, filas más grandes
     drawList('Con deuda', '#C3423F', debt, debtAlloc, 30, 40, 2, 16, 16);
     y += sectionGap;
-    // CRÉDITO después, algo más compacto
     drawList('Con crédito', '#2D8659', credit, creditAlloc, 22, 30, 3, 13, 13);
     y += sectionGap;
 
-    // AL DÍA: solo una línea resumen, no ocupa la lista completa
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(PAD, y, W-PAD*2, neutralLineH);
     ctx.fillStyle = '#9AA69E';
@@ -750,7 +744,6 @@ class App{
     ctx.fillText(`✅  ${neutral.length} jugador${neutral.length===1?'':'es'} al día`, PAD+14, y+neutralLineH/2+5);
     y += neutralLineH + sectionGap;
 
-    // ---- footer ----
     ctx.textAlign = 'center';
     ctx.font = '400 11px -apple-system, sans-serif';
     ctx.fillStyle = '#9AA69E';
@@ -803,7 +796,6 @@ class App{
     ctx.fillStyle = '#F6F2E9';
     ctx.fillRect(0,0,W,H);
 
-    // header centrado
     ctx.textAlign = 'center';
     ctx.font = '700 26px Oswald';
     ctx.fillStyle = '#12241B';
@@ -818,7 +810,6 @@ class App{
     const colXRojo = PAD, colXBlanco = PAD + colW + gapBetween;
 
     const drawTeamCard = (label, list, x, bg, borderColor, titleColor) => {
-      // tarjeta
       roundRectPath(ctx, x, y, colW, cardH, 14);
       ctx.fillStyle = bg;
       ctx.fill();
@@ -826,7 +817,6 @@ class App{
       ctx.strokeStyle = borderColor;
       ctx.stroke();
 
-      // cabecera de la tarjeta
       ctx.textAlign = 'center';
       ctx.font = '700 20px Oswald';
       ctx.fillStyle = titleColor;
@@ -880,35 +870,46 @@ class App{
   /* ---------------- MODALS ---------------- */
   openModal(type, payload){ this.modal = {type, payload: payload || {}}; this.render(); }
   closeModal(){ this.modal = null; this.render(); }
-  setPage(p){ this.page = p; this.modal = null; this.render(); }
+  setPage(p){ this.page = p; this.modal = null; this.pageAnim = true; this.render(); this.pageAnim = false; }
 
   /* =====================================================================
      RENDER
   ===================================================================== */
   render(){
     const el = document.getElementById('app');
-    // Guardamos la posición de scroll para restaurarla tras redibujar (si no, cada
-    // cambio -p.ej. marcar una casilla- "resetea" la lista al principio y parece
-    // que el elemento se mueve, cuando en realidad es solo el scroll el que salta).
+    
+    // GUARDAR ESTADO PARA ARREGLAR BUG DE BÚSQUEDA Y SCROLL
     const prevContent = el.querySelector('.content');
     const contentScroll = prevContent ? prevContent.scrollTop : 0;
     const prevChecklist = el.querySelector('.checklist');
     const checklistScroll = prevChecklist ? prevChecklist.scrollTop : null;
+    const activeId = document.activeElement ? document.activeElement.id : null;
+    const selStart = document.activeElement && document.activeElement.selectionStart !== undefined ? document.activeElement.selectionStart : null;
 
     el.innerHTML = `
       ${this.renderTopbar()}
-      <div class="content">${this.renderPage()}</div>
+      <div class="content ${this.pageAnim ? 'animate-fade' : ''}">${this.renderPage()}</div>
       ${this.renderFab()}
       ${this.renderBottomNav()}
       ${this.modal ? this.renderModal() : ''}
       ${this.toastMsg ? `<div class="toast">${escapeHtml(this.toastMsg)}</div>` : ''}
     `;
 
+    // RESTAURAR ESTADO
     const newContent = el.querySelector('.content');
     if(newContent) newContent.scrollTop = contentScroll;
     if(checklistScroll !== null){
       const newChecklist = el.querySelector('.checklist');
       if(newChecklist) newChecklist.scrollTop = checklistScroll;
+    }
+    if(activeId){
+      const actEl = document.getElementById(activeId);
+      if(actEl){
+        actEl.focus();
+        if(selStart !== null && actEl.setSelectionRange) {
+          try { actEl.setSelectionRange(selStart, selStart); } catch(e){}
+        }
+      }
     }
   }
 
@@ -977,7 +978,7 @@ class App{
     if(this.jugFilterRegular) list = list.filter(p=> String(p.isRegular)===this.jugFilterRegular);
     list.sort((a,b)=>a.name.localeCompare(b.name));
     return `
-      <input type="search" class="search-bar" placeholder="Buscar jugador..." value="${escapeHtml(this.jugSearch)}"
+      <input type="search" id="jugSearchInput" class="search-bar" placeholder="Buscar jugador..." value="${escapeHtml(this.jugSearch)}"
         oninput="app.jugSearch=this.value; app.render()" />
       <div class="filter-bar">
         <button class="chip ${this.jugFilterType===''?'active':''}" onclick="app.jugFilterType='';app.render()">Todos</button>
@@ -1017,7 +1018,15 @@ class App{
         <button class="chip ${mt==='F5'?'active':''}" onclick="app._movMatchType='F5';app.render()">F5</button>
         <button class="chip ${mt==='F7'?'active':''}" onclick="app._movMatchType='F7';app.render()">F7</button>
       </div>
-      <label>Jugadores</label>
+      
+      <div class="field-row" style="align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:5px">
+        <label style="margin:0">Jugadores</label>
+        <div style="display:flex; gap:6px;">
+          <button class="icon-btn" style="color:var(--pitch); font-size:12px; font-weight:600; background:var(--turf-soft); padding:4px 10px; border-radius:12px; width:auto;" onclick="app.selectPresentPlayers()">Del partido de hoy</button>
+          <button class="icon-btn" style="color:var(--muted); font-size:12px; font-weight:600; background:var(--line); padding:4px 10px; border-radius:12px; width:auto;" onclick="app.clearMovPlayers()">Vaciar</button>
+        </div>
+      </div>
+      
       <div class="checklist">
         ${players.map(p=>`<label><input type="checkbox" value="${p.id}" ${sel.has(p.id)?'checked':''}
           onchange="app.toggleMovPlayer('${p.id}')" />${escapeHtml(p.name)}</label>`).join('') || '<div class="empty-state">No hay jugadores de este tipo</div>'}
@@ -1037,6 +1046,28 @@ class App{
   toggleMovPlayer(id){
     if(!this._movSelected) this._movSelected = new Set();
     if(this._movSelected.has(id)) this._movSelected.delete(id); else this._movSelected.add(id);
+  }
+  clearMovPlayers(){
+    this._movSelected = new Set();
+    this.render();
+  }
+  selectPresentPlayers(){
+    if(this.teamsPresent.size === 0){
+      this.toast('Ve a Equipos y marca quién juega hoy');
+      return;
+    }
+    if(!this._movSelected) this._movSelected = new Set();
+    let count = 0;
+    this.teamsPresent.forEach(id => {
+      // Ignoramos a los invitados, no se les puede hacer cargos en la app
+      if(!String(id).startsWith('guest_')){
+        this._movSelected.add(id);
+        count++;
+      }
+    });
+    if(count > 0) this.toast(`Seleccionados ${count} habituales del partido`);
+    else this.toast('Solo has marcado invitados');
+    this.render();
   }
   submitMovJugador(){
     const mt = this._movMatchType || this.matchFilter;
@@ -1257,13 +1288,17 @@ class App{
       });
     }
     all.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-    all = all.slice(0,40);
+    
+    // LIMITAR Y CARGAR MÁS
+    const totalItems = all.length;
+    all = all.slice(0, this.histLimit);
+    
     return `
-      <input type="search" class="search-bar" placeholder="Buscar en historial..." value="${escapeHtml(this.histSearch)}" oninput="app.histSearch=this.value;app.render()" />
+      <input type="search" id="histSearchInput" class="search-bar" placeholder="Buscar en historial..." value="${escapeHtml(this.histSearch)}" oninput="app.histSearch=this.value;app.histLimit=40;app.render()" />
       <div class="filter-bar">
-        <button class="chip ${this.histMatchFilter===''?'active':''}" onclick="app.histMatchFilter='';app.render()">Todos</button>
-        <button class="chip ${this.histMatchFilter==='F5'?'active':''}" onclick="app.histMatchFilter='F5';app.render()">F5</button>
-        <button class="chip ${this.histMatchFilter==='F7'?'active':''}" onclick="app.histMatchFilter='F7';app.render()">F7</button>
+        <button class="chip ${this.histMatchFilter===''?'active':''}" onclick="app.histMatchFilter='';app.histLimit=40;app.render()">Todos</button>
+        <button class="chip ${this.histMatchFilter==='F5'?'active':''}" onclick="app.histMatchFilter='F5';app.histLimit=40;app.render()">F5</button>
+        <button class="chip ${this.histMatchFilter==='F7'?'active':''}" onclick="app.histMatchFilter='F7';app.histLimit=40;app.render()">F7</button>
       </div>
       ${all.map(t=>{
         const names = t.kind==='jugador' ? (t.playerIds||[]).map(id=>{ const p=this.players.find(x=>x.id===id); return p?p.name:'(borrado)'; }).join(', ') : 'Bote general';
@@ -1275,6 +1310,7 @@ class App{
           </div>
         </div>`;
       }).join('') || '<div class="empty-state">Sin movimientos</div>'}
+      ${this.histLimit < totalItems ? `<button class="btn btn-outline btn-block" style="margin-top:16px" onclick="app.histLimit += 40; app.render()">Cargar más (${totalItems - this.histLimit} restantes)</button>` : ''}
     `;
   }
 
@@ -1334,9 +1370,10 @@ class App{
       `;
     } else if(type==='quickTx'){
       const p = this.players.find(x=>x.id===payload.playerId);
+      const bal = this.getPlayerBalance(p.id, payload.matchType);
       body = `
         <h2>${escapeHtml(p.name)}</h2>
-        <div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:10px">Saldo actual ${payload.matchType}: <b class="mono">${fmt(this.getPlayerBalance(p.id,payload.matchType))}</b></div>
+        <div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:10px">Saldo actual ${payload.matchType}: <b class="mono">${fmt(bal)}</b></div>
         <label>Importe</label>
         <div class="sign-toggle">
           <button id="qtxPlus" class="active plus" onclick="app.qtxSign='plus';app.render()">+ Abona</button>
@@ -1346,6 +1383,7 @@ class App{
         <label>Motivo (opcional)</label>
         <input type="text" id="qtxReason" placeholder="Partido, balón..." />
         <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitQuickTx('${p.id}','${payload.matchType}')">Registrar</button>
+        ${bal < -0.001 ? `<button class="btn btn-outline btn-block" style="margin-top:12px; border-color:var(--credit); color:var(--credit);" onclick="app.settleDebt('${p.id}', '${payload.matchType}', ${Math.abs(bal)})">✅ Saldar deuda exacta (${fmtPlain(Math.abs(bal))})</button>` : ''}
       `;
     } else if(type==='addGuest'){
       body = `
