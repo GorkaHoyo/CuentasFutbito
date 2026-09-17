@@ -43,7 +43,7 @@
     {
       "id": "1789650701297131",
       "name": "Patxo",
-      "type": "F5",
+      "type": "F5/F7",
       "isRegular": true,
       "skill": "alto",
       "stamina": "medio",
@@ -54,6 +54,6 @@
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-17T13:11:57.005Z",
+  "exportDate": "2026-09-17T13:11:59.921Z",
   "version": "2.0"
 }
