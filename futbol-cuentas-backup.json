@@ -33,7 +33,7 @@
     {
       "id": "1789650665244420",
       "name": "Pablo",
-      "type": "F7",
+      "type": "F5/F7",
       "isRegular": true,
       "skill": "medio",
       "stamina": "medio",
@@ -54,6 +54,6 @@
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-17T13:11:50.575Z",
+  "exportDate": "2026-09-17T13:11:54.630Z",
   "version": "2.0"
 }
