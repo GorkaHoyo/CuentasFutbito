@@ -8,6 +8,15 @@
       "skill": "medio",
       "position": "defensa",
       "createdAt": "2026-09-17T07:48:45.008Z"
+    },
+    {
+      "id": "1789631469093832",
+      "name": "Julio",
+      "type": "F5/F7",
+      "isRegular": false,
+      "skill": "medio",
+      "position": "medio",
+      "createdAt": "2026-09-17T07:51:09.093Z"
     }
   ],
   "transactions": [
@@ -24,6 +33,6 @@
   ],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-17T07:49:49.137Z",
+  "exportDate": "2026-09-17T07:51:09.795Z",
   "version": "2.0"
 }
