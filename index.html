@@ -137,12 +137,15 @@
     font-size:14px; font-weight:600; border-radius:9px; padding:11px 16px; border:0; cursor:pointer;
     display:inline-flex; align-items:center; justify-content:center; gap:6px;
   }
+  .btn svg { width:18px; height:18px; flex-shrink:0; } /* FIX PARA EVITAR ICONOS GIGANTES */
   .btn-primary{ background:var(--pitch); color:#fff; width:100%; }
   .btn-gold{ background:var(--gold); color:var(--pitch-dark); width:100%; }
   .btn-outline{ background:transparent; color:var(--pitch); border:1.5px solid var(--pitch); }
   .btn-danger{ background:transparent; color:var(--debt); border:1.5px solid var(--debt); }
   .btn-block{ width:100%; margin-top:6px; }
   .btn-sm{ font-size:12.5px; padding:7px 12px; width:auto; flex:1; }
+  .btn-sm svg { width:16px; height:16px; } /* FIX ICONOS PEQUEÑOS */
+  
   .fab{
     position:fixed; bottom:calc(66px + var(--safe-bottom)); left:50%; transform:translateX(148px);
     width:52px; height:52px; border-radius:50%; background:var(--gold); color:var(--pitch-dark);
@@ -172,7 +175,8 @@
   .sign-toggle button.active.plus{ background:var(--turf-soft); color:var(--credit); }
   .sign-toggle button.active.minus{ background:var(--debt-soft); color:var(--debt); }
 
-  .checklist{ max-height:220px; overflow-y:auto; border:1.5px solid var(--line); border-radius:9px; }
+  /* FIX LISTA JUGADORES: max-height:45vh para aprovechar la pantalla */
+  .checklist{ max-height:45vh; overflow-y:auto; border:1.5px solid var(--line); border-radius:9px; }
   .checklist label{ display:flex; align-items:center; gap:10px; padding:9px 12px; margin:0; text-transform:none; letter-spacing:0; font-weight:400; font-size:14px; color:var(--ink); border-bottom:1px solid var(--line); }
   .checklist label:last-child{ border-bottom:none; }
   .checklist input[type=checkbox]{ width:17px; height:17px; accent-color:var(--pitch); }
@@ -240,7 +244,6 @@ const ICONS = {
 const SKILL_WEIGHT = { muy_bajo:1, bajo:2, medio:3, alto:4, muy_alto:5 };
 const SKILL_LABEL = { muy_bajo:'Muy bajo', bajo:'Bajo', medio:'Medio', alto:'Alto', muy_alto:'Muy alto' };
 
-// Físico y Resistencia
 const STAMINA_WEIGHT = { bajo:1, medio:2, alto:3 };
 const STAMINA_LABEL = { bajo:'Bajo', medio:'Medio', alto:'Alto' };
 
@@ -1091,6 +1094,7 @@ class App{
     if(!this._movSelected) this._movSelected = new Set();
     let count = 0;
     this.teamsPresent.forEach(id => {
+      // Ignoramos a los invitados, no se les puede hacer cargos en la app
       if(!String(id).startsWith('guest_')){
         this._movSelected.add(id);
         count++;
@@ -1168,7 +1172,7 @@ class App{
       <label>Jugadores presentes hoy
         <span class="mono" style="text-transform:none;font-weight:700;color:${sizeOk?'var(--credit)':'var(--debt)'}">${count} / ${required.join(' o ')}</span>
       </label>
-      <div class="checklist">
+      <div class="checklist" style="margin-bottom:8px">
         ${players.map(p=>`<label><input type="checkbox" ${this.teamsPresent.has(p.id)?'checked':''}
           onchange="app.togglePresent('${p.id}')" />${escapeHtml(p.name)}${p.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>'} 
           <span class="lvl-badge" style="margin-left:auto">Niv:${SKILL_LABEL[p.skill]||'Medio'} | Fis:${STAMINA_LABEL[p.stamina]||'Medio'}</span></label>`).join('') || '<div class="empty-state">No hay jugadores de este tipo</div>'}
@@ -1177,10 +1181,12 @@ class App{
           <span class="lvl-badge" style="margin-left:auto">Niv:${SKILL_LABEL[g.skill]||'Medio'} | Fis:${STAMINA_LABEL[g.stamina]||'Medio'}</span>
           <button class="icon-btn" onclick="event.preventDefault();app.removeGuest('${g.id}')">${ICONS.trash}</button></label>`).join('')}
       </div>
-      <button class="btn btn-sm btn-outline" style="margin-top:8px" onclick="app.openModal('addGuest')">${ICONS.plus} Añadir invitado</button>
+      <div class="field-row" style="margin-bottom:14px">
+        <button class="btn btn-sm btn-outline" onclick="app.openModal('addGuest')">${ICONS.plus} Añadir invitado</button>
+      </div>
       ${!sizeOk ? `<div class="empty-state" style="text-align:left;padding:8px 2px">Para generar equipos de ${mt} hacen falta exactamente ${required.join(' o ')} jugadores presentes. Añade invitados si te faltan para completar.</div>` : ''}
       ${sizeOk && missingPosition.length>0 ? `<div class="empty-state" style="text-align:left;padding:8px 2px;color:var(--debt)">Falta asignar posición a: ${missingPosition.map(p=>escapeHtml(p.name)).join(', ')}. Edítalos en Jugadores (o en el invitado) antes de generar equipos.</div>` : ''}
-      <div class="field-row" style="margin-top:14px">
+      <div class="field-row">
         <button class="btn btn-primary" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(true)">${ICONS.shuffle} Equilibrar</button>
         <button class="btn btn-outline" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(false)">Aleatorio</button>
       </div>
