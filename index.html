@@ -239,6 +239,11 @@ const ICONS = {
 
 const SKILL_WEIGHT = { muy_bajo:1, bajo:2, medio:3, alto:4, muy_alto:5 };
 const SKILL_LABEL = { muy_bajo:'Muy bajo', bajo:'Bajo', medio:'Medio', alto:'Alto', muy_alto:'Muy alto' };
+
+// NUEVO: Físico y Resistencia
+const STAMINA_WEIGHT = { bajo:1, medio:2, alto:3 };
+const STAMINA_LABEL = { bajo:'Bajo', medio:'Medio', alto:'Alto' };
+
 const POSITIONS = ['portero','defensa','medio','delantero'];
 const POSITION_LABEL = { portero:'Portero', defensa:'Defensa', medio:'Medio', delantero:'Delantero', 'sin posición':'Sin posición' };
 const POSITION_ABBR = { portero:'POR', defensa:'DEF', medio:'MED', delantero:'DEL', 'sin posición':'-' };
@@ -270,7 +275,7 @@ class App{
   constructor(){
     this.load();
     this.page = 'resumen';
-    this.pageAnim = false; // Control de animación
+    this.pageAnim = false;
     this.matchFilter = 'F5';
     this.modal = null;
     this.toastMsg = null;
@@ -279,7 +284,7 @@ class App{
     this.jugSearch = '';
     this.histSearch = '';
     this.histMatchFilter = '';
-    this.histLimit = 40; // Límite inicial historial
+    this.histLimit = 40;
     this.teamsMatchType = 'F5';
     this.teamsPresent = new Set();
     this.teamsGuests = [];
@@ -437,7 +442,11 @@ class App{
 
   /* ---------------- CRUD players ---------------- */
   addPlayer(data){
-    this.players.push({ id:uid(), name:data.name.trim(), type:data.type, isRegular:data.isRegular, skill:data.skill||'medio', position:data.position||'', createdAt:new Date().toISOString() });
+    this.players.push({ 
+      id:uid(), name:data.name.trim(), type:data.type, isRegular:data.isRegular, 
+      skill:data.skill||'medio', stamina:data.stamina||'medio', position:data.position||'', 
+      createdAt:new Date().toISOString() 
+    });
     this.save(); this.closeModal(); this.toast('Jugador añadido');
   }
   updatePlayer(id, data){
@@ -537,9 +546,20 @@ class App{
     let pool = ids.map(id=>{
       const p = this.findPresentPerson(id);
       if(!p) return null;
-      return { id:p.id, name:p.name, weight: SKILL_WEIGHT[p.skill] || 3, position:p.position||'sin posición' };
+      
+      // NUEVA FÓRMULA DE PESO COMBINADO (Técnica + Físico)
+      const wSkill = SKILL_WEIGHT[p.skill] || 3;
+      const wStamina = STAMINA_WEIGHT[p.stamina] || 2;
+      
+      return { 
+        id:p.id, 
+        name:p.name, 
+        weight: wSkill + wStamina, // Ahora suma ambos, el rango es de 2 a 8
+        position:p.position||'sin posición' 
+      };
     }).filter(Boolean);
     if(pool.length < 2){ this.toast('Selecciona al menos 2 jugadores'); return; }
+    
     const teamRojo=[], teamBlanco=[]; let sumRojo=0, sumBlanco=0;
     if(balanced){
       const byPos = {};
@@ -990,7 +1010,7 @@ class App{
       ${list.map(p=>{
         const total = this.getPlayerTotalBalance(p.id);
         return `<div class="ticket neutral" onclick="app.openModal('editPlayer',{id:'${p.id}'})">
-          <div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${p.type}${p.isRegular?' · habitual':' · esporádico'}${p.skill?' · '+SKILL_LABEL[p.skill]:''}</div></div>
+          <div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${p.type}${p.isRegular?' · habitual':' · esporádico'} · Niv: ${SKILL_LABEL[p.skill]||'Medio'}</div></div>
           <div class="amt mono ${total>0?'pos':(total<0?'neg':'zero')}">${fmt(total)}</div>
         </div>`;
       }).join('') || `<div class="empty-state">No hay jugadores. Añade el primero con el botón +.</div>`}
@@ -1139,10 +1159,11 @@ class App{
       </label>
       <div class="checklist">
         ${players.map(p=>`<label><input type="checkbox" ${this.teamsPresent.has(p.id)?'checked':''}
-          onchange="app.togglePresent('${p.id}')" />${escapeHtml(p.name)}${p.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin posición</span>'} <span class="lvl-badge" style="margin-left:auto">${SKILL_LABEL[p.skill]||'Medio'}</span></label>`).join('') || '<div class="empty-state">No hay jugadores de este tipo</div>'}
+          onchange="app.togglePresent('${p.id}')" />${escapeHtml(p.name)}${p.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>'} 
+          <span class="lvl-badge" style="margin-left:auto">Niv:${SKILL_LABEL[p.skill]||'Medio'} | Fis:${STAMINA_LABEL[p.stamina]||'Medio'}</span></label>`).join('') || '<div class="empty-state">No hay jugadores de este tipo</div>'}
         ${this.teamsGuests.map(g=>`<label><input type="checkbox" ${this.teamsPresent.has(g.id)?'checked':''}
-          onchange="app.togglePresent('${g.id}')" />${escapeHtml(g.name)} <span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Invitado</span>${g.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin posición</span>'}
-          <span class="lvl-badge" style="margin-left:auto">${SKILL_LABEL[g.skill]||'Medio'}</span>
+          onchange="app.togglePresent('${g.id}')" />${escapeHtml(g.name)} <span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Invitado</span>${g.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>'}
+          <span class="lvl-badge" style="margin-left:auto">Niv:${SKILL_LABEL[g.skill]||'Medio'} | Fis:${STAMINA_LABEL[g.stamina]||'Medio'}</span>
           <button class="icon-btn" onclick="event.preventDefault();app.removeGuest('${g.id}')">${ICONS.trash}</button></label>`).join('')}
       </div>
       <button class="btn btn-sm btn-outline" style="margin-top:8px" onclick="app.openModal('addGuest')">${ICONS.plus} Añadir invitado</button>
@@ -1165,8 +1186,9 @@ class App{
     const name = document.getElementById('guestName').value.trim();
     if(!name){ this.toast('Falta el nombre del invitado'); return; }
     const skill = document.querySelector('#guestSkillGroup .chip.active').dataset.val;
+    const stamina = document.querySelector('#guestStaminaGroup .chip.active').dataset.val;
     const position = document.querySelector('#guestPosGroup .chip.active').dataset.val;
-    const guest = { id:'guest_'+uid(), name, skill, position };
+    const guest = { id:'guest_'+uid(), name, skill, stamina, position };
     this.teamsGuests.push(guest);
     this.teamsPresent.add(guest.id);
     this.closeModal();
@@ -1177,9 +1199,9 @@ class App{
     const avgRojo = avg(r.teamRojo), avgBlanco = avg(r.teamBlanco);
     const teamBlock = (team, label, list, average, accent) => `
       <div class="team-card" style="border-left:4px solid ${accent}">
-        <h3><span>${label}</span><span class="mono" style="font-size:12px;color:var(--muted)">media ${average.toFixed(1)}</span></h3>
+        <h3><span>${label}</span><span class="mono" style="font-size:12px;color:var(--muted)">peso global ${average.toFixed(1)}</span></h3>
         ${list.map((p,i)=>`<div class="team-player ${this.teamsSwapSel && this.teamsSwapSel.team===team && this.teamsSwapSel.idx===i ? 'selected':''}"
-          onclick="app.swapTeamPlayer('${team}', ${i})"><span>${escapeHtml(p.name)} <span class="lvl-badge" style="background:${POSITION_COLOR[p.position]||'#8A8A8A'};color:#fff">${POSITION_ABBR[p.position]||'-'}</span></span><span class="lvl-badge">${p.weight}</span></div>`).join('') || '<div class="empty-state">Sin jugadores</div>'}
+          onclick="app.swapTeamPlayer('${team}', ${i})"><span>${escapeHtml(p.name)} <span class="lvl-badge" style="background:${POSITION_COLOR[p.position]||'#8A8A8A'};color:#fff">${POSITION_ABBR[p.position]||'-'}</span></span><span class="lvl-badge">★ ${p.weight}</span></div>`).join('') || '<div class="empty-state">Sin jugadores</div>'}
       </div>`;
     return `
       <div class="section-title" style="margin-top:22px">Equipos generados <span class="count">toca dos jugadores para intercambiarlos</span></div>
@@ -1351,9 +1373,13 @@ class App{
         <div class="chip-group" id="pTypeGroup">
           ${['F5','F7','F5/F7'].map(t=>`<button class="chip ${((p&&p.type===t)||(!p&&t==='F7'))?'active':''}" data-val="${t}" onclick="app.pickChip(this,'pTypeGroup')">${t}</button>`).join('')}
         </div>
-        <label>Nivel</label>
+        <label>Habilidad Técnica</label>
         <div class="chip-group" id="pSkillGroup">
           ${Object.keys(SKILL_LABEL).map(s=>`<button class="chip ${((p&&p.skill===s)||(!p&&s==='medio'))?'active':''}" data-val="${s}" onclick="app.pickChip(this,'pSkillGroup')">${SKILL_LABEL[s]}</button>`).join('')}
+        </div>
+        <label>Físico / Resistencia</label>
+        <div class="chip-group" id="pStaminaGroup">
+          ${Object.keys(STAMINA_LABEL).map(s=>`<button class="chip ${((p&&p.stamina===s)||(!p&&s==='medio'))?'active':''}" data-val="${s}" onclick="app.pickChip(this,'pStaminaGroup')">${STAMINA_LABEL[s]}</button>`).join('')}
         </div>
         <label>Posición</label>
         <div class="chip-group" id="pPosGroup">
@@ -1391,9 +1417,13 @@ class App{
         <div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:6px">Solo se usa para generar los equipos de hoy — no se guarda en tu lista de jugadores.</div>
         <label>Nombre</label>
         <input type="text" id="guestName" placeholder="Nombre del invitado" />
-        <label>Nivel</label>
+        <label>Habilidad Técnica</label>
         <div class="chip-group" id="guestSkillGroup">
           ${Object.keys(SKILL_LABEL).map(s=>`<button class="chip ${s==='medio'?'active':''}" data-val="${s}" onclick="app.pickChip(this,'guestSkillGroup')">${SKILL_LABEL[s]}</button>`).join('')}
+        </div>
+        <label>Físico / Resistencia</label>
+        <div class="chip-group" id="guestStaminaGroup">
+          ${Object.keys(STAMINA_LABEL).map(s=>`<button class="chip ${s==='medio'?'active':''}" data-val="${s}" onclick="app.pickChip(this,'guestStaminaGroup')">${STAMINA_LABEL[s]}</button>`).join('')}
         </div>
         <label>Posición</label>
         <div class="chip-group" id="guestPosGroup">
@@ -1416,9 +1446,10 @@ class App{
     if(!name){ this.toast('Falta el nombre'); return; }
     const type = document.querySelector('#pTypeGroup .chip.active').dataset.val;
     const skill = document.querySelector('#pSkillGroup .chip.active').dataset.val;
+    const stamina = document.querySelector('#pStaminaGroup .chip.active').dataset.val;
     const position = document.querySelector('#pPosGroup .chip.active').dataset.val;
     const isRegular = document.querySelector('#pRegGroup .chip.active').dataset.val === 'true';
-    const data = {name, type, skill, position, isRegular};
+    const data = {name, type, skill, stamina, position, isRegular};
     if(id) this.updatePlayer(id, data); else this.addPlayer(data);
   }
   submitQuickTx(playerId, matchType){
