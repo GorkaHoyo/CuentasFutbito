@@ -264,7 +264,7 @@ class App{
   constructor(){
     this.load();
     this.page = 'resumen';
-    this.matchFilter = 'F7';
+    this.matchFilter = 'F5';
     this.modal = null;
     this.toastMsg = null;
     this.jugFilterType = '';
@@ -272,7 +272,7 @@ class App{
     this.jugSearch = '';
     this.histSearch = '';
     this.histMatchFilter = '';
-    this.teamsMatchType = 'F7';
+    this.teamsMatchType = 'F5';
     this.teamsPresent = new Set();
     this.teamsGuests = []; // invitados de hoy: solo para generar equipos, no se guardan en this.players
     this.teamsResult = null;
@@ -505,7 +505,7 @@ class App{
 
   /* ---------------- TEAMS ---------------- */
   requiredTeamSizes(matchType){
-    return matchType === 'F5' ? [10] : [14, 16];
+    return matchType === 'F5' ? [10,12] : [14, 16];
   }
   findPresentPerson(id){
     return this.players.find(x=>x.id===id) || this.teamsGuests.find(x=>x.id===id);
