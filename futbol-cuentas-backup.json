@@ -30,10 +30,20 @@
       "matchType": "F5",
       "reason": "partido",
       "createdAt": "2026-09-17T07:57:48.138Z"
+    },
+    {
+      "id": "1789631943779217",
+      "playerIds": [
+        "1789631469093832"
+      ],
+      "amount": -2.5,
+      "matchType": "F5",
+      "reason": "",
+      "createdAt": "2026-09-17T07:59:03.779Z"
     }
   ],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-17T07:57:48.841Z",
+  "exportDate": "2026-09-17T07:59:04.481Z",
   "version": "2.0"
 }
