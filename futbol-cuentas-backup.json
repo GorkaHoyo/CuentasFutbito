@@ -59,6 +59,16 @@
       "stamina": "medio",
       "position": "defensa",
       "createdAt": "2026-09-25T17:20:35.619Z"
+    },
+    {
+      "id": "1790356881304364",
+      "name": "Aitor Txopi",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "muy_alto",
+      "stamina": "alto",
+      "position": "medio",
+      "createdAt": "2026-09-25T17:21:21.304Z"
     }
   ],
   "transactions": [
@@ -75,6 +85,6 @@
   ],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-25T17:20:36.325Z",
+  "exportDate": "2026-09-25T17:21:22.005Z",
   "version": "2.0"
 }
