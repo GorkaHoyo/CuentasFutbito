@@ -79,6 +79,16 @@
       "stamina": "medio",
       "position": "defensa",
       "createdAt": "2026-09-25T17:21:44.738Z"
+    },
+    {
+      "id": "1790356935818787",
+      "name": "Hoyuki",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "muy_alto",
+      "stamina": "medio",
+      "position": "delantero",
+      "createdAt": "2026-09-25T17:22:15.818Z"
     }
   ],
   "transactions": [
@@ -95,6 +105,6 @@
   ],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-25T17:21:45.440Z",
+  "exportDate": "2026-09-25T17:22:16.519Z",
   "version": "2.0"
 }
