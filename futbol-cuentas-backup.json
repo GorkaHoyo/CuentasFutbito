@@ -51,9 +51,20 @@
       "createdAt": "2026-09-17T13:11:41.297Z"
     }
   ],
-  "transactions": [],
+  "transactions": [
+    {
+      "id": "179035672918257",
+      "playerIds": [
+        "1789631325008249"
+      ],
+      "amount": 20,
+      "matchType": "F5",
+      "reason": "",
+      "createdAt": "2026-09-25T17:18:49.182Z"
+    }
+  ],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-17T13:26:30.665Z",
+  "exportDate": "2026-09-25T17:18:49.885Z",
   "version": "2.0"
 }
