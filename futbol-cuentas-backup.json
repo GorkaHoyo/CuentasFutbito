@@ -1,24 +1,34 @@
 {
   "players": [
     {
-      "id": "1789631325008249",
-      "name": "Gorka Hoyo",
-      "type": "F5/F7",
-      "isRegular": true,
-      "skill": "alto",
-      "position": "defensa",
-      "createdAt": "2026-09-17T07:48:45.008Z",
-      "stamina": "bajo"
-    },
-    {
-      "id": "1789631469093832",
-      "name": "Julio",
+      "id": "1790356904738775",
+      "name": "Aiert",
       "type": "F5/F7",
       "isRegular": false,
+      "skill": "alto",
+      "stamina": "medio",
+      "position": "defensa",
+      "createdAt": "2026-09-25T17:21:44.738Z"
+    },
+    {
+      "id": "1790357028877208",
+      "name": "Aitor Kortazar",
+      "type": "F5/F7",
+      "isRegular": true,
       "skill": "medio",
+      "stamina": "alto",
       "position": "medio",
-      "createdAt": "2026-09-17T07:51:09.093Z",
-      "stamina": "medio"
+      "createdAt": "2026-09-25T17:23:48.877Z"
+    },
+    {
+      "id": "1790356881304364",
+      "name": "Aitor Txopi",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "muy_alto",
+      "stamina": "alto",
+      "position": "medio",
+      "createdAt": "2026-09-25T17:21:21.304Z"
     },
     {
       "id": "1789650639411794",
@@ -29,6 +39,46 @@
       "stamina": "medio",
       "position": "defensa",
       "createdAt": "2026-09-17T13:10:39.411Z"
+    },
+    {
+      "id": "1790356835619431",
+      "name": "Diego Opaopi",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "medio",
+      "stamina": "medio",
+      "position": "defensa",
+      "createdAt": "2026-09-25T17:20:35.619Z"
+    },
+    {
+      "id": "1789631325008249",
+      "name": "Gorka Hoyo",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "alto",
+      "position": "defensa",
+      "createdAt": "2026-09-17T07:48:45.008Z",
+      "stamina": "bajo"
+    },
+    {
+      "id": "1790356935818787",
+      "name": "Hoyuki",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "muy_alto",
+      "stamina": "medio",
+      "position": "delantero",
+      "createdAt": "2026-09-25T17:22:15.818Z"
+    },
+    {
+      "id": "1789631469093832",
+      "name": "Julio",
+      "type": "F5/F7",
+      "isRegular": false,
+      "skill": "medio",
+      "position": "medio",
+      "createdAt": "2026-09-17T07:51:09.093Z",
+      "stamina": "medio"
     },
     {
       "id": "1789650665244420",
@@ -49,56 +99,6 @@
       "stamina": "medio",
       "position": "medio",
       "createdAt": "2026-09-17T13:11:41.297Z"
-    },
-    {
-      "id": "1790356835619431",
-      "name": "Diego Opaopi",
-      "type": "F5/F7",
-      "isRegular": true,
-      "skill": "medio",
-      "stamina": "medio",
-      "position": "defensa",
-      "createdAt": "2026-09-25T17:20:35.619Z"
-    },
-    {
-      "id": "1790356881304364",
-      "name": "Aitor Txopi",
-      "type": "F5/F7",
-      "isRegular": true,
-      "skill": "muy_alto",
-      "stamina": "alto",
-      "position": "medio",
-      "createdAt": "2026-09-25T17:21:21.304Z"
-    },
-    {
-      "id": "1790356904738775",
-      "name": "Aiert",
-      "type": "F5/F7",
-      "isRegular": false,
-      "skill": "alto",
-      "stamina": "medio",
-      "position": "defensa",
-      "createdAt": "2026-09-25T17:21:44.738Z"
-    },
-    {
-      "id": "1790356935818787",
-      "name": "Hoyuki",
-      "type": "F5/F7",
-      "isRegular": true,
-      "skill": "muy_alto",
-      "stamina": "medio",
-      "position": "delantero",
-      "createdAt": "2026-09-25T17:22:15.818Z"
-    },
-    {
-      "id": "1790357028877208",
-      "name": "Aitor Kortazar",
-      "type": "F5/F7",
-      "isRegular": true,
-      "skill": "medio",
-      "stamina": "alto",
-      "position": "medio",
-      "createdAt": "2026-09-25T17:23:48.877Z"
     }
   ],
   "transactions": [
@@ -111,10 +111,47 @@
       "matchType": "F5",
       "reason": "",
       "createdAt": "2026-09-25T17:18:49.182Z"
+    },
+    {
+      "id": "1790357236698257",
+      "playerIds": [
+        "1790356904738775",
+        "1790357028877208",
+        "1789650639411794",
+        "1790356835619431",
+        "1789631325008249",
+        "1790356935818787",
+        "1789631469093832",
+        "1789650665244420",
+        "1789650701297131",
+        "1790356881304364"
+      ],
+      "amount": -3,
+      "matchType": "F5",
+      "reason": "Cuota de partido",
+      "createdAt": "2026-09-25T17:27:16.697Z"
+    },
+    {
+      "id": "1790357236698349",
+      "playerIds": [
+        "1790356935818787"
+      ],
+      "amount": 20,
+      "matchType": "F5",
+      "reason": "Pago pista adelantado",
+      "createdAt": "2026-09-25T17:27:16.697Z"
     }
   ],
-  "generalTransactions": [],
+  "generalTransactions": [
+    {
+      "id": "1790357236698536",
+      "amount": 10,
+      "matchType": "F5",
+      "reason": "Sobrante de partido",
+      "createdAt": "2026-09-25T17:27:16.697Z"
+    }
+  ],
   "footballs": [],
-  "exportDate": "2026-09-25T17:23:49.578Z",
+  "exportDate": "2026-09-25T17:27:17.402Z",
   "version": "2.0"
 }
