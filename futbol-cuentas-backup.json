@@ -69,6 +69,16 @@
       "stamina": "alto",
       "position": "medio",
       "createdAt": "2026-09-25T17:21:21.304Z"
+    },
+    {
+      "id": "1790356904738775",
+      "name": "Aiert",
+      "type": "F5/F7",
+      "isRegular": false,
+      "skill": "alto",
+      "stamina": "medio",
+      "position": "defensa",
+      "createdAt": "2026-09-25T17:21:44.738Z"
     }
   ],
   "transactions": [
@@ -85,6 +95,6 @@
   ],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-25T17:21:22.005Z",
+  "exportDate": "2026-09-25T17:21:45.440Z",
   "version": "2.0"
 }
