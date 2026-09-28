@@ -49,11 +49,21 @@
       "stamina": "bajo",
       "position": "medio",
       "createdAt": "2026-09-28T17:38:13.188Z"
+    },
+    {
+      "id": "1790617176525250",
+      "name": "Gorka",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "alto",
+      "stamina": "bajo",
+      "position": "defensa",
+      "createdAt": "2026-09-28T17:39:36.525Z"
     }
   ],
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-28T17:38:13.888Z",
+  "exportDate": "2026-09-28T17:39:37.235Z",
   "version": "2.0"
 }
