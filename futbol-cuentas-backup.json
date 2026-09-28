@@ -9,11 +9,21 @@
       "stamina": "medio",
       "position": "delantero",
       "createdAt": "2026-09-28T17:35:08.815Z"
+    },
+    {
+      "id": "1790616929299341",
+      "name": "Txopi Aitor",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "muy_alto",
+      "stamina": "alto",
+      "position": "delantero",
+      "createdAt": "2026-09-28T17:35:29.299Z"
     }
   ],
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-28T17:35:09.522Z",
+  "exportDate": "2026-09-28T17:35:30.000Z",
   "version": "2.0"
 }
