@@ -59,11 +59,21 @@
       "stamina": "medio",
       "position": "medio",
       "createdAt": "2026-09-28T17:39:44.734Z"
+    },
+    {
+      "id": "1790617300232532",
+      "name": "Job Ezequiel",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "bajo",
+      "stamina": "medio",
+      "position": "defensa",
+      "createdAt": "2026-09-28T17:41:40.232Z"
     }
   ],
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-28T17:39:45.436Z",
+  "exportDate": "2026-09-28T17:41:40.940Z",
   "version": "2.0"
 }
