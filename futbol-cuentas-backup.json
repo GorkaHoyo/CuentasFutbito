@@ -109,11 +109,21 @@
       "stamina": "medio",
       "position": "defensa",
       "createdAt": "2026-09-28T17:46:47.175Z"
+    },
+    {
+      "id": "1790628990483718",
+      "name": "Diego Recio",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "medio",
+      "stamina": "medio",
+      "position": "medio",
+      "createdAt": "2026-09-28T20:56:30.483Z"
     }
   ],
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-28T17:46:47.877Z",
+  "exportDate": "2026-09-28T20:56:31.186Z",
   "version": "2.0"
 }
