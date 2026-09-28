@@ -51,19 +51,19 @@
       "createdAt": "2026-09-28T17:38:13.188Z"
     },
     {
-      "id": "1790617176525250",
-      "name": "Gorka",
+      "id": "1790617184733961",
+      "name": "Jose",
       "type": "F5/F7",
       "isRegular": true,
-      "skill": "alto",
-      "stamina": "bajo",
-      "position": "defensa",
-      "createdAt": "2026-09-28T17:39:36.525Z"
+      "skill": "bajo",
+      "stamina": "medio",
+      "position": "medio",
+      "createdAt": "2026-09-28T17:39:44.734Z"
     }
   ],
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-28T17:39:37.235Z",
+  "exportDate": "2026-09-28T17:39:45.436Z",
   "version": "2.0"
 }
