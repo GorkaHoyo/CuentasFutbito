@@ -69,11 +69,21 @@
       "stamina": "medio",
       "position": "defensa",
       "createdAt": "2026-09-28T17:41:40.232Z"
+    },
+    {
+      "id": "1790617380927257",
+      "name": "Juan g.",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "medio",
+      "stamina": "medio",
+      "position": "defensa",
+      "createdAt": "2026-09-28T17:43:00.927Z"
     }
   ],
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-28T17:41:40.940Z",
+  "exportDate": "2026-09-28T17:43:01.628Z",
   "version": "2.0"
 }
