@@ -29,11 +29,21 @@
       "stamina": "medio",
       "position": "defensa",
       "createdAt": "2026-09-28T17:35:49.341Z"
+    },
+    {
+      "id": "1790617058257940",
+      "name": "Diego OpaOpi",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "medio",
+      "stamina": "medio",
+      "position": "defensa",
+      "createdAt": "2026-09-28T17:37:38.258Z"
     }
   ],
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-28T17:35:50.042Z",
+  "exportDate": "2026-09-28T17:37:38.959Z",
   "version": "2.0"
 }
