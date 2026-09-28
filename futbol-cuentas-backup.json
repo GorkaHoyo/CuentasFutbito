@@ -1,8 +1,19 @@
 {
-  "players": [],
+  "players": [
+    {
+      "id": "1790616908815312",
+      "name": "Hoyuki Ander",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "muy_alto",
+      "stamina": "medio",
+      "position": "delantero",
+      "createdAt": "2026-09-28T17:35:08.815Z"
+    }
+  ],
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-25T17:31:29.445Z",
+  "exportDate": "2026-09-28T17:35:09.522Z",
   "version": "2.0"
 }
