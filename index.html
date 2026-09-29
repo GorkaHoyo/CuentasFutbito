@@ -274,7 +274,7 @@ function timeAgo(date){
 }
 
 class App{
-constructor(){
+  constructor(){
     this.page = 'resumen';
     this.pageAnim = false;
     this.matchFilter = 'F5';
@@ -290,6 +290,7 @@ constructor(){
     this.githubSync = JSON.parse(localStorage.getItem('githubSyncConfig') || 'null');
     this.githubSyncStatus = null;
     this._pushTimer = null;
+    
     this.load();
     this.render();
     if(this.githubSync){ this.pullFromGithub(true); }
@@ -300,7 +301,6 @@ constructor(){
     this.transactions = JSON.parse(localStorage.getItem('football-transactions') || '[]');
     this.generalTransactions = JSON.parse(localStorage.getItem('football-general-transactions') || '[]');
     
-    // Cargamos los jugadores que tenías marcados
     this.teamsMatchType = localStorage.getItem('football-teams-match') || 'F5';
     this.teamsPresent = new Set(JSON.parse(localStorage.getItem('football-teams-present') || '[]'));
     this.teamsGuests = JSON.parse(localStorage.getItem('football-teams-guests') || '[]');
@@ -309,7 +309,6 @@ constructor(){
   }
   
   saveTeamsLocal(){
-    // Guarda tu selección de equipos en la memoria a largo plazo del móvil
     localStorage.setItem('football-teams-match', this.teamsMatchType);
     localStorage.setItem('football-teams-present', JSON.stringify(Array.from(this.teamsPresent)));
     localStorage.setItem('football-teams-guests', JSON.stringify(this.teamsGuests));
@@ -1164,7 +1163,7 @@ constructor(){
   }
 
   /* -------- EQUIPOS -------- */
- renderEquipos(){
+  renderEquipos(){
     const mt = this.teamsMatchType;
     const players = this.getPlayersForMatch(mt).sort((a,b)=>a.name.localeCompare(b.name));
     const r = this.teamsResult;
@@ -1204,10 +1203,16 @@ constructor(){
       ${r ? this.renderTeamsResult(r) : ''}
     `;
   }
-  togglePresent(id){ if(this.teamsPresent.has(id)) this.teamsPresent.delete(id); else this.teamsPresent.add(id); this.render(); }
+  togglePresent(id){ 
+    if(this.teamsPresent.has(id)) this.teamsPresent.delete(id); 
+    else this.teamsPresent.add(id); 
+    this.saveTeamsLocal();
+    this.render(); 
+  }
   removeGuest(id){
     this.teamsGuests = this.teamsGuests.filter(g=>g.id!==id);
     this.teamsPresent.delete(id);
+    this.saveTeamsLocal();
     this.render();
   }
   submitGuest(){
@@ -1219,6 +1224,7 @@ constructor(){
     const guest = { id:'guest_'+uid(), name, skill, stamina, position, bilbaoKirolak: false };
     this.teamsGuests.push(guest);
     this.teamsPresent.add(guest.id);
+    this.saveTeamsLocal();
     this.closeModal();
     this.toast('Invitado añadido para hoy');
   }
@@ -1355,6 +1361,8 @@ constructor(){
       ${this.histLimit < totalItems ? \`<button class="btn btn-outline btn-block" style="margin-top:16px" onclick="app.histLimit += 40; app.render()">Cargar más (\${totalItems - this.histLimit} restantes)</button>\` : ''}
     `;
   }
+
+  /* -------- FAB + NAV -------- */
   renderFab(){
     if(this.page==='resumen') return `<button class="fab" onclick="app.setPage('movimientos')">${ICONS.plus}</button>`;
     if(this.page==='jugadores') return `<button class="fab" onclick="app.openModal('addPlayer')">${ICONS.plus}</button>`;
@@ -1672,7 +1680,7 @@ window.addEventListener('online', ()=>{
   }
 });
 
-// Detectar cuando minimizas la app, apagas la pantalla o sales de Chrome
+// MEMORIA PERSISTENTE DE LA PANTALLA EQUIPOS
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === 'hidden' && window.app) window.app.saveTeamsLocal();
 });
