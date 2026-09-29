@@ -60,7 +60,8 @@
       "skill": "bajo",
       "stamina": "medio",
       "position": "medio",
-      "createdAt": "2026-09-28T17:39:44.734Z"
+      "createdAt": "2026-09-28T17:39:44.734Z",
+      "bilbaoKirolak": true
     },
     {
       "id": "1790617300232532",
@@ -131,6 +132,6 @@
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-29T07:36:02.264Z",
+  "exportDate": "2026-09-29T07:36:07.446Z",
   "version": "2.0"
 }
