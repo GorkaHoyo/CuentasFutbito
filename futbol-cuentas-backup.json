@@ -8,7 +8,8 @@
       "skill": "muy_alto",
       "stamina": "medio",
       "position": "delantero",
-      "createdAt": "2026-09-28T17:35:08.815Z"
+      "createdAt": "2026-09-28T17:35:08.815Z",
+      "bilbaoKirolak": true
     },
     {
       "id": "1790616929299341",
@@ -127,6 +128,6 @@
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-29T07:32:59.009Z",
+  "exportDate": "2026-09-29T07:33:02.209Z",
   "version": "2.0"
 }
