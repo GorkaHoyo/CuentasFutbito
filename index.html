@@ -1350,19 +1350,17 @@ class App{
       </div>
       ${all.map(t=>{
         const names = t.kind==='jugador' ? (t.playerIds||[]).map(id=>{ const p=this.players.find(x=>x.id===id); return p?p.name:'(borrado)'; }).join(', ') : 'Bote general';
-        return \`<div class="ticket ${t.amount>0?'credit':'debt'}">
-          <div><div class="name">\${escapeHtml(names)}</div><div class="sub">\${t.matchType} · \${escapeHtml(t.reason)||'sin motivo'} · \${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="amt mono ${t.amount>0?'pos':'neg'}">\${fmt(t.amount)}</div>
-            <button class="icon-btn" onclick="app.\${t.kind==='jugador'?'deleteTransaction':'deleteGeneralTransaction'}('\${t.id}')">\${ICONS.trash}</button>
-          </div>
-        </div>\`;
+        return '<div class="ticket ' + (t.amount>0 ? 'credit' : 'debt') + '">' +
+          '<div><div class="name">' + escapeHtml(names) + '</div><div class="sub">' + t.matchType + ' · ' + (escapeHtml(t.reason)||'sin motivo') + ' · ' + new Date(t.createdAt).toLocaleDateString('es-ES') + '</div></div>' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<div class="amt mono ' + (t.amount>0 ? 'pos' : 'neg') + '">' + fmt(t.amount) + '</div>' +
+            '<button class="icon-btn" onclick="app.' + (t.kind==='jugador' ? 'deleteTransaction' : 'deleteGeneralTransaction') + '(\\'' + t.id + '\\')">' + ICONS.trash + '</button>' +
+          '</div>' +
+        '</div>';
       }).join('') || '<div class="empty-state">Sin movimientos</div>'}
-      ${this.histLimit < totalItems ? \`<button class="btn btn-outline btn-block" style="margin-top:16px" onclick="app.histLimit += 40; app.render()">Cargar más (\${totalItems - this.histLimit} restantes)</button>\` : ''}
+      ${this.histLimit < totalItems ? '<button class="btn btn-outline btn-block" style="margin-top:16px" onclick="app.histLimit += 40; app.render()">Cargar más (' + (totalItems - this.histLimit) + ' restantes)</button>' : ''}
     `;
   }
-
-  /* -------- FAB + NAV -------- */
   renderFab(){
     if(this.page==='resumen') return `<button class="fab" onclick="app.setPage('movimientos')">${ICONS.plus}</button>`;
     if(this.page==='jugadores') return `<button class="fab" onclick="app.openModal('addPlayer')">${ICONS.plus}</button>`;
