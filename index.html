@@ -784,7 +784,6 @@ class App{
 
   shareTeams(){
     const r = this.teamsResult; if(!r) return;
-    // Quitamos la posición del texto compartido para que sea más limpio
     let txt = `⚽ EQUIPOS ${this.teamsMatchType}\n\n🔴 Equipo Rojo\n` + r.teamRojo.map(p=>`- ${p.name}`).join('\n');
     txt += `\n\n🔵 Equipo Azul\n` + r.teamBlanco.map(p=>`- ${p.name}`).join('\n');
     if(navigator.share){ navigator.share({ text: txt }).catch(()=>{}); }
@@ -870,7 +869,6 @@ class App{
       });
     };
 
-    // Cambiado Equipo Blanco a Equipo Azul (#1E3A8A)
     drawTeamCard('EQUIPO ROJO', r.teamRojo, colXRojo, '#FCE8E7', '#C3423F', '#C3423F');
     drawTeamCard('EQUIPO AZUL', r.teamBlanco, colXBlanco, '#E0E7FF', '#1E3A8A', '#1E3A8A');
     y += cardH + gapBetween;
@@ -895,11 +893,11 @@ class App{
   openModal(type, payload){ 
     if(type === 'settleMatch') {
       this._smCost = "19.55";
+      this._smQuotaBK = "3.00";
+      this._smQuotaNormal = "0.00";
       this._smPayer = 'bote';
       this._smSelected = new Set();
       
-      // Ya no seleccionamos a todos por defecto
-      // La selección se hará mediante los botones dedicados en el modal
     }
     this.modal = {type, payload: payload || {}}; 
     this.render(); 
@@ -1095,6 +1093,7 @@ class App{
     if(!this._movSelected) this._movSelected = new Set();
     let count = 0;
     this.teamsPresent.forEach(id => {
+      // Ignoramos a los invitados, no se les puede hacer cargos en la app
       if(!String(id).startsWith('guest_')){
         this._movSelected.add(id);
         count++;
