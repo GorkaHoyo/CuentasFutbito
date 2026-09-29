@@ -274,8 +274,7 @@ function timeAgo(date){
 }
 
 class App{
-  constructor(){
-    this.load();
+constructor(){
     this.page = 'resumen';
     this.pageAnim = false;
     this.matchFilter = 'F5';
@@ -287,15 +286,11 @@ class App{
     this.histSearch = '';
     this.histMatchFilter = '';
     this.histLimit = 40;
-    this.teamsMatchType = 'F5';
-    this.teamsPresent = new Set();
-    this.teamsGuests = [];
-    this.teamsResult = null;
-    this.teamsSwapSel = null;
     this.movTab = 'jugador';
     this.githubSync = JSON.parse(localStorage.getItem('githubSyncConfig') || 'null');
     this.githubSyncStatus = null;
     this._pushTimer = null;
+    this.load();
     this.render();
     if(this.githubSync){ this.pullFromGithub(true); }
   }
@@ -304,7 +299,23 @@ class App{
     this.players = JSON.parse(localStorage.getItem('football-players') || '[]');
     this.transactions = JSON.parse(localStorage.getItem('football-transactions') || '[]');
     this.generalTransactions = JSON.parse(localStorage.getItem('football-general-transactions') || '[]');
+    
+    // Cargamos los jugadores que tenías marcados
+    this.teamsMatchType = localStorage.getItem('football-teams-match') || 'F5';
+    this.teamsPresent = new Set(JSON.parse(localStorage.getItem('football-teams-present') || '[]'));
+    this.teamsGuests = JSON.parse(localStorage.getItem('football-teams-guests') || '[]');
+    this.teamsResult = JSON.parse(localStorage.getItem('football-teams-result') || 'null');
+    this.teamsSwapSel = null;
   }
+  
+  saveTeamsLocal(){
+    // Guarda tu selección de equipos en la memoria a largo plazo del móvil
+    localStorage.setItem('football-teams-match', this.teamsMatchType);
+    localStorage.setItem('football-teams-present', JSON.stringify(Array.from(this.teamsPresent)));
+    localStorage.setItem('football-teams-guests', JSON.stringify(this.teamsGuests));
+    localStorage.setItem('football-teams-result', JSON.stringify(this.teamsResult));
+  }
+
   save(){
     localStorage.setItem('football-players', JSON.stringify(this.players));
     localStorage.setItem('football-transactions', JSON.stringify(this.transactions));
@@ -1659,6 +1670,14 @@ window.addEventListener('online', ()=>{
   if(window.app && app.githubSync && app.githubSyncStatus && !app.githubSyncStatus.ok){
     app.pushToGithub();
   }
+});
+
+// Detectar cuando minimizas la app, apagas la pantalla o sales de Chrome
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === 'hidden' && window.app) window.app.saveTeamsLocal();
+});
+window.addEventListener("beforeunload", () => {
+  if (window.app) window.app.saveTeamsLocal();
 });
 </script>
 </body>
