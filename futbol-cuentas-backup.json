@@ -88,7 +88,8 @@
       "skill": "alto",
       "stamina": "bajo",
       "position": "defensa",
-      "createdAt": "2026-09-28T17:46:11.023Z"
+      "createdAt": "2026-09-28T17:46:11.023Z",
+      "bilbaoKirolak": true
     },
     {
       "id": "1790617596728380",
@@ -126,6 +127,6 @@
   "transactions": [],
   "generalTransactions": [],
   "footballs": [],
-  "exportDate": "2026-09-29T07:32:55.639Z",
+  "exportDate": "2026-09-29T07:32:59.009Z",
   "version": "2.0"
 }
