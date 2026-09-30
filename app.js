@@ -116,8 +116,10 @@ async pullFromGithub(silent){
     if(!this.githubSync) return;
     const branch = this.githubSync.branch ?? 'main'; 
     try{
-      const res = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}`, { 
-        headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json' } 
+      // MAGIA ANTI-CACHÉ: Añadimos un timestamp y cache: 'no-store' para obligar al navegador a traer la versión real de GitHub
+      const res = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&t=${Date.now()}`, { 
+        headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json' },
+        cache: 'no-store'
       });
       if(res.status === 404){ this.githubSync.sha = null; this.saveGithubConfig(this.githubSync); await this.pushToGithub(); return; }
       if(res.status === 401 || res.status === 403) throw new Error('Token inválido o sin permisos');
@@ -128,12 +130,10 @@ async pullFromGithub(silent){
       this.saveGithubConfig(this.githubSync);
       const json = JSON.parse(b64DecodeUnicode(data.content));
       
-      // Descargamos datos económicos y de jugadores
       this.players = json.players ?? []; 
       this.transactions = json.transactions ?? []; 
       this.generalTransactions = json.generalTransactions ?? [];
       
-      // NUEVO: Descargamos el estado de los equipos y la convocatoria
       if (json.teamsMatchType) this.teamsMatchType = json.teamsMatchType;
       if (json.teamsPresent) this.teamsPresent = new Set(json.teamsPresent);
       if (json.teamsGuests) this.teamsGuests = json.teamsGuests;
@@ -141,7 +141,6 @@ async pullFromGithub(silent){
 
       this.save(); 
       
-      // Guardamos la configuración de equipos en el dispositivo local para que no se pierda al refrescar
       localStorage.setItem('football-teams-match', this.teamsMatchType);
       localStorage.setItem('football-teams-present', JSON.stringify(Array.from(this.teamsPresent)));
       localStorage.setItem('football-teams-guests', JSON.stringify(this.teamsGuests));
@@ -161,13 +160,12 @@ async pullFromGithub(silent){
     if(!this.githubSync) return;
     const branch = this.githubSync.branch ?? 'main'; 
     
-    // NUEVO: Añadimos las variables de los equipos al payload que viaja a GitHub
     const payload = { 
       players: this.players, 
       transactions: this.transactions, 
       generalTransactions: this.generalTransactions, 
       teamsMatchType: this.teamsMatchType,
-      teamsPresent: Array.from(this.teamsPresent), // Convertimos el Set a Array para que JSON lo entienda
+      teamsPresent: Array.from(this.teamsPresent),
       teamsGuests: this.teamsGuests,
       teamsResult: this.teamsResult,
       exportDate: new Date().toISOString(), 
@@ -181,7 +179,8 @@ async pullFromGithub(silent){
     try{
       let res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) });
       if(res.status === 409){ 
-        const fresh = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}`, { headers }); 
+        // MAGIA ANTI-CACHÉ: Resolvemos el conflicto HTTP 409 forzando la petición limpia
+        const fresh = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&t=${Date.now()}`, { headers, cache: 'no-store' }); 
         if(fresh.ok){ const fd = await fresh.json(); body.sha = fd.sha; } 
         res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) }); 
       }
