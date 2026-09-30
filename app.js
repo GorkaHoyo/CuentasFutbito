@@ -121,20 +121,20 @@ class App {
   
   async pullFromGithub(silent){
     if(!this.githubSync) return;
-    // SEMÁFORO: Si ya está sincronizando, no hacemos nada para evitar colisiones
     if(this._isSyncing) return;
     this._isSyncing = true;
     
     const branch = this.githubSync.branch ?? 'main'; 
     try{
-      // DESTRUCTOR DE CACHÉ: Añadimos Math.random() y cabeceras estrictas
+      // CORRECCIÓN: Eliminada la cabecera 'Cache-Control' que bloqueaba CORS. Mantenemos solo cache: 'no-store'
       const res = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&nocache=${Math.random()}`, { 
-        headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json', 'Cache-Control': 'no-cache, no-store, must-revalidate' } 
+        headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json' },
+        cache: 'no-store'
       });
       if(res.status === 404){ 
         this.githubSync.sha = null; 
         this.saveGithubConfig(this.githubSync); 
-        this._isSyncing = false; // Soltamos el semáforo antes de llamar a push
+        this._isSyncing = false;
         await this.pushToGithub(); 
         return; 
       }
@@ -168,7 +168,6 @@ class App {
       this.githubSyncStatus = {ok:false, error: err.message, at:new Date()}; 
       if(!silent) this.toast(`No se pudo sincronizar: ${err.message}`); 
     } finally {
-      // Liberamos el semáforo pase lo que pase
       this._isSyncing = false;
       this.render(); 
     }
@@ -176,7 +175,6 @@ class App {
 
   async pushToGithub(){
     if(!this.githubSync) return;
-    // SEMÁFORO EN COLA: Si está ocupado, espera 1 segundo y reintenta para no perder cambios
     if(this._isSyncing) {
        clearTimeout(this._pushTimer);
        this._pushTimer = setTimeout(()=>this.pushToGithub(), 1000);
@@ -205,16 +203,16 @@ class App {
       let res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) });
       
       if(res.status === 409 || res.status === 422){ 
-        // BYPASS DE CACHÉ TOTAL si hay colisión
+        // CORRECCIÓN: Igual que arriba, evitamos el bloqueo CORS al hacer el bypass
         const fresh = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&nocache=${Math.random()}`, { 
-          headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json', 'Cache-Control': 'no-cache, no-store, must-revalidate' } 
+          headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json' },
+          cache: 'no-store' 
         }); 
         if(fresh.ok){ 
           const fd = await fresh.json(); 
           body.sha = fd.sha; 
           this.githubSync.sha = fd.sha;
           this.saveGithubConfig(this.githubSync);
-          // Reintentamos con el SHA fresco de verdad
           res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) }); 
         } 
       }
