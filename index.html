@@ -9,162 +9,118 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icon.svg" />
 <title>Cuentas F5·F7</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
+<link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
+<link href="[https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap](https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap)" rel="stylesheet">
 <style>
-  :root{
-    --pitch-dark:#0F3D2E;
-    --pitch:#154934;
-    --turf:#2D8659;
-    --turf-soft:#DDEEE3;
-    --chalk:#F6F2E9;
-    --paper:#FFFFFF;
-    --ink:#12241B;
-    --muted:#6E7C73;
-    --line:#E3DDCB;
-    --gold:#E8A33D;
-    --gold-soft:#FBEAD1;
-    --debt:#C3423F;
-    --debt-soft:#FBE4E1;
-    --credit:#2D8659;
-    --radius-card:14px;
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-  }
+  :root{--pitch-dark:#0F3D2E;--pitch:#154934;--turf:#2D8659;--turf-soft:#DDEEE3;--chalk:#F6F2E9;--paper:#FFFFFF;--ink:#12241B;--muted:#6E7C73;--line:#E3DDCB;--gold:#E8A33D;--gold-soft:#FBEAD1;--debt:#C3423F;--debt-soft:#FBE4E1;--credit:#2D8659;--radius-card:14px;--safe-bottom:env(safe-area-inset-bottom, 0px);}
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background:var(--chalk);
-    color:var(--ink);
-    min-height:100vh;
-    -webkit-tap-highlight-color: transparent;
-  }
-  h1,h2,h3,.headline,.nav-label,.tab-label,.btn,.chip,.stat-label{
-    font-family:"Oswald", -apple-system, sans-serif;
-  }
-  .mono{ font-family:"Space Mono", monospace; font-variant-numeric: tabular-nums; }
-  #app{ max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; background:var(--chalk); position:relative; }
-
-  .topbar{ background:var(--pitch-dark); color:var(--chalk); padding:14px 16px 10px; display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid var(--gold); }
-  .topbar .brand{ display:flex; align-items:center; gap:8px; }
-  .topbar .brand svg{ width:24px; height:24px; }
-  .topbar h1{ font-size:17px; font-weight:600; letter-spacing:.3px; margin:0; }
-  .topbar .date{ font-size:11px; color:#B9C9BE; margin-top:1px; }
-  .match-switch{ display:flex; background:rgba(255,255,255,.08); border-radius:20px; padding:3px; }
-  .match-switch button{ border:0; background:transparent; color:#CFE0D6; font-family:"Oswald"; font-size:13px; font-weight:600; padding:6px 14px; border-radius:16px; cursor:pointer; }
-  .match-switch button.active{ background:var(--gold); color:var(--pitch-dark); }
-
-  .scoreboard{ background:var(--pitch); color:var(--chalk); margin:12px 16px 4px; border-radius:10px; display:grid; grid-template-columns:1fr 1fr 1fr; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
-  .scoreboard .cell{ padding:12px 6px; text-align:center; border-right:1px solid rgba(255,255,255,.12); }
-  .scoreboard .cell:last-child{ border-right:none; }
-  .scoreboard .stat-label{ font-size:10px; letter-spacing:.08em; color:#9FC2AC; margin-bottom:4px; text-transform:uppercase; }
-  .scoreboard .stat-value{ font-size:20px; font-weight:700; }
-  .pos{ color:#8FE3B0; } .neg{ color:#FF9B92; } .neu{ color:var(--chalk); }
-
-  .content{ flex:1; padding:14px 16px 90px; overflow-y:auto; }
-  .animate-fade { animation: pageFade 0.2s ease-out; }
-  @keyframes pageFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-  
-  .section-title{ display:flex; align-items:center; gap:8px; margin:18px 0 8px; font-size:13px; font-weight:600; letter-spacing:.03em; color:var(--muted); }
-  .section-title .dot{ width:8px; height:8px; border-radius:50%; }
-  .section-title .count{ margin-left:auto; color:var(--muted); font-weight:400; font-size:12px; }
-
-  .ticket{ background:var(--paper); border:1px solid var(--line); border-left:4px solid var(--line); border-radius:8px; padding:10px 12px; display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; cursor:pointer; }
-  .ticket.credit{ border-left-color:var(--credit); }
-  .ticket.debt{ border-left-color:var(--debt); }
-  .ticket.neutral{ border-left-color:var(--line); }
-  .ticket .name{ font-size:14.5px; font-weight:500; }
-  .ticket .sub{ font-size:11px; color:var(--muted); margin-top:1px; }
-  .ticket .amt{ font-size:15px; font-weight:700; }
-  .amt.pos{ color:var(--credit); } .amt.neg{ color:var(--debt); } .amt.zero{ color:var(--muted); }
-
-  .empty-state{ text-align:center; padding:30px 10px; color:var(--muted); font-size:13px; }
-
-  .bottom-nav{ position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; background:var(--paper); border-top:1px solid var(--line); display:flex; padding-bottom:var(--safe-bottom); z-index:50; }
-  .bottom-nav button{ flex:1; background:none; border:0; padding:9px 2px 8px; display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--muted); cursor:pointer; }
-  .bottom-nav button svg{ width:21px; height:21px; }
-  .bottom-nav button.active{ color:var(--pitch); }
-  .bottom-nav .tab-label{ font-size:10px; font-weight:500; }
-
-  .btn{ font-size:14px; font-weight:600; border-radius:9px; padding:11px 16px; border:0; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
-  .btn svg { width:18px; height:18px; flex-shrink:0; } 
-  .btn-primary{ background:var(--pitch); color:#fff; width:100%; }
-  .btn-gold{ background:var(--gold); color:var(--pitch-dark); width:100%; }
-  .btn-outline{ background:transparent; color:var(--pitch); border:1.5px solid var(--pitch); }
-  .btn-danger{ background:transparent; color:var(--debt); border:1.5px solid var(--debt); }
-  .btn-block{ width:100%; margin-top:6px; }
-  .btn-sm{ font-size:12.5px; padding:7px 12px; width:auto; flex:1; }
-  .btn-sm svg { width:16px; height:16px; } 
-  
-  .fab{ position:fixed; bottom:calc(66px + var(--safe-bottom)); left:50%; transform:translateX(148px); width:52px; height:52px; border-radius:50%; background:var(--gold); color:var(--pitch-dark); border:0; box-shadow:0 4px 10px rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:40; }
-  .fab svg{ width:24px; height:24px; }
-
-  label{ font-size:12px; font-weight:600; color:var(--muted); display:block; margin:12px 0 5px; text-transform:uppercase; letter-spacing:.03em; }
-  input[type=text], input[type=number], input[type=search], select, textarea{ width:100%; padding:11px 12px; border:1.5px solid var(--line); border-radius:9px; font-size:15px; background:var(--paper); color:var(--ink); font-family:inherit; }
-  input:focus, select:focus, textarea:focus{ outline:2px solid var(--turf); outline-offset:1px; }
-  .field-row{ display:flex; gap:10px; }
-  .field-row > div{ flex:1; }
-  .chip-group{ display:flex; gap:8px; flex-wrap:wrap; }
-  .chip{ border:1.5px solid var(--line); background:var(--paper); border-radius:20px; padding:7px 14px; font-size:13px; font-weight:600; cursor:pointer; color:var(--ink); }
-  .chip.active{ background:var(--pitch); border-color:var(--pitch); color:#fff; }
-  .chip.gold-active.active{ background:var(--gold); border-color:var(--gold); color:var(--pitch-dark); }
-  .sign-toggle{ display:flex; border-radius:9px; overflow:hidden; border:1.5px solid var(--line); }
-  .sign-toggle button{ flex:1; padding:11px; border:0; background:var(--paper); font-family:"Oswald"; font-weight:700; font-size:16px; cursor:pointer; color:var(--muted); }
-  .sign-toggle button.active.plus{ background:var(--turf-soft); color:var(--credit); }
-  .sign-toggle button.active.minus{ background:var(--debt-soft); color:var(--debt); }
-
-  .checklist{ max-height:45vh; overflow-y:auto; border:1.5px solid var(--line); border-radius:9px; }
-  .checklist label{ display:flex; align-items:center; gap:10px; padding:9px 12px; margin:0; text-transform:none; letter-spacing:0; font-weight:400; font-size:14px; color:var(--ink); border-bottom:1px solid var(--line); }
-  .checklist label:last-child{ border-bottom:none; }
-  .checklist input[type=checkbox]{ width:17px; height:17px; accent-color:var(--pitch); }
-
-  .sheet-backdrop{ position:fixed; inset:0; background:rgba(15,61,46,.45); z-index:100; display:flex; align-items:flex-end; justify-content:center; }
-  .sheet{ background:var(--chalk); width:100%; max-width:480px; border-radius:18px 18px 0 0; max-height:88vh; overflow-y:auto; padding:8px 18px calc(20px + var(--safe-bottom)); animation: slideUp .18s ease-out; }
-  @keyframes slideUp{ from{ transform:translateY(16px); opacity:.6;} to{ transform:translateY(0); opacity:1;} }
-  .sheet-handle{ width:36px; height:4px; background:var(--line); border-radius:3px; margin:8px auto 6px; }
-  .sheet h2{ font-size:18px; margin:6px 0 2px; }
-  .sheet .close-x{ position:absolute; right:16px; top:14px; background:none; border:0; font-size:20px; color:var(--muted); cursor:pointer; }
-
-  .subtabs{ display:flex; gap:6px; margin-bottom:12px; }
-  .subtabs button{ flex:1; }
-
-  .row-actions{ display:flex; gap:6px; }
-  .icon-btn{ background:none; border:0; padding:4px; cursor:pointer; color:var(--muted); }
-  .icon-btn svg{ width:17px; height:17px; }
-  .search-bar{ margin-bottom:10px; }
-  .filter-bar{ display:flex; gap:7px; margin-bottom:12px; overflow-x:auto; padding-bottom:2px; }
-
-  .team-card{ background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; }
-  .team-card h3{ font-size:14px; margin:0 0 8px; display:flex; justify-content:space-between; color:var(--pitch); }
-  .team-player{ display:flex; justify-content:space-between; padding:7px 4px; border-bottom:1px dashed var(--line); font-size:14px; cursor:pointer; }
-  .team-player:last-child{ border-bottom:none; }
-  .team-player.selected{ background:var(--gold-soft); border-radius:6px; }
-  .lvl-badge{ font-size:10px; background:var(--turf-soft); color:var(--credit); padding:2px 6px; border-radius:8px; font-weight:700; }
-
-  .toast{ position:fixed; bottom:calc(78px + var(--safe-bottom)); left:50%; transform:translateX(-50%); background:var(--pitch-dark); color:#fff; padding:10px 18px; border-radius:20px; font-size:13px; z-index:200; box-shadow:0 4px 12px rgba(0,0,0,.3); }
-
-  ::-webkit-scrollbar{ width:0; height:0; }
+  html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--chalk);color:var(--ink);min-height:100vh;-webkit-tap-highlight-color:transparent;}
+  h1,h2,h3,.headline,.nav-label,.tab-label,.btn,.chip,.stat-label{font-family:"Oswald",-apple-system,sans-serif;}
+  .mono{font-family:"Space Mono",monospace;font-variant-numeric:tabular-nums;}
+  #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--chalk);position:relative;}
+  .topbar{background:var(--pitch-dark);color:var(--chalk);padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--gold);}
+  .topbar .brand{display:flex;align-items:center;gap:8px;}
+  .topbar .brand svg{width:24px;height:24px;}
+  .topbar h1{font-size:17px;font-weight:600;letter-spacing:.3px;margin:0;}
+  .topbar .date{font-size:11px;color:#B9C9BE;margin-top:1px;}
+  .match-switch{display:flex;background:rgba(255,255,255,.08);border-radius:20px;padding:3px;}
+  .match-switch button{border:0;background:transparent;color:#CFE0D6;font-family:"Oswald";font-size:13px;font-weight:600;padding:6px 14px;border-radius:16px;cursor:pointer;}
+  .match-switch button.active{background:var(--gold);color:var(--pitch-dark);}
+  .scoreboard{background:var(--pitch);color:var(--chalk);margin:12px 16px 4px;border-radius:10px;display:grid;grid-template-columns:1fr 1fr 1fr;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
+  .scoreboard .cell{padding:12px 6px;text-align:center;border-right:1px solid rgba(255,255,255,.12);}
+  .scoreboard .cell:last-child{border-right:none;}
+  .scoreboard .stat-label{font-size:10px;letter-spacing:.08em;color:#9FC2AC;margin-bottom:4px;text-transform:uppercase;}
+  .scoreboard .stat-value{font-size:20px;font-weight:700;}
+  .pos{color:#8FE3B0;} .neg{color:#FF9B92;} .neu{color:var(--chalk);}
+  .content{flex:1;padding:14px 16px 90px;overflow-y:auto;}
+  .animate-fade{animation:pageFade 0.2s ease-out;}
+  @keyframes pageFade{from{opacity:0;transform:translateY(4px);} to{opacity:1;transform:translateY(0);}}
+  .section-title{display:flex;align-items:center;gap:8px;margin:18px 0 8px;font-size:13px;font-weight:600;letter-spacing:.03em;color:var(--muted);}
+  .section-title .dot{width:8px;height:8px;border-radius:50%;}
+  .section-title .count{margin-left:auto;color:var(--muted);font-weight:400;font-size:12px;}
+  .ticket{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;cursor:pointer;}
+  .ticket.credit{border-left-color:var(--credit);}
+  .ticket.debt{border-left-color:var(--debt);}
+  .ticket.neutral{border-left-color:var(--line);}
+  .ticket .name{font-size:14.5px;font-weight:500;}
+  .ticket .sub{font-size:11px;color:var(--muted);margin-top:1px;}
+  .ticket .amt{font-size:15px;font-weight:700;}
+  .amt.pos{color:var(--credit);} .amt.neg{color:var(--debt);} .amt.zero{color:var(--muted);}
+  .empty-state{text-align:center;padding:30px 10px;color:var(--muted);font-size:13px;}
+  .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--paper);border-top:1px solid var(--line);display:flex;padding-bottom:var(--safe-bottom);z-index:50;}
+  .bottom-nav button{flex:1;background:none;border:0;padding:9px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);cursor:pointer;}
+  .bottom-nav button svg{width:21px;height:21px;}
+  .bottom-nav button.active{color:var(--pitch);}
+  .bottom-nav .tab-label{font-size:10px;font-weight:500;}
+  .btn{font-size:14px;font-weight:600;border-radius:9px;padding:11px 16px;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;}
+  .btn svg{width:18px;height:18px;flex-shrink:0;} 
+  .btn-primary{background:var(--pitch);color:#fff;width:100%;}
+  .btn-gold{background:var(--gold);color:var(--pitch-dark);width:100%;}
+  .btn-outline{background:transparent;color:var(--pitch);border:1.5px solid var(--pitch);}
+  .btn-danger{background:transparent;color:var(--debt);border:1.5px solid var(--debt);}
+  .btn-block{width:100%;margin-top:6px;}
+  .btn-sm{font-size:12.5px;padding:7px 12px;width:auto;flex:1;}
+  .btn-sm svg{width:16px;height:16px;} 
+  .fab{position:fixed;bottom:calc(66px + var(--safe-bottom));left:50%;transform:translateX(148px);width:52px;height:52px;border-radius:50%;background:var(--gold);color:var(--pitch-dark);border:0;box-shadow:0 4px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:40;}
+  .fab svg{width:24px;height:24px;}
+  label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin:12px 0 5px;text-transform:uppercase;letter-spacing:.03em;}
+  input[type=text],input[type=number],input[type=search],select,textarea{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:9px;font-size:15px;background:var(--paper);color:var(--ink);font-family:inherit;}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--turf);outline-offset:1px;}
+  .field-row{display:flex;gap:10px;}
+  .field-row > div{flex:1;}
+  .chip-group{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{border:1.5px solid var(--line);background:var(--paper);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);}
+  .chip.active{background:var(--pitch);border-color:var(--pitch);color:#fff;}
+  .chip.gold-active.active{background:var(--gold);border-color:var(--gold);color:var(--pitch-dark);}
+  .sign-toggle{display:flex;border-radius:9px;overflow:hidden;border:1.5px solid var(--line);}
+  .sign-toggle button{flex:1;padding:11px;border:0;background:var(--paper);font-family:"Oswald";font-weight:700;font-size:16px;cursor:pointer;color:var(--muted);}
+  .sign-toggle button.active.plus{background:var(--turf-soft);color:var(--credit);}
+  .sign-toggle button.active.minus{background:var(--debt-soft);color:var(--debt);}
+  .checklist{max-height:45vh;overflow-y:auto;border:1.5px solid var(--line);border-radius:9px;}
+  .checklist label{display:flex;align-items:center;gap:10px;padding:9px 12px;margin:0;text-transform:none;letter-spacing:0;font-weight:400;font-size:14px;color:var(--ink);border-bottom:1px solid var(--line);}
+  .checklist label:last-child{border-bottom:none;}
+  .checklist input[type=checkbox]{width:17px;height:17px;accent-color:var(--pitch);}
+  .sheet-backdrop{position:fixed;inset:0;background:rgba(15,61,46,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
+  .sheet{background:var(--chalk);width:100%;max-width:480px;border-radius:18px 18px 0 0;max-height:88vh;overflow-y:auto;padding:8px 18px calc(20px + var(--safe-bottom));animation:slideUp .18s ease-out;}
+  @keyframes slideUp{from{transform:translateY(16px);opacity:.6;} to{transform:translateY(0);opacity:1;}}
+  .sheet-handle{width:36px;height:4px;background:var(--line);border-radius:3px;margin:8px auto 6px;}
+  .sheet h2{font-size:18px;margin:6px 0 2px;}
+  .sheet .close-x{position:absolute;right:16px;top:14px;background:none;border:0;font-size:20px;color:var(--muted);cursor:pointer;}
+  .subtabs{display:flex;gap:6px;margin-bottom:12px;}
+  .subtabs button{flex:1;}
+  .row-actions{display:flex;gap:6px;}
+  .icon-btn{background:none;border:0;padding:4px;cursor:pointer;color:var(--muted);}
+  .icon-btn svg{width:17px;height:17px;}
+  .search-bar{margin-bottom:10px;}
+  .filter-bar{display:flex;gap:7px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;}
+  .team-card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;}
+  .team-card h3{font-size:14px;margin:0 0 8px;display:flex;justify-content:space-between;color:var(--pitch);}
+  .team-player{display:flex;justify-content:space-between;padding:7px 4px;border-bottom:1px dashed var(--line);font-size:14px;cursor:pointer;}
+  .team-player:last-child{border-bottom:none;}
+  .team-player.selected{background:var(--gold-soft);border-radius:6px;}
+  .lvl-badge{font-size:10px;background:var(--turf-soft);color:var(--credit);padding:2px 6px;border-radius:8px;font-weight:700;}
+  .toast{position:fixed;bottom:calc(78px + var(--safe-bottom));left:50%;transform:translateX(-50%);background:var(--pitch-dark);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:200;box-shadow:0 4px 12px rgba(0,0,0,.3);}
+  ::-webkit-scrollbar{width:0;height:0;}
 </style>
 </head>
 <body>
 <div id="app"></div>
-
 <script>
 const ICONS = {
-  ball: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9.5"/><path d="M12 6.5l4 3-1.5 4.7h-5L8 9.5z"/><path d="M12 2.5v4M2.7 9l3.7 1M4 17l3.5-2.5M20 17l-3.5-2.5M21.3 9l-3.7 1M9 21l1-4M15 21l-1-4"/></svg>`,
-  home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`,
-  users: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.5 2.9-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.2 14.2c2.7.3 4.8 2.4 4.8 5.8"/></svg>`,
-  euro: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M17 5.5c-1.3-1-2.7-1.5-4.3-1.5-4 0-7.2 3.6-7.2 8s3.2 8 7.2 8c1.6 0 3-.5 4.3-1.5"/><path d="M3.5 10.5h9M3.5 13.5h8"/></svg>`,
-  shirts: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3L3 6.5 5.5 10 8 8.5V21h8V8.5l2.5 1.5L21 6.5 16 3c-.8 1.3-2.3 2-4 2s-3.2-.7-4-2z"/></svg>`,
-  gear: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.7 7.7 0 000-3l2-1.6-2-3.4-2.4.7a7.8 7.8 0 00-2.6-1.5L14 2h-4l-.4 2.7a7.8 7.8 0 00-2.6 1.5l-2.4-.7-2 3.4 2 1.6a7.7 7.7 0 000 3l-2 1.6 2 3.4 2.4-.7c.75.65 1.63 1.15 2.6 1.5L10 22h4l.4-2.7a7.8 7.8 0 002.6-1.5l2.4.7 2-3.4z"/></svg>`,
-  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`,
-  edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>`,
-  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>`,
-  download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/></svg>`,
-  upload: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21V9m0 0l-4 4m4-4l4 4M4 5h16"/></svg>`,
-  share: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="18" cy="5" r="2.3"/><circle cx="6" cy="12" r="2.3"/><circle cx="18" cy="19" r="2.3"/><path d="M8 10.8l8-4.4M8 13.2l8 4.4"/></svg>`,
-  shuffle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h3.5L15 18h6M14.5 6H21M3 18h3.5L11 12"/><path d="M18.5 3.5L21 6l-2.5 2.5M18.5 15.5L21 18l-2.5 2.5"/></svg>`,
+  ball: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9.5"/><path d="M12 6.5l4 3-1.5 4.7h-5L8 9.5z"/><path d="M12 2.5v4M2.7 9l3.7 1M4 17l3.5-2.5M20 17l-3.5-2.5M21.3 9l-3.7 1M9 21l1-4M15 21l-1-4"/></svg>',
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.5 2.9-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.2 14.2c2.7.3 4.8 2.4 4.8 5.8"/></svg>',
+  euro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M17 5.5c-1.3-1-2.7-1.5-4.3-1.5-4 0-7.2 3.6-7.2 8s3.2 8 7.2 8c1.6 0 3-.5 4.3-1.5"/><path d="M3.5 10.5h9M3.5 13.5h8"/></svg>',
+  shirts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3L3 6.5 5.5 10 8 8.5V21h8V8.5l2.5 1.5L21 6.5 16 3c-.8 1.3-2.3 2-4 2s-3.2-.7-4-2z"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.7 7.7 0 000-3l2-1.6-2-3.4-2.4.7a7.8 7.8 0 00-2.6-1.5L14 2h-4l-.4 2.7a7.8 7.8 0 00-2.6 1.5l-2.4-.7-2 3.4 2 1.6a7.7 7.7 0 000 3l-2 1.6 2 3.4 2.4-.7c.75.65 1.63 1.15 2.6 1.5L10 22h4l.4-2.7a7.8 7.8 0 002.6-1.5l2.4.7 2-3.4z"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+  download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/></svg>',
+  upload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21V9m0 0l-4 4m4-4l4 4M4 5h16"/></svg>',
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="18" cy="5" r="2.3"/><circle cx="6" cy="12" r="2.3"/><circle cx="18" cy="19" r="2.3"/><path d="M8 10.8l8-4.4M8 13.2l8 4.4"/></svg>',
+  shuffle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h3.5L15 18h6M14.5 6H21M3 18h3.5L11 12"/><path d="M18.5 3.5L21 6l-2.5 2.5M18.5 15.5L21 18l-2.5 2.5"/></svg>'
 };
 
 const SKILL_WEIGHT = { muy_bajo:1, bajo:2, medio:3, alto:4, muy_alto:5 };
@@ -273,7 +229,7 @@ class App{
     const repo = this.githubSync.repo;
     const path = this.githubSync.path;
     const encPath = path.split('/').map(encodeURIComponent).join('/');
-    return `https://api.github.com/repos/${owner}/${repo}/contents/${encPath}`;
+    return `[https://api.github.com/repos/$](https://api.github.com/repos/$){owner}/${repo}/contents/${encPath}`;
   }
   scheduleGithubPush(){
     if(!this.githubSync) return;
@@ -381,820 +337,4 @@ class App{
       else if(b < -0.001) { debt.push({p:p,b:b}); }
       else { neutral.push({p:p,b:b}); }
     });
-    credit.sort((a,b)=>a.p.name.localeCompare(b.p.name));
-    neutral.sort((a,b)=>a.p.name.localeCompare(b.p.name));
-    debt.sort((a,b)=>a.p.name.localeCompare(b.p.name));
-    return {credit:credit, neutral:neutral, debt:debt};
-  }
-
-  addPlayer(data){
-    const pSkill = data.skill ? data.skill : 'medio';
-    const pStamina = data.stamina ? data.stamina : 'medio';
-    const pPos = data.position ? data.position : '';
-    const pBK = data.bilbaoKirolak ? data.bilbaoKirolak : false;
-    this.players.push({ 
-      id:uid(), name:data.name.trim(), type:data.type, isRegular:data.isRegular, 
-      skill:pSkill, stamina:pStamina, position:pPos, 
-      bilbaoKirolak:pBK, createdAt:new Date().toISOString() 
-    });
-    this.save(); this.closeModal(); this.toast('Jugador añadido');
-  }
-  updatePlayer(id, data){
-    const p = this.players.find(x=>x.id===id); if(!p) return;
-    Object.assign(p, data);
-    this.save(); this.closeModal(); this.toast('Jugador actualizado');
-  }
-  deletePlayer(id){
-    if(!confirm('¿Eliminar a este jugador?')) return;
-    this.players = this.players.filter(p=>p.id!==id);
-    this.transactions = this.transactions
-      .map(t => {
-         if(t.playerIds.includes(id)) {
-            const newIds = t.playerIds.filter(pid=>pid!==id);
-            return { id:t.id, playerIds:newIds, amount:t.amount, matchType:t.matchType, reason:t.reason, createdAt:t.createdAt };
-         }
-         return t;
-      })
-      .filter(t => t.playerIds.length > 0);
-    this.teamsPresent.delete(id);
-    this.save(); this.closeModal(); this.toast('Jugador eliminado');
-  }
-  addTransaction(playerIds, amount, matchType, reason){
-    if(playerIds.length===0) { this.toast('Falta jugador o importe'); return; }
-    if(!amount) { this.toast('Falta jugador o importe'); return; }
-    const res = reason ? reason : '';
-    this.transactions.push({ id:uid(), playerIds: playerIds, amount:parseFloat(amount), matchType: matchType, reason:res, createdAt:new Date().toISOString() });
-    this.save(); this.closeModal(); this.toast('Movimiento registrado');
-  }
-  updateTransaction(id, data){
-    const t = this.transactions.find(x=>x.id===id); if(!t) return;
-    Object.assign(t, data);
-    this.save(); this.closeModal(); this.toast('Movimiento actualizado');
-  }
-  deleteTransaction(id){
-    if(!confirm('¿Eliminar este movimiento?')) return;
-    this.transactions = this.transactions.filter(t=>t.id!==id);
-    this.save(); this.closeModal(); this.toast('Movimiento eliminado');
-  }
-  addGeneralTransaction(amount, matchType, reason){
-    if(!amount){ this.toast('Falta el importe'); return; }
-    const res = reason ? reason : '';
-    this.generalTransactions.push({ id:uid(), amount:parseFloat(amount), matchType: matchType, reason:res, createdAt:new Date().toISOString() });
-    this.save(); this.closeModal(); this.toast('Movimiento del bote registrado');
-  }
-  deleteGeneralTransaction(id){
-    if(!confirm('¿Eliminar este movimiento del bote?')) return;
-    this.generalTransactions = this.generalTransactions.filter(t=>t.id!==id);
-    this.save(); this.closeModal(); this.toast('Movimiento eliminado');
-  }
-  settleDebt(playerId, matchType, amount){
-    this.addTransaction([playerId], amount, matchType, 'Saldar deuda');
-  }
-
-  exportBackup(){
-    const data = { players:this.players, transactions:this.transactions, generalTransactions:this.generalTransactions, footballs:[], exportDate:new Date().toISOString(), version:'2.0' };
-    const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `futbol-cuentas-backup-${new Date().toISOString().slice(0,10)}.json`;
-    a.click(); URL.revokeObjectURL(url);
-    this.toast('Backup exportado');
-  }
-  importBackup(file){
-    const reader = new FileReader();
-    reader.onload = (e)=>{
-      try{
-        const data = JSON.parse(e.target.result);
-        if(!confirm('Esto reemplazará todos los datos actuales. ¿Continuar?')) return;
-        this.players = data.players ? data.players : [];
-        this.transactions = data.transactions ? data.transactions : [];
-        this.generalTransactions = data.generalTransactions ? data.generalTransactions : [];
-        this.save(); this.render(); this.toast('Datos importados');
-      }catch(err){ alert('El archivo no es un backup válido.'); }
-    };
-    reader.readAsText(file);
-  }
-
-  requiredTeamSizes(matchType){ return matchType === 'F5' ? [10,12] : [14, 16]; }
-  findPresentPerson(id){ 
-    const fp = this.players.find(x=>x.id===id);
-    if(fp) return fp;
-    return this.teamsGuests.find(x=>x.id===id);
-  }
-  presentWithoutPosition(){ 
-    return Array.from(this.teamsPresent).map(id=>this.findPresentPerson(id)).filter(p=>{
-       if(!p) return false;
-       if(!p.position) return true;
-       return false;
-    }); 
-  }
-  
-  generateTeams(balanced){
-    const ids = Array.from(this.teamsPresent);
-    const required = this.requiredTeamSizes(this.teamsMatchType);
-    if(!required.includes(ids.length)){
-      this.toast(`Para ${this.teamsMatchType} hacen falta ${required.join(' o ')} jugadores`); return;
-    }
-    const missingPosition = this.presentWithoutPosition();
-    if(missingPosition.length > 0){
-      alert('Asigna posición a estos jugadores:\n' + missingPosition.map(p=>'· '+p.name).join('\n')); return;
-    }
-    let pool = ids.map(id=>{
-      const p = this.findPresentPerson(id);
-      if(!p) return null;
-      const wSkill = SKILL_WEIGHT[p.skill] ? SKILL_WEIGHT[p.skill] : 3;
-      const wStamina = STAMINA_WEIGHT[p.stamina] ? STAMINA_WEIGHT[p.stamina] : 2;
-      const pPos = p.position ? p.position : 'sin posición';
-      return { id:p.id, name:p.name, weight: wSkill + wStamina, position:pPos };
-    }).filter(Boolean);
-    
-    const teamRojo=[], teamBlanco=[]; let sumRojo=0, sumBlanco=0;
-    if(balanced){
-      const byPos = {};
-      pool.forEach(p=>{ 
-        if(!byPos[p.position]) byPos[p.position] = [];
-        byPos[p.position].push(p); 
-      });
-      Object.values(byPos).forEach(group=>{
-        group.sort(()=>Math.random()-0.5);
-        group.sort((a,b)=>b.weight-a.weight);
-        group.forEach(pl=>{
-          if(sumRojo <= sumBlanco){ teamRojo.push(pl); sumRojo += pl.weight; } else { teamBlanco.push(pl); sumBlanco += pl.weight; }
-        });
-      });
-    } else {
-      pool.sort(()=>Math.random()-0.5);
-      pool.forEach(pl=>{
-        if(teamRojo.length <= teamBlanco.length){ teamRojo.push(pl); } else { teamBlanco.push(pl); }
-      });
-    }
-    this.sortByPosition(teamRojo); this.sortByPosition(teamBlanco);
-    this.teamsResult = { teamRojo:teamRojo, teamBlanco:teamBlanco };
-    this.teamsSwapSel = null;
-    this.saveTeamsLocal();
-    this.render();
-  }
-  sortByPosition(list){
-    const order = { portero:0, defensa:1, medio:2, delantero:3, 'sin posición':4 };
-    list.sort((a,b)=> {
-      const valA = order[a.position] !== undefined ? order[a.position] : 4;
-      const valB = order[b.position] !== undefined ? order[b.position] : 4;
-      return valA - valB;
-    });
-    return list;
-  }
-  swapTeamPlayer(team, idx){
-    if(!this.teamsSwapSel){ this.teamsSwapSel = {team:team, idx:idx}; this.render(); return; }
-    const sel = this.teamsSwapSel;
-    let isSame = false;
-    if(sel.team === team) { if(sel.idx === idx) isSame = true; }
-    if(isSame){ this.teamsSwapSel = null; this.render(); return; }
-    
-    const a = sel.team==='rojo' ? this.teamsResult.teamRojo : this.teamsResult.teamBlanco;
-    const b = team==='rojo' ? this.teamsResult.teamRojo : this.teamsResult.teamBlanco;
-    const tmp = a[sel.idx]; a[sel.idx] = b[idx]; b[idx] = tmp;
-    this.sortByPosition(this.teamsResult.teamRojo); this.sortByPosition(this.teamsResult.teamBlanco);
-    this.teamsSwapSel = null;
-    this.saveTeamsLocal();
-    this.render();
-  }
-
-  async ensureFonts(){
-    try{
-      await Promise.all([ document.fonts.load('700 32px Oswald'), document.fonts.load('600 20px Oswald'), document.fonts.load('400 16px Oswald'), document.fonts.load('700 24px "Space Mono"'), document.fonts.load('400 16px "Space Mono"')]);
-    }catch(e){}
-  }
-
-  async exportSummaryImage(matchType){
-    await this.ensureFonts();
-    const bote = this.getTotalPot(matchType);
-    const {credit, neutral, debt} = this.classify(matchType);
-    const jugadoresSum = [...credit, ...debt].reduce((s,x)=>s+x.b, 0);
-    const balance = bote + jugadoresSum;
-    const DPR = 2, W = 675, H = 1200, PAD = 22;
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
-    const ctx = canvas.getContext('2d');
-    ctx.scale(DPR, DPR);
-    ctx.fillStyle = '#F6F2E9'; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle = '#0F3D2E'; ctx.fillRect(0,0,W,84);
-    ctx.fillStyle = '#E8A33D'; ctx.fillRect(0, 80, W, 4);
-    ctx.textAlign = 'left'; ctx.fillStyle = '#F6F2E9'; ctx.font = '700 26px Oswald'; ctx.fillText('⚽ CUENTAS F5·F7', PAD, 42);
-    ctx.font = '600 16px Oswald'; ctx.fillStyle = '#CFE0D6'; ctx.fillText(`Resumen · ${matchType}`, PAD, 65);
-    const dateStr = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'});
-    ctx.textAlign = 'right'; ctx.font = '400 13px -apple-system, sans-serif'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(dateStr, W-PAD, 65);
-    let y = 84;
-    ctx.textAlign = 'left'; ctx.fillStyle = '#154934'; ctx.fillRect(PAD, y+12, W-PAD*2, 80);
-    const cellW = (W-PAD*2)/3;
-    const cls = v => v>0.001 ? '#8FE3B0' : (v<-0.001 ? '#FF9B92' : '#F6F2E9');
-    const stats = [ {label:'BOTE', txt:fmtPlain(bote), value:bote}, {label:'JUGADORES', txt:fmt(jugadoresSum), value:jugadoresSum}, {label:'BALANCE', txt:fmtPlain(balance), value:balance} ];
-    ctx.textAlign = 'center';
-    stats.forEach((s,i)=>{
-      const cx = PAD + cellW*i + cellW/2;
-      ctx.font = '600 11px Oswald'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(s.label, cx, y+34);
-      ctx.font = '700 24px "Space Mono"'; ctx.fillStyle = cls(s.value); ctx.fillText(s.txt, cx, y+66);
-    });
-    ctx.textAlign = 'left'; y += 102 + 12;
-    const available = H - y - 62 - 24;
-    const debtAlloc = Math.round(available * 0.56);
-    const creditAlloc = available - debtAlloc;
-
-    const drawList = (title, color, items, alloc, minRowH, maxRowH, maxCols, nameFontPx, amtFontPx) => {
-      ctx.font = `700 ${Math.max(15, Math.round(nameFontPx*0.92))}px Oswald`; ctx.fillStyle = color;
-      ctx.beginPath(); ctx.arc(PAD+5, y+11, 5, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#12241B'; ctx.fillText(title.toUpperCase(), PAD+18, y+16);
-      ctx.font = '400 12px Oswald'; ctx.fillStyle = '#6E7C73'; ctx.textAlign = 'right'; ctx.fillText(`${items.length}`, W-PAD, y+16);
-      ctx.textAlign = 'left'; y += 26;
-      if(items.length === 0){ ctx.font = '400 14px -apple-system, sans-serif'; ctx.fillStyle = '#9AA69E'; ctx.fillText('—', PAD, y+20); y += minRowH; return; }
-      const fitRows = Math.ceil(items.length/maxCols); const rowH = Math.max(6, Math.min(maxRowH, alloc/fitRows));
-      const colW = (W-PAD*2-((maxCols-1)*12))/maxCols;
-      for(let i=0;i<items.length;i++){
-        const col = Math.floor(i/fitRows); const rx = PAD + col*(colW+12); const ry = y + (i%fitRows)*rowH;
-        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(rx, ry+2, colW, rowH-8);
-        ctx.fillStyle = color; ctx.fillRect(rx, ry+2, 4, rowH-8);
-        ctx.font = `600 ${Math.min(nameFontPx, rowH*0.42)}px -apple-system, sans-serif`; ctx.fillStyle = '#12241B';
-        let name = items[i].p.name;
-        ctx.fillText(name.substring(0,18), rx+12, ry+2+(rowH-8)/2+4);
-        ctx.font = `700 ${Math.min(amtFontPx, rowH*0.42)}px "Space Mono"`; ctx.textAlign = 'right';
-        ctx.fillStyle = items[i].b>0.001 ? '#2D8659' : (items[i].b<-0.001 ? '#C3423F' : '#6E7C73');
-        ctx.fillText(fmt(items[i].b), rx+colW-10, ry+2+(rowH-8)/2+4); ctx.textAlign = 'left';
-      }
-      y += fitRows*rowH;
-    };
-
-    drawList('Con deuda', '#C3423F', debt, debtAlloc, 30, 40, 2, 16, 16); y += 12;
-    drawList('Con crédito', '#2D8659', credit, creditAlloc, 22, 30, 3, 13, 13); y += 12;
-    ctx.fillStyle = '#FFFFFF'; ctx.fillRect(PAD, y, W-PAD*2, 34);
-    ctx.fillStyle = '#9AA69E'; ctx.fillRect(PAD, y, 4, 34);
-    ctx.font = '600 14px Oswald'; ctx.fillStyle = '#4B5750'; 
-    const playerTxt = neutral.length === 1 ? 'jugador' : 'jugadores';
-    ctx.fillText(`✅  ${neutral.length} ${playerTxt} al día`, PAD+14, y+22);
-    canvas.toBlob((blob)=>{
-      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `cuentas-${matchType}.png`; a.click(); URL.revokeObjectURL(url);
-    }, 'image/png');
-  }
-
-  shareTeams(){
-    const r = this.teamsResult; if(!r) return;
-    let txt = `⚽ EQUIPOS ${this.teamsMatchType}\n\n🔴 Equipo Rojo\n` + r.teamRojo.map(p=>`- ${p.name}`).join('\n');
-    txt += `\n\n🔵 Equipo Azul\n` + r.teamBlanco.map(p=>`- ${p.name}`).join('\n');
-    if(navigator.share){ navigator.share({ text: txt }).catch(()=>{}); }
-    else { navigator.clipboard.writeText(txt).then(()=>{ this.toast('Copiado'); }); }
-  }
-
-  async exportTeamsImage(){
-    const r = this.teamsResult; if(!r) return;
-    await this.ensureFonts();
-    const DPR = 2, W = 800, PAD = 28, cardH = 56 + Math.max(r.teamRojo.length, r.teamBlanco.length)*42 + 24;
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil((96+cardH+52)*DPR);
-    const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
-    ctx.fillStyle = '#F6F2E9'; ctx.fillRect(0,0,W,96+cardH+52);
-    ctx.textAlign = 'center'; ctx.font = '700 26px Oswald'; ctx.fillStyle = '#12241B'; ctx.fillText(`⚽ EQUIPOS GENERADOS · ${this.teamsMatchType}`, W/2, 46);
-    ctx.font = '400 14px -apple-system, sans-serif'; ctx.fillStyle = '#6E7C73'; ctx.fillText(new Date().toLocaleDateString('es-ES'), W/2, 70);
-    const colW = (W - PAD*2 - 22)/2;
-    const drawTeamCard = (label, list, x, bg, borderColor, titleColor) => {
-      ctx.fillStyle = bg; ctx.fillRect(x, 96, colW, cardH);
-      ctx.lineWidth = 2; ctx.strokeStyle = borderColor; ctx.strokeRect(x, 96, colW, cardH);
-      ctx.font = '700 20px Oswald'; ctx.fillStyle = titleColor; ctx.fillText(label, x+colW/2, 96+12+28);
-      ctx.textAlign = 'left';
-      let ry = 96 + 56 + 12;
-      list.forEach(p=>{
-        const bcol = POSITION_COLOR[p.position] ? POSITION_COLOR[p.position] : '#8A8A8A';
-        const babbr = POSITION_ABBR[p.position] ? POSITION_ABBR[p.position] : '-';
-        ctx.fillStyle = bcol; ctx.fillRect(x+12, ry+(42-26)/2, 56, 26);
-        ctx.textAlign = 'center'; ctx.font = '700 12px Oswald'; ctx.fillStyle = '#FFFFFF'; ctx.fillText(babbr, x+12+28, ry+21+4);
-        ctx.textAlign = 'left'; ctx.font = '600 16px -apple-system, sans-serif'; ctx.fillStyle = '#12241B';
-        ctx.fillText(p.name.substring(0,16), x+12+56+12, ry+21+5);
-        ry += 42;
-      });
-      ctx.textAlign = 'center';
-    };
-    drawTeamCard('EQUIPO ROJO', r.teamRojo, PAD, '#FCE8E7', '#C3423F', '#C3423F');
-    drawTeamCard('EQUIPO AZUL', r.teamBlanco, PAD+colW+22, '#E0E7FF', '#1E3A8A', '#1E3A8A');
-    canvas.toBlob((blob)=>{
-      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `equipos.png`; a.click(); URL.revokeObjectURL(url);
-    }, 'image/png');
-  }
-
-  openModal(type, payload){ 
-    if(type === 'settleMatch') {
-      this._smCost = "19.55";
-      this._smQuotaBK = "3.00";
-      this._smQuotaNormal = "0.00";
-      this._smPayer = 'bote';
-      this._smSelected = new Set();
-      this.teamsPresent.forEach(id => { if(!String(id).startsWith('guest_')) this._smSelected.add(id); });
-    }
-    const pl = payload ? payload : {};
-    this.modal = {type: type, payload: pl}; this.render(); 
-  }
-  closeModal(){ this.modal = null; this.render(); }
-  setPage(p){ this.page = p; this.modal = null; this.pageAnim = true; this.render(); this.pageAnim = false; }
-
-  render(){
-    const el = document.getElementById('app');
-    const prevContent = el.querySelector('.content'); const contentScroll = prevContent ? prevContent.scrollTop : 0;
-    
-    let inner = this.renderTopbar();
-    inner += `<div class="content ${this.pageAnim ? 'animate-fade' : ''}">${this.renderPage()}</div>`;
-    inner += this.renderFab();
-    inner += this.renderBottomNav();
-    if (this.modal) inner += this.renderModal();
-    if (this.toastMsg) inner += `<div class="toast">${escapeHtml(this.toastMsg)}</div>`;
-    el.innerHTML = inner;
-
-    const newContent = el.querySelector('.content'); if(newContent) newContent.scrollTop = contentScroll;
-  }
-
-  renderTopbar(){
-    const f5act = this.matchFilter === 'F5' ? 'active' : '';
-    const f7act = this.matchFilter === 'F7' ? 'active' : '';
-    return `<div class="topbar"><div class="brand">${ICONS.ball}<div><h1>Cuentas F5·F7</h1><div class="date">${todayStr()}</div></div></div><div class="match-switch"><button class="${f5act}" onclick="app.matchFilter='F5';app.render()">F5</button><button class="${f7act}" onclick="app.matchFilter='F7';app.render()">F7</button></div></div>`;
-  }
-  renderScoreboard(matchType){
-    const bote = this.getTotalPot(matchType); const {credit, debt} = this.classify(matchType); const jugadores = [...credit, ...debt].reduce((s,x)=>s+x.b,0); const balance = bote + jugadores;
-    const cls = v => v>0.001?'pos':(v<-0.001?'neg':'neu');
-    return `<div class="scoreboard"><div class="cell"><div class="stat-label">Bote</div><div class="stat-value mono ${cls(bote)}">${fmtPlain(bote)}</div></div><div class="cell"><div class="stat-label">Jugadores</div><div class="stat-value mono ${cls(jugadores)}">${fmt(jugadores)}</div></div><div class="cell"><div class="stat-label">Balance</div><div class="stat-value mono ${cls(balance)}">${fmtPlain(balance)}</div></div></div>`;
-  }
-  renderPage(){
-    switch(this.page){ case 'resumen': return this.renderResumen(); case 'jugadores': return this.renderJugadores(); case 'movimientos': return this.renderMovimientos(); case 'equipos': return this.renderEquipos(); case 'ajustes': return this.renderAjustes(); default: return this.renderResumen(); }
-  }
-
-  renderResumen(){
-    const mt = this.matchFilter; const {credit, neutral, debt} = this.classify(mt);
-    const row = (item, kind) => {
-      const regTxt = item.p.isRegular ? ' · habitual' : '';
-      const colorCls = item.b>0 ? 'pos' : (item.b<0 ? 'neg' : 'zero');
-      return `<div class="ticket ${kind}" onclick="app.openModal('quickTx', {playerId:'${item.p.id}', matchType:'${mt}'})"><div><div class="name">${escapeHtml(item.p.name)}</div><div class="sub">${item.p.type}${regTxt}</div></div><div class="amt mono ${colorCls}">${fmt(item.b)}</div></div>`;
-    };
-    
-    let html = this.renderScoreboard(mt);
-    html += `<button class="btn btn-sm btn-outline" onclick="app.exportSummaryImage('${mt}')">${ICONS.download} Exportar imagen</button>`;
-    html += `<div class="section-title"><span class="dot" style="background:var(--credit)"></span>Con crédito<span class="count">${credit.length}</span></div>`;
-    html += credit.length ? credit.map(i=>row(i,'credit')).join('') : '<div class="empty-state">Nadie tiene crédito todavía</div>';
-    html += `<div class="section-title"><span class="dot" style="background:var(--line)"></span>Al día<span class="count">${neutral.length}</span></div>`;
-    html += neutral.length ? neutral.map(i=>row(i,'neutral')).join('') : '<div class="empty-state">—</div>';
-    html += `<div class="section-title"><span class="dot" style="background:var(--debt)"></span>Con deuda<span class="count">${debt.length}</span></div>`;
-    html += debt.length ? debt.map(i=>row(i,'debt')).join('') : '<div class="empty-state">Nadie tiene deudas 🎉</div>';
-    return html;
-  }
-
-  renderJugadores(){
-    let list = this.players.slice();
-    if(this.jugSearch) {
-      const q = this.jugSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      list = list.filter(p=>{
-        const n = p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        return n.includes(q);
-      });
-    }
-    if(this.jugFilterType) {
-      list = list.filter(p => {
-        if(p.type === this.jugFilterType) return true;
-        if(p.type === 'F5/F7') return true;
-        return false;
-      });
-    }
-    if(this.jugFilterRegular) list = list.filter(p=> String(p.isRegular)===this.jugFilterRegular);
-    list.sort((a,b)=>a.name.localeCompare(b.name));
-    
-    let html = `<input type="search" id="jugSearchInput" class="search-bar" placeholder="Buscar jugador..." value="${escapeHtml(this.jugSearch)}" oninput="app.jugSearch=this.value; app.render()" />`;
-    html += `<div class="filter-bar"><button class="chip ${this.jugFilterType===''?'active':''}" onclick="app.jugFilterType='';app.render()">Todos</button><button class="chip ${this.jugFilterType==='F5'?'active':''}" onclick="app.jugFilterType='F5';app.render()">F5</button><button class="chip ${this.jugFilterType==='F7'?'active':''}" onclick="app.jugFilterType='F7';app.render()">F7</button></div>`;
-    html += `<div class="section-title">Jugadores<span class="count">${list.length}</span></div>`;
-    
-    const pList = list.map(p=>{ 
-      const total = this.getPlayerTotalBalance(p.id); 
-      const bKLabel = p.bilbaoKirolak ? ' · Bilbao Kirolak' : ''; 
-      const regTxt = p.isRegular ? ' · habitual' : ' · esporádico';
-      let colCls = 'zero';
-      if(total>0) colCls = 'pos';
-      if(total<0) colCls = 'neg';
-      return `<div class="ticket neutral" onclick="app.openModal('editPlayer',{id:'${p.id}'})"><div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${p.type}${regTxt}${bKLabel}</div></div><div class="amt mono ${colCls}">${fmt(total)}</div></div>`; 
-    }).join('');
-    
-    if(pList) { html += pList; } else { html += '<div class="empty-state">No hay jugadores.</div>'; }
-    return html;
-  }
-
-  renderMovimientos(){
-    let html = `<div class="subtabs"><button class="chip ${this.movTab==='jugador'?'active':''}" style="flex:1" onclick="app.movTab='jugador';app.render()">A jugadores</button><button class="chip ${this.movTab==='bote'?'active':''}" style="flex:1" onclick="app.movTab='bote';app.render()">Al bote</button></div>`;
-    html += this.movTab==='jugador' ? this.renderMovJugadorForm() : this.renderMovBoteForm();
-    return html;
-  }
-  renderMovJugadorForm(){
-    const mt = this._movMatchType ? this._movMatchType : this.matchFilter; 
-    const sign = this._movSign ? this._movSign : 'plus'; 
-    const players = this.getPlayersForMatch(mt); 
-    const sel = this._movSelected ? this._movSelected : new Set();
-    
-    let html = `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app._movMatchType='F5';app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app._movMatchType='F7';app.render()">F7</button></div><div class="field-row" style="align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:5px"><label style="margin:0">Jugadores</label><div style="display:flex; gap:6px;"><button class="icon-btn" style="color:var(--pitch); font-size:12px; font-weight:600; background:var(--turf-soft); padding:4px 10px; border-radius:12px; width:auto;" onclick="app.selectPresentPlayers()">Del partido de hoy</button><button class="icon-btn" style="color:var(--muted); font-size:12px; font-weight:600; background:var(--line); padding:4px 10px; border-radius:12px; width:auto;" onclick="app.clearMovPlayers()">Vaciar</button></div></div>`;
-    
-    const pList = players.map(p=>{
-      const chk = sel.has(p.id) ? 'checked' : '';
-      return `<label><input type="checkbox" value="${p.id}" ${chk} onchange="app.toggleMovPlayer('${p.id}')" />${escapeHtml(p.name)}</label>`;
-    }).join('');
-    
-    html += `<div class="checklist">${pList ? pList : '<div class="empty-state">No hay jugadores</div>'}</div>`;
-    html += `<label>Importe (por jugador)</label><div class="sign-toggle"><button class="${sign==='plus'?'active plus':''}" onclick="app._movSign='plus';app.render()">+ Abona</button><button class="${sign==='minus'?'active minus':''}" onclick="app._movSign='minus';app.render()">− Carga</button></div>`;
-    
-    const valAmt = this._movAmount ? this._movAmount : '';
-    const valRes = this._movReason ? this._movReason : '';
-    html += `<input type="number" step="0.01" min="0" id="movAmount" placeholder="0.00" value="${valAmt}" oninput="app._movAmount=this.value" style="margin-top:8px" /><label>Motivo (opcional)</label><input type="text" id="movReason" placeholder="Partido, balón..." value="${valRes}" oninput="app._movReason=this.value" /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitMovJugador()">Registrar movimiento</button>`;
-    return html;
-  }
-  toggleMovPlayer(id){ if(!this._movSelected) this._movSelected = new Set(); if(this._movSelected.has(id)) { this._movSelected.delete(id); } else { this._movSelected.add(id); } }
-  clearMovPlayers(){ this._movSelected = new Set(); this.render(); }
-  selectPresentPlayers(){ if(this.teamsPresent.size === 0){ this.toast('Ve a Equipos y marca quién juega hoy'); return; } if(!this._movSelected) this._movSelected = new Set(); this.teamsPresent.forEach(id => { if(!String(id).startsWith('guest_')) this._smSelected.add(id); }); this.render(); }
-  submitMovJugador(){ const mt = this._movMatchType ? this._movMatchType : this.matchFilter; const sel = Array.from(this._movSelected ? this._movSelected : []); let amount = parseFloat(this._movAmount); if(isNaN(amount)){ this.toast('Introduce un importe'); return; } const cSign = this._movSign ? this._movSign : 'plus'; if(cSign==='minus') { amount = -Math.abs(amount); } else { amount = Math.abs(amount); } this.addTransaction(sel, amount, mt, this._movReason); this._movSelected = new Set(); this._movAmount=''; this._movReason=''; this.render(); }
-  
-  renderMovBoteForm(){
-    const mt = this._boteMatchType ? this._boteMatchType : this.matchFilter; 
-    const sign = this._boteSign ? this._boteSign : 'plus';
-    
-    let html = `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app._boteMatchType='F5';app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app._boteMatchType='F7';app.render()">F7</button></div><label>Importe</label><div class="sign-toggle"><button class="${sign==='plus'?'active plus':''}" onclick="app._boteSign='plus';app.render()">+ Ingreso</button><button class="${sign==='minus'?'active minus':''}" onclick="app._boteSign='minus';app.render()">− Gasto</button></div>`;
-    
-    const valAmt = this._boteAmount ? this._boteAmount : '';
-    const valRes = this._boteReason ? this._boteReason : '';
-    html += `<input type="number" step="0.01" min="0" placeholder="0.00" value="${valAmt}" oninput="app._boteAmount=this.value" style="margin-top:8px" /><label>Motivo (opcional)</label><input type="text" placeholder="Balón, pista..." value="${valRes}" oninput="app._boteReason=this.value" /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitMovBote()">Registrar en el bote</button><div class="section-title" style="margin-top:24px">Últimos movimientos del bote</div>`;
-    
-    const hList = this.generalTransactions.filter(t=>t.matchType===mt).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,8).map(t=>{
-      const rName = t.reason ? escapeHtml(t.reason) : 'Movimiento del bote';
-      const colCls = t.amount>0 ? 'pos' : 'neg';
-      return `<div class="ticket neutral"><div><div class="name">${rName}</div><div class="sub">${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div><div style="display:flex;align-items:center;gap:10px"><div class="amt mono ${colCls}">${fmt(t.amount)}</div><button class="icon-btn" onclick="event.stopPropagation();app.deleteGeneralTransaction('${t.id}')">${ICONS.trash}</button></div></div>`;
-    }).join('');
-    
-    html += hList ? hList : '<div class="empty-state">Sin movimientos</div>';
-    return html;
-  }
-  submitMovBote(){ const mt = this._boteMatchType ? this._boteMatchType : this.matchFilter; let amount = parseFloat(this._boteAmount); if(isNaN(amount)){ this.toast('Introduce importe'); return; } const cSign = this._boteSign ? this._boteSign : 'plus'; if(cSign==='minus') { amount = -Math.abs(amount); } else { amount = Math.abs(amount); } this.addGeneralTransaction(amount, mt, this._boteReason); this._boteAmount=''; this._boteReason=''; this.render(); }
-
-  renderEquipos(){
-    const mt = this.teamsMatchType; 
-    let players = this.getPlayersForMatch(mt);
-    if(this.teamsSearch) {
-      const q = this.teamsSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      players = players.filter(p=>{
-        const n = p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        return n.includes(q);
-      });
-    }
-    players = players.sort((a,b)=>a.name.localeCompare(b.name));
-    
-    const r = this.teamsResult; 
-    const required = this.requiredTeamSizes(mt); 
-    const count = this.teamsPresent.size; 
-    let sizeOk = false;
-    if(required.includes(count)) sizeOk = true;
-    
-    const missingPosition = this.presentWithoutPosition(); 
-    let ok = false;
-    if(sizeOk) { if(missingPosition.length === 0) ok = true; }
-
-    let html = `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app.teamsMatchType='F5';app.teamsPresent=new Set();app.teamsGuests=[];app.teamsResult=null;app.saveTeamsLocal();app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app.teamsMatchType='F7';app.teamsPresent=new Set();app.teamsGuests=[];app.teamsResult=null;app.saveTeamsLocal();app.render()">F7</button></div>`;
-    
-    const colCount = sizeOk ? 'var(--credit)' : 'var(--debt)';
-    html += `<label style="display:flex; justify-content:space-between; align-items:flex-end;">Jugadores presentes hoy <span class="mono" style="text-transform:none;font-weight:700;color:${colCount}">${count} / ${required.join(' o ')}</span></label>`;
-    
-    const tsVal = this.teamsSearch ? this.teamsSearch : '';
-    html += `<input type="search" id="teamsSearchInput" class="search-bar" placeholder="Buscar jugador para convocar..." value="${escapeHtml(tsVal)}" oninput="app.teamsSearch=this.value; app.render()" style="margin-bottom:8px;" />`;
-
-    let playersHtml = '<div class="empty-state">No hay jugadores que coincidan</div>';
-    if(players.length > 0) {
-      playersHtml = players.map(p=>{
-        const chk = this.teamsPresent.has(p.id) ? 'checked' : '';
-        const noPos = p.position ? '' : ' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>';
-        const sk = SKILL_LABEL[p.skill] ? SKILL_LABEL[p.skill] : 'Medio';
-        const st = STAMINA_LABEL[p.stamina] ? STAMINA_LABEL[p.stamina] : 'Medio';
-        return `<label><input type="checkbox" ${chk} onchange="app.togglePresent('${p.id}')" />${escapeHtml(p.name)}${noPos} <span class="lvl-badge" style="margin-left:auto">Niv:${sk} • Fis:${st}</span></label>`;
-      }).join('');
-    }
-    
-    let guestsHtml = '';
-    if(this.teamsGuests.length > 0) {
-      guestsHtml = this.teamsGuests.map(g=>{
-        const chk = this.teamsPresent.has(g.id) ? 'checked' : '';
-        const noPos = g.position ? '' : ' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>';
-        const sk = SKILL_LABEL[g.skill] ? SKILL_LABEL[g.skill] : 'Medio';
-        const st = STAMINA_LABEL[g.stamina] ? STAMINA_LABEL[g.stamina] : 'Medio';
-        return `<label><input type="checkbox" ${chk} onchange="app.togglePresent('${g.id}')" />${escapeHtml(g.name)} <span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Invitado</span>${noPos}<span class="lvl-badge" style="margin-left:auto">Niv:${sk} • Fis:${st}</span><button class="icon-btn" onclick="event.preventDefault();app.removeGuest('${g.id}')">${ICONS.trash}</button></label>`;
-      }).join('');
-    }
-
-    html += `<div class="checklist" style="margin-bottom:8px">${playersHtml}${guestsHtml}</div>`;
-    html += `<div class="field-row" style="margin-bottom:14px"><button class="btn btn-sm btn-outline" onclick="app.openModal('addGuest')">${ICONS.plus} Añadir invitado</button></div>`;
-    
-    if(!sizeOk) html += `<div class="empty-state" style="text-align:left;padding:8px 2px">Para generar equipos de ${mt} hacen falta exactamente ${required.join(' o ')} jugadores presentes.</div>`;
-    if(sizeOk) { if(missingPosition.length>0) html += `<div class="empty-state" style="text-align:left;padding:8px 2px;color:var(--debt)">Falta asignar posición a: ${missingPosition.map(p=>escapeHtml(p.name)).join(', ')}.</div>`; }
-    
-    let disBtn = '';
-    if(!ok) disBtn = 'disabled style="opacity:.45"';
-    html += `<div class="field-row"><button class="btn btn-primary" ${disBtn} onclick="app.generateTeams(true)">${ICONS.shuffle} Equilibrar</button><button class="btn btn-outline" ${disBtn} onclick="app.generateTeams(false)">Aleatorio</button></div>`;
-    
-    if(count > 0) html += `<button class="btn btn-block" style="margin-top:12px; background:var(--gold-soft); color:#8a5a12; border:1.5px solid var(--gold);" onclick="app.openModal('settleMatch')">💰 Liquidar Partido Automático</button>`;
-    
-    if(r) html += this.renderTeamsResult(r);
-    return html;
-  }
-
-  togglePresent(id){ if(this.teamsPresent.has(id)) { this.teamsPresent.delete(id); } else { this.teamsPresent.add(id); } this.saveTeamsLocal(); this.render(); }
-  removeGuest(id){ this.teamsGuests = this.teamsGuests.filter(g=>g.id!==id); this.teamsPresent.delete(id); this.saveTeamsLocal(); this.render(); }
-  submitGuest(){ const name = document.getElementById('guestName').value.trim(); if(!name){ this.toast('Falta nombre'); return; } const skill = document.querySelector('#guestSkillGroup .chip.active').dataset.val; const stamina = document.querySelector('#guestStaminaGroup .chip.active').dataset.val; const position = document.querySelector('#guestPosGroup .chip.active').dataset.val; const guest = { id:'guest_'+uid(), name:name, skill:skill, stamina:stamina, position:position, bilbaoKirolak: false }; this.teamsGuests.push(guest); this.teamsPresent.add(guest.id); this.saveTeamsLocal(); this.closeModal(); this.toast('Invitado añadido'); }
-  
-  renderTeamsResult(r){
-    const avg = list => list.length ? (list.reduce((s,p)=>s+p.weight,0)/list.length) : 0;
-    const avgRojo = avg(r.teamRojo);
-    const avgBlanco = avg(r.teamBlanco);
-    
-    const teamBlock = (team, label, list, average, accent) => {
-      let pList = '<div class="empty-state">Sin jugadores</div>';
-      if(list.length > 0) {
-        pList = list.map((p,i)=>{
-          let isSel = '';
-          if(this.teamsSwapSel) { if(this.teamsSwapSel.team===team) { if(this.teamsSwapSel.idx===i) isSel = 'selected'; } }
-          const bg = POSITION_COLOR[p.position] ? POSITION_COLOR[p.position] : '#8A8A8A';
-          const abbr = POSITION_ABBR[p.position] ? POSITION_ABBR[p.position] : '-';
-          return `<div class="team-player ${isSel}" onclick="app.swapTeamPlayer('${team}', ${i})"><span>${escapeHtml(p.name)} <span class="lvl-badge" style="background:${bg};color:#fff">${abbr}</span></span><span class="lvl-badge">★ ${p.weight}</span></div>`;
-        }).join('');
-      }
-      return `<div class="team-card" style="border-left:4px solid ${accent}"><h3><span>${label}</span><span class="mono" style="font-size:12px;color:var(--muted)">peso global ${average.toFixed(1)}</span></h3>${pList}</div>`;
-    };
-    
-    let html = `<div class="section-title" style="margin-top:22px">Equipos generados <span class="count">toca dos jugadores para intercambiarlos</span></div>`;
-    html += teamBlock('rojo', '🔴 Equipo Rojo', r.teamRojo, avgRojo, '#C3423F');
-    html += teamBlock('blanco', '🔵 Equipo Azul', r.teamBlanco, avgBlanco, '#1E3A8A');
-    html += `<div class="field-row" style="margin-top:6px"><button class="btn btn-sm btn-outline" onclick="app.exportTeamsImage()">${ICONS.download} Exportar imagen</button><button class="btn btn-sm btn-gold" onclick="app.shareTeams()">${ICONS.share} Compartir texto</button></div>`;
-    return html;
-  }
-
-  renderGithubSyncBox(){
-    if(!this.githubSync){ 
-      let ghO = ''; let ghR = '';
-      if(this.githubSync) { if(this.githubSync.owner) ghO = this.githubSync.owner; }
-      if(this.githubSync) { if(this.githubSync.repo) ghR = this.githubSync.repo; }
-      return `<div class="ticket neutral" style="cursor:default;display:block"><div style="font-size:13px;line-height:1.5;margin-bottom:10px">Guarda los datos en tu repo de GitHub para que se sincronicen automáticamente entre el móvil, el ordenador, etc. Necesitas un <b>token de acceso personal</b> con permiso de escritura sobre ese repo.</div><label>Usuario u organización</label><input type="text" id="ghOwner" placeholder="ividat84" value="${ghO}" /><label>Repositorio</label><input type="text" id="ghRepo" placeholder="CuentasFutbito" value="${ghR}" /><label>Archivo dentro del repo</label><input type="text" id="ghPath" placeholder="futbol-cuentas-backup.json" value="futbol-cuentas-backup.json" /><label>Rama</label><input type="text" id="ghBranch" placeholder="main" value="main" /><label>Token de acceso personal</label><input type="password" id="ghToken" placeholder="github_pat_..." /><button class="btn btn-primary btn-block" style="margin-top:14px" onclick="app.submitGithubConfig()">Guardar y sincronizar</button></div>`; 
-    }
-    const s = this.githubSyncStatus; 
-    let pending = false;
-    if(s) { if(!s.ok) pending = true; } else { pending = true; }
-    
-    let cloudLine = 'Sincronizando…';
-    if(s) cloudLine = s.ok ? `✅ Sincronizado con la nube ${timeAgo(s.at)}` : `⚠️ Sin sincronizar: ${escapeHtml(s.error)} (${timeAgo(s.at)})`;
-    
-    const bName = this.githubSync.branch ? this.githubSync.branch : 'main';
-    const pdCls = pending ? 'debt' : 'credit';
-    let html = `<div class="ticket ${pdCls}" style="cursor:default;display:block"><div class="name">${escapeHtml(this.githubSync.owner)}/${escapeHtml(this.githubSync.repo)}</div><div class="sub">${escapeHtml(this.githubSync.path)} · rama ${escapeHtml(bName)}</div><div class="sub" style="margin-top:8px">📱 Guardado en este dispositivo</div><div class="sub">${cloudLine}</div>`;
-    if(pending) html += `<div class="sub" style="margin-top:4px;color:var(--muted)">Tus últimos cambios están a salvo en el móvil. En cuanto haya conexión con GitHub se subirán solos, o pulsa "Reintentar" para forzarlo ahora.</div>`;
-    html += `</div><div class="field-row" style="margin-top:8px"><button class="btn btn-outline" onclick="app.pullFromGithub(false)">Descargar de la nube</button>`;
-    if(pending) html += `<button class="btn btn-primary" onclick="app.pushToGithub()">Reintentar subida</button>`;
-    html += `</div><button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.clearGithubConfig()">Desconectar</button>`;
-    return html;
-  }
-  submitGithubConfig(){ const owner = document.getElementById('ghOwner').value.trim(); const repo = document.getElementById('ghRepo').value.trim(); const path = document.getElementById('ghPath').value.trim() ? document.getElementById('ghPath').value.trim() : 'futbol-cuentas-backup.json'; const branch = document.getElementById('ghBranch').value.trim() ? document.getElementById('ghBranch').value.trim() : 'main'; const token = document.getElementById('ghToken').value.trim(); if(!owner){ this.toast('Rellena usuario, repositorio y token'); return; } if(!repo){ this.toast('Rellena usuario, repositorio y token'); return; } if(!token){ this.toast('Rellena usuario, repositorio y token'); return; } this.saveGithubConfig({owner:owner, repo:repo, path:path, branch:branch, token:token, sha:null}); this.render(); this.pullFromGithub(false); }
-
-  renderAjustes(){
-    return `<div class="section-title">Sincronización con GitHub</div>${this.renderGithubSyncBox()}<div class="section-title" style="margin-top:24px">Copia de seguridad manual</div><div class="field-row"><button class="btn btn-sm btn-outline" onclick="app.exportBackup()">${ICONS.download} Exportar JSON</button><input type="file" id="importFile" accept="application/json" style="display:none" onchange="app.importBackup(this.files[0])" /><button class="btn btn-sm btn-outline" onclick="document.getElementById('importFile').click()">${ICONS.upload} Importar JSON</button></div><div class="section-title" style="margin-top:24px">Historial de movimientos</div>${this.renderHistorial()}<div class="section-title" style="margin-top:24px">Instalar como app</div><div class="ticket neutral" style="cursor:default"><div style="font-size:13px;line-height:1.5">En Chrome (Android) pulsa el menú ⋮ y elige <b>"Instalar app"</b> o <b>"Añadir a pantalla de inicio"</b>.</div></div>`;
-  }
-
-  renderHistorial(){
-    const mappedTx = this.transactions.map(t=>{
-       t.kind = 'jugador';
-       return t;
-    });
-    const mappedGen = this.generalTransactions.map(t=>{
-       t.kind = 'bote';
-       return t;
-    });
-    let all = [...mappedTx, ...mappedGen];
-    
-    if(this.histMatchFilter) all = all.filter(t=>t.matchType===this.histMatchFilter);
-    if(this.histSearch){ 
-      const q = this.histSearch.toLowerCase(); 
-      all = all.filter(t=>{ 
-        const plIds = t.playerIds ? t.playerIds : [];
-        const names = plIds.map(id=>{ const p=this.players.find(x=>x.id===id); return p?p.name:''; }).join(' ').toLowerCase(); 
-        const resText = t.reason ? t.reason : '';
-        if(names.includes(q)) return true;
-        if(resText.toLowerCase().includes(q)) return true;
-        return false;
-      }); 
-    }
-    all.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-    const totalItems = all.length; all = all.slice(0, this.histLimit);
-    
-    const fAll = this.histMatchFilter==='' ? 'active' : '';
-    const fF5 = this.histMatchFilter==='F5' ? 'active' : '';
-    const fF7 = this.histMatchFilter==='F7' ? 'active' : '';
-    
-    let html = `<input type="search" class="search-bar" placeholder="Buscar en historial..." value="${escapeHtml(this.histSearch)}" oninput="app.histSearch=this.value;app.histLimit=40;app.render()" /><div class="filter-bar"><button class="chip ${fAll}" onclick="app.histMatchFilter='';app.histLimit=40;app.render()">Todos</button><button class="chip ${fF5}" onclick="app.histMatchFilter='F5';app.histLimit=40;app.render()">F5</button><button class="chip ${fF7}" onclick="app.histMatchFilter='F7';app.histLimit=40;app.render()">F7</button></div>`;
-    
-    const tList = all.map(t=>{ 
-      let names = 'Bote general';
-      if(t.kind==='jugador'){
-        const plIds = t.playerIds ? t.playerIds : [];
-        names = plIds.map(id=>{ const p=this.players.find(x=>x.id===id); return p?p.name:'(borrado)'; }).join(', ');
-      }
-      const kindCls = t.amount>0 ? 'credit' : 'debt';
-      const colCls = t.amount>0 ? 'pos' : 'neg';
-      const reasonTxt = t.reason ? escapeHtml(t.reason) : 'sin motivo';
-      const actionFn = t.kind==='jugador' ? 'deleteTransaction' : 'deleteGeneralTransaction';
-      return `<div class="ticket ${kindCls}"><div><div class="name">${escapeHtml(names)}</div><div class="sub">${t.matchType} · ${reasonTxt} · ${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div><div style="display:flex;align-items:center;gap:8px"><div class="amt mono ${colCls}">${fmt(t.amount)}</div><button class="icon-btn" onclick="app.${actionFn}('${t.id}')">${ICONS.trash}</button></div></div>`; 
-    }).join('');
-    
-    html += tList ? tList : '<div class="empty-state">Sin movimientos</div>';
-    if(this.histLimit < totalItems){
-      html += `<button class="btn btn-outline btn-block" style="margin-top:16px" onclick="app.histLimit += 40; app.render()">Cargar más (${totalItems - this.histLimit} restantes)</button>`;
-    }
-    return html;
-  }
-
-  renderFab(){ if(this.page==='resumen') return `<button class="fab" onclick="app.setPage('movimientos')">${ICONS.plus}</button>`; if(this.page==='jugadores') return `<button class="fab" onclick="app.openModal('addPlayer')">${ICONS.plus}</button>`; return ''; }
-  renderBottomNav(){ 
-    const tabs = [ {id:'resumen', label:'Resumen', icon:ICONS.home}, {id:'jugadores', label:'Jugadores', icon:ICONS.users}, {id:'movimientos', label:'Movim.', icon:ICONS.euro}, {id:'equipos', label:'Equipos', icon:ICONS.shirts}, {id:'ajustes', label:'Ajustes', icon:ICONS.gear}, ]; 
-    const tList = tabs.map(t=>{
-      const act = this.page===t.id ? 'active' : '';
-      return `<button class="${act}" onclick="app.setPage('${t.id}')">${t.icon}<span class="tab-label">${t.label}</span></button>`;
-    }).join('');
-    return `<div class="bottom-nav">${tList}</div>`; 
-  }
-
-  renderModal(){
-    const type = this.modal.type;
-    const payload = this.modal.payload;
-    let body = '';
-    
-    let notFound = false;
-    if(type==='editPlayer') {
-       const pf = this.players.find(x=>x.id===payload.id);
-       if(!pf) notFound = true;
-    }
-    if(notFound){ this.modal = null; return ''; }
-    
-    if(type==='addPlayer') {
-       body = this.generatePlayerFormModal(null);
-    } else if(type==='editPlayer'){
-       const p = this.players.find(x=>x.id===payload.id);
-       body = this.generatePlayerFormModal(p);
-    } else if(type==='quickTx'){
-      const p = this.players.find(x=>x.id===payload.playerId); const bal = this.getPlayerBalance(p.id, payload.matchType);
-      const sPlus = this.qtxSign==='plus' ? 'active plus' : (this.qtxSign ? '' : 'active plus');
-      const sMin = this.qtxSign==='minus' ? 'active minus' : '';
-      body = `<h2>${escapeHtml(p.name)}</h2><div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:10px">Saldo actual ${payload.matchType}: <b class="mono">${fmt(bal)}</b></div><label>Importe</label><div class="sign-toggle"><button id="qtxPlus" class="${sPlus}" onclick="app.qtxSign='plus';app.render()">+ Abona</button><button id="qtxMinus" class="${sMin}" onclick="app.qtxSign='minus';app.render()">− Carga</button></div><input type="number" step="0.01" min="0" id="qtxAmount" placeholder="0.00" style="margin-top:8px" /><label>Motivo (opcional)</label><input type="text" id="qtxReason" placeholder="Partido, balón..." /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitQuickTx('${p.id}','${payload.matchType}')">Registrar</button>`;
-      if(bal < -0.001) body += `<button class="btn btn-outline btn-block" style="margin-top:12px; border-color:var(--credit); color:var(--credit);" onclick="app.settleDebt('${p.id}', '${payload.matchType}',${Math.abs(bal)})">✅ Saldar deuda exacta (${fmtPlain(Math.abs(bal))})</button>`;
-    } else if(type==='addGuest'){
-      const sHtml = Object.keys(SKILL_LABEL).map(s=>{ const act = s==='medio'?'active':''; return `<button class="chip ${act}" data-val="${s}" onclick="app.pickChip(this,'guestSkillGroup')">${SKILL_LABEL[s]}</button>`; }).join('');
-      const fHtml = Object.keys(STAMINA_LABEL).map(s=>{ const act = s==='medio'?'active':''; return `<button class="chip ${act}" data-val="${s}" onclick="app.pickChip(this,'guestStaminaGroup')">${STAMINA_LABEL[s]}</button>`; }).join('');
-      const pHtml = POSITIONS.map(pos=>`<button class="chip" data-val="${pos}" onclick="app.pickChip(this,'guestPosGroup')">${pos}</button>`).join('');
-      body = `<h2>Jugador invitado</h2><div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:6px">Solo se usa para generar los equipos de hoy.</div><label>Nombre</label><input type="text" id="guestName" placeholder="Nombre del invitado" /><label>Habilidad Técnica</label><div class="chip-group" id="guestSkillGroup">${sHtml}</div><label>Físico / Resistencia</label><div class="chip-group" id="guestStaminaGroup">${fHtml}</div><label>Posición</label><div class="chip-group" id="guestPosGroup"><button class="chip active" data-val="" onclick="app.pickChip(this,'guestPosGroup')">-</button>${pHtml}</div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitGuest()">Añadir a la lista de hoy</button>`;
-    } else if(type==='settleMatch'){
-      const mt = this.teamsMatchType; const quotaBK = parseFloat(this._smQuotaBK) ? parseFloat(this._smQuotaBK) : 0; const quotaNormal = parseFloat(this._smQuotaNormal) ? parseFloat(this._smQuotaNormal) : 0; const cost = parseFloat(this._smCost) ? parseFloat(this._smCost) : 0;
-      const presentPlayers = [];
-      Array.from(this.teamsPresent).forEach(id => {
-        const p = this.findPresentPerson(id);
-        if(p) presentPlayers.push(p);
-      });
-      
-      let countBK = 0; let countNormal = 0;
-      this._smSelected.forEach(id => { 
-        const p = this.findPresentPerson(id); 
-        if(p) { if(p.bilbaoKirolak) { countBK++; } else { countNormal++; } } 
-      });
-      
-      const collectedBK = countBK * quotaBK; const collectedNormal = countNormal * quotaNormal; const collectedTotal = collectedBK + collectedNormal; const surplus = collectedTotal - cost;
-      
-      let payerOptions = `<option value="bote" ${this._smPayer==='bote'?'selected':''}>Fondo común (Bote)</option>`;
-      const plSort = this.players.slice().sort((a,b)=>a.name.localeCompare(b.name));
-      payerOptions += plSort.map(p => {
-         const sel = this._smPayer===p.id ? 'selected' : '';
-         return `<option value="${p.id}" ${sel}>${escapeHtml(p.name)}</option>`;
-      }).join('');
-      
-      body = `<h2>Liquidar Partido ${mt}</h2><div class="sub" style="margin-bottom:12px; color:var(--muted); font-size:13px; line-height:1.4">Calcula y reparte de golpe la cuota a los jugadores, abona el coste de la pista y envía el sobrante al Bote.</div><div class="field-row"><div><label>Cuota (BK)</label><input type="number" step="0.10" min="0" value="${this._smQuotaBK}" oninput="app._smQuotaBK=this.value; app.render()" /></div><div><label>Cuota (Normal)</label><input type="number" step="0.10" min="0" value="${this._smQuotaNormal}" oninput="app._smQuotaNormal=this.value; app.render()" /></div></div><div class="field-row" style="margin-top:10px;"><div><label>Coste Pista</label><input type="number" step="0.05" min="0" value="${this._smCost}" oninput="app._smCost=this.value; app.render()" /></div><div><label>¿Quién pagó?</label><select onchange="app._smPayer=this.value; app.render()">${payerOptions}</select></div></div><div class="field-row" style="align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:5px"><label style="margin:0">Cobrar cuota a (${this._smSelected.size})</label><div style="display:flex; gap:6px;"><button class="icon-btn" style="color:var(--pitch); font-size:12px; font-weight:600; background:var(--turf-soft); padding:4px 10px; border-radius:12px; width:auto;" onclick="app.selectAllSmPlayers()">Todos</button><button class="icon-btn" style="color:var(--muted); font-size:12px; font-weight:600; background:var(--line); padding:4px 10px; border-radius:12px; width:auto;" onclick="app.clearSmPlayers()">Ninguno</button></div></div>`;
-      
-      const selList = presentPlayers.map(p=>{
-         const isSel = this._smSelected.has(p.id) ? 'checked' : '';
-         const bkBd = p.bilbaoKirolak ? '<span class="lvl-badge" style="background:var(--turf-soft);color:var(--pitch)">BK</span>' : '';
-         const gBd = String(p.id).startsWith('guest_') ? '<span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Invitado</span>' : '';
-         return `<label><input type="checkbox" ${isSel} onchange="app.toggleSmPlayer('${p.id}')" />${escapeHtml(p.name)} ${bkBd} ${gBd}</label>`;
-      }).join('');
-      body += `<div class="checklist" style="max-height:150px">${selList}</div>`;
-      
-      const surColor = surplus>=0 ? 'var(--credit)' : 'var(--debt)';
-      const surPlusSign = surplus>=0 ? '+' : '';
-      body += `<div class="ticket neutral" style="margin-top:16px; background:var(--chalk); border:1px dashed var(--muted); cursor:default"><div style="font-size:13px; color:var(--ink); width:100%">Recaudación (${countBK} BK + ${countNormal} Norm.): <b style="float:right">${fmtPlain(collectedTotal)}</b><br>Coste pista: <b style="float:right; color:var(--debt)">-${fmtPlain(cost)}</b><br><div style="border-top:1px solid var(--line); margin:6px 0 0 0; padding-top:6px; font-weight:600;">Sobrante al bote: <b style="float:right; color:${surColor}">${surPlusSign}${fmtPlain(surplus)}</b></div></div></div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitSettleMatch()">Confirmar y Liquidar</button>`;
-    }
-    return `<div class="sheet-backdrop" onclick="if(event.target===this) app.closeModal()"><div class="sheet"><div class="sheet-handle"></div><button class="close-x" onclick="app.closeModal()">✕</button>${body}</div></div>`;
-  }
-  
-  generatePlayerFormModal(p){
-    let isF5 = ''; let isF7 = ''; let isF57 = '';
-    if(p) {
-       if(p.type==='F5') isF5 = 'active';
-       if(p.type==='F7') isF7 = 'active';
-       if(p.type==='F5/F7') isF57 = 'active';
-    } else {
-       isF57 = 'active';
-    }
-    
-    let typeHtml = `<button class="chip ${isF5}" data-val="F5" onclick="app.pickChip(this,'pTypeGroup')">F5</button>`;
-    typeHtml += `<button class="chip ${isF7}" data-val="F7" onclick="app.pickChip(this,'pTypeGroup')">F7</button>`;
-    typeHtml += `<button class="chip ${isF57}" data-val="F5/F7" onclick="app.pickChip(this,'pTypeGroup')">F5/F7</button>`;
-
-    const pTitle = p ? 'Editar jugador' : 'Nuevo jugador';
-    const pName = p ? escapeHtml(p.name) : '';
-    
-    const skHtml = Object.keys(SKILL_LABEL).map(s=>{
-       let act = '';
-       if(p) { if(p.skill===s) act = 'active'; } else { if(s==='medio') act = 'active'; }
-       return `<button class="chip ${act}" data-val="${s}" onclick="app.pickChip(this,'pSkillGroup')">${SKILL_LABEL[s]}</button>`;
-    }).join('');
-    
-    const stHtml = Object.keys(STAMINA_LABEL).map(s=>{
-       let act = '';
-       if(p) { if(p.stamina===s) act = 'active'; } else { if(s==='medio') act = 'active'; }
-       return `<button class="chip ${act}" data-val="${s}" onclick="app.pickChip(this,'pStaminaGroup')">${STAMINA_LABEL[s]}</button>`;
-    }).join('');
-    
-    const posNullAct = p ? (p.position ? '' : 'active') : 'active';
-    let posHtml = `<button class="chip ${posNullAct}" data-val="" onclick="app.pickChip(this,'pPosGroup')">-</button>`;
-    posHtml += POSITIONS.map(pos=>{
-       const act = p ? (p.position===pos ? 'active' : '') : '';
-       return `<button class="chip ${act}" data-val="${pos}" onclick="app.pickChip(this,'pPosGroup')">${pos}</button>`;
-    }).join('');
-    
-    const bkYes = p ? (p.bilbaoKirolak ? 'active' : '') : '';
-    const bkNo = p ? (p.bilbaoKirolak ? '' : 'active') : 'active';
-    
-    const regYes = p ? (p.isRegular ? 'active' : '') : 'active';
-    const regNo = p ? (p.isRegular ? '' : 'active') : '';
-
-    let body = `<h2>${pTitle}</h2><label>Nombre</label><input type="text" id="pName" value="${pName}" placeholder="Nombre y apellido" /><label>Tipo</label><div class="chip-group" id="pTypeGroup">${typeHtml}</div><label>Habilidad Técnica</label><div class="chip-group" id="pSkillGroup">${skHtml}</div><label>Físico / Resistencia</label><div class="chip-group" id="pStaminaGroup">${stHtml}</div><label>Posición</label><div class="chip-group" id="pPosGroup">${posHtml}</div><label>Abonado Bilbao Kirolak</label><div class="chip-group" id="pBKGroup"><button class="chip ${bkYes}" data-val="true" onclick="app.pickChip(this,'pBKGroup')">Sí</button><button class="chip ${bkNo}" data-val="false" onclick="app.pickChip(this,'pBKGroup')">No</button></div><label>Habitual</label><div class="chip-group" id="pRegGroup"><button class="chip ${regYes}" data-val="true" onclick="app.pickChip(this,'pRegGroup')">Sí</button><button class="chip ${regNo}" data-val="false" onclick="app.pickChip(this,'pRegGroup')">Esporádico</button></div>`;
-    
-    const idStr = p ? `'${p.id}'` : 'null';
-    body += `<button class="btn btn-primary btn-block" style="margin-top:18px" onclick="app.savePlayerForm(${idStr})">Guardar</button>`;
-    if(p) body += `<button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.deletePlayer('${p.id}')">Eliminar jugador</button>`;
-    return body;
-  }
-
-  pickChip(btn, groupId){ document.getElementById(groupId).querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); }
-  savePlayerForm(id){
-    const name = document.getElementById('pName').value.trim(); if(!name){ this.toast('Falta nombre'); return; }
-    const type = document.querySelector('#pTypeGroup .chip.active').dataset.val;
-    const skill = document.querySelector('#pSkillGroup .chip.active').dataset.val;
-    const stamina = document.querySelector('#pStaminaGroup .chip.active').dataset.val;
-    const position = document.querySelector('#pPosGroup .chip.active').dataset.val;
-    const isRegular = document.querySelector('#pRegGroup .chip.active').dataset.val === 'true';
-    const bilbaoKirolak = document.querySelector('#pBKGroup .chip.active').dataset.val === 'true';
-    const data = {name:name, type:type, skill:skill, stamina:stamina, position:position, isRegular:isRegular, bilbaoKirolak:bilbaoKirolak};
-    if(id) { this.updatePlayer(id, data); } else { this.addPlayer(data); }
-  }
-  submitQuickTx(playerId, matchType){
-    let amount = parseFloat(document.getElementById('qtxAmount').value); if(isNaN(amount)){ this.toast('Introduce importe'); return; }
-    const cSign = this.qtxSign ? this.qtxSign : 'plus';
-    if(cSign==='minus') { amount = -Math.abs(amount); } else { amount = Math.abs(amount); }
-    const reason = document.getElementById('qtxReason').value; this.qtxSign = null; this.addTransaction([playerId], amount, matchType, reason);
-  }
-  toggleSmPlayer(id){ if(this._smSelected.has(id)) { this._smSelected.delete(id); } else { this._smSelected.add(id); } this.render(); }
-  selectAllSmPlayers(){ this._smSelected = new Set(); this.teamsPresent.forEach(id => { this._smSelected.add(id); }); this.render(); }
-  clearSmPlayers(){ this._smSelected = new Set(); this.render(); }
-  
-  submitSettleMatch(){
-    const mt = this.teamsMatchType; const quotaBK = parseFloat(this._smQuotaBK) ? parseFloat(this._smQuotaBK) : 0; const quotaNormal = parseFloat(this._smQuotaNormal) ? parseFloat(this._smQuotaNormal) : 0; const cost = parseFloat(this._smCost) ? parseFloat(this._smCost) : 0;
-    const playerIds = Array.from(this._smSelected);
-    let collectedTotal = 0; const idsBK = []; const idsNormal = [];
-    playerIds.forEach(id => {
-      const p = this.findPresentPerson(id);
-      if(p) {
-        if(p.bilbaoKirolak) { collectedTotal += quotaBK; if(!String(id).startsWith('guest_')) idsBK.push(id); } 
-        else { collectedTotal += quotaNormal; if(!String(id).startsWith('guest_')) idsNormal.push(id); }
-      }
-    });
-    const surplus = collectedTotal - cost;
-    if(playerIds.length === 0) { if(surplus === 0) { if(cost === 0) { this.toast('Nada que liquidar'); return; } } }
-    const now = new Date().toISOString();
-    if(idsBK.length > 0) { if(quotaBK > 0) this.transactions.push({ id:uid(), playerIds: idsBK, amount: -Math.abs(quotaBK), matchType: mt, reason: 'Cuota partido (BK)', createdAt: now }); }
-    if(idsNormal.length > 0) { if(quotaNormal > 0) this.transactions.push({ id:uid(), playerIds: idsNormal, amount: -Math.abs(quotaNormal), matchType: mt, reason: 'Cuota partido (Normal)', createdAt: now }); }
-    if(this._smPayer) { if(this._smPayer !== 'bote') { if(cost > 0) this.transactions.push({ id:uid(), playerIds: [this._smPayer], amount: Math.abs(cost), matchType: mt, reason: 'Pago pista adelantado', createdAt: now }); } }
-    if(surplus !== 0){ this.generalTransactions.push({ id:uid(), amount: surplus, matchType: mt, reason: 'Sobrante partido', createdAt: now }); }
-    this.save(); this.closeModal(); this.toast('Liquidado automáticamente');
-  }
-}
-
-let app;
-window.addEventListener('DOMContentLoaded', ()=>{ app = new App(); window.app = app; document.body.addEventListener('click', (e)=>{ if(e.target.closest('.fab')) return; if(e.target.closest('.bottom-nav')) return; }); });
-document.addEventListener('click', function(e){ const t = e.target.closest('[data-open-add-player]'); if(t) app.openModal('addPlayer'); });
-if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
-window.addEventListener('online', ()=>{ 
-   if(window.app) {
-      if(app.githubSync) {
-         if(app.githubSyncStatus) {
-            if(!app.githubSyncStatus.ok) app.pushToGithub();
-         }
-      }
-   }
-});
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === 'hidden') { if(window.app) window.app.saveTeamsLocal(); } });
-window.addEventListener("beforeunload", () => { if (window.app) window.app.saveTeamsLocal(); });
-</script>
-</body>
-</html>
+    credit.sort((a,b)=>a.p
