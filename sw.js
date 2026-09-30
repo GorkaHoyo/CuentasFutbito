@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cuentas-futbol-v3';
+const CACHE_NAME = 'cuentas-futbol-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -7,12 +7,29 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', e => {
+  // Obliga al navegador a instalar esta nueva versión inmediatamente
+  self.skipWaiting(); 
   e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
 });
 
+self.addEventListener('activate', e => {
+  // Borra la caché vieja para que no queden restos
+  e.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+      );
+    })
+  );
+  // Toma el control de la página al instante
+  self.clients.claim(); 
+});
+
 self.addEventListener('fetch', e => {
-  // Ignorar las peticiones que vengan de extensiones de Chrome
-  if (!e.request.url.startsWith('http')) return;
+  // Ignorar las peticiones de extensiones de Chrome para evitar el error
+  if (!e.request.url.startsWith('http')) {
+    return;
+  }
 
   e.respondWith(
     caches.match(e.request).then(response => {
@@ -23,7 +40,6 @@ self.addEventListener('fetch', e => {
         });
       });
     }).catch(() => {
-        // Fallback si no hay internet
         return caches.match('./index.html');
     })
   );
