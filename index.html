@@ -253,7 +253,7 @@ function uid(){ return Date.now().toString() + Math.floor(Math.random()*1000); }
 function fmt(n){ const v = Math.round((n + Number.EPSILON) * 100) / 100; return (v > 0 ? '+' : '') + v.toFixed(2) + '€'; }
 function fmtPlain(n){ return (Math.round((n+Number.EPSILON)*100)/100).toFixed(2) + '€'; }
 function todayStr(){ return new Date().toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); }
-function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeHtml(s){ return (s ? s : '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function b64EncodeUnicode(str){ return btoa(unescape(encodeURIComponent(str))); }
 function b64DecodeUnicode(str){ return decodeURIComponent(escape(atob(str.replace(/\n/g,'')))); }
 function timeAgo(date){
@@ -279,23 +279,39 @@ class App{
     this.histMatchFilter = '';
     this.histLimit = 40;
     this.movTab = 'jugador';
-    this.githubSync = JSON.parse(localStorage.getItem('githubSyncConfig') || 'null');
+    
+    let ghConfig = null;
+    try { ghConfig = JSON.parse(localStorage.getItem('githubSyncConfig')); } catch(e) {}
+    this.githubSync = ghConfig ? ghConfig : null;
     this.githubSyncStatus = null;
     this._pushTimer = null;
+    
     this.load();
     this.render();
     if(this.githubSync) this.pullFromGithub(true);
   }
 
   load(){
-    this.players = JSON.parse(localStorage.getItem('football-players') || '[]');
-    this.transactions = JSON.parse(localStorage.getItem('football-transactions') || '[]');
-    this.generalTransactions = JSON.parse(localStorage.getItem('football-general-transactions') || '[]');
+    try { this.players = JSON.parse(localStorage.getItem('football-players')); } catch(e) {}
+    if(!this.players) this.players = [];
     
-    this.teamsMatchType = localStorage.getItem('football-teams-match') || 'F5';
-    this.teamsPresent = new Set(JSON.parse(localStorage.getItem('football-teams-present') || '[]'));
-    this.teamsGuests = JSON.parse(localStorage.getItem('football-teams-guests') || '[]');
-    this.teamsResult = JSON.parse(localStorage.getItem('football-teams-result') || 'null');
+    try { this.transactions = JSON.parse(localStorage.getItem('football-transactions')); } catch(e) {}
+    if(!this.transactions) this.transactions = [];
+    
+    try { this.generalTransactions = JSON.parse(localStorage.getItem('football-general-transactions')); } catch(e) {}
+    if(!this.generalTransactions) this.generalTransactions = [];
+    
+    const mt = localStorage.getItem('football-teams-match');
+    this.teamsMatchType = mt ? mt : 'F5';
+    
+    try { this.teamsPresent = new Set(JSON.parse(localStorage.getItem('football-teams-present'))); } catch(e) {}
+    if(!this.teamsPresent) this.teamsPresent = new Set();
+    
+    try { this.teamsGuests = JSON.parse(localStorage.getItem('football-teams-guests')); } catch(e) {}
+    if(!this.teamsGuests) this.teamsGuests = [];
+    
+    try { this.teamsResult = JSON.parse(localStorage.getItem('football-teams-result')); } catch(e) {}
+    
     this.teamsSwapSel = null;
   }
 
@@ -335,9 +351,10 @@ class App{
   }
   async pullFromGithub(silent){
     if(!this.githubSync) return;
-    const {branch, token} = this.githubSync;
+    const branch = this.githubSync.branch ? this.githubSync.branch : 'main';
+    const token = this.githubSync.token;
     try{
-      const res = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch||'main')}`, {
+      const res = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}`, {
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
       });
       if(res.status === 404){
@@ -352,9 +369,9 @@ class App{
       this.githubSync.sha = data.sha;
       this.saveGithubConfig(this.githubSync);
       const json = JSON.parse(b64DecodeUnicode(data.content));
-      this.players = json.players || [];
-      this.transactions = json.transactions || [];
-      this.generalTransactions = json.generalTransactions || [];
+      this.players = json.players ? json.players : [];
+      this.transactions = json.transactions ? json.transactions : [];
+      this.generalTransactions = json.generalTransactions ? json.generalTransactions : [];
       this.save();
       this.githubSyncStatus = {ok:true, at:new Date()};
       if(!silent) this.toast('Sincronizado con GitHub');
@@ -367,19 +384,20 @@ class App{
   }
   async pushToGithub(){
     if(!this.githubSync) return;
-    const {branch, token} = this.githubSync;
+    const branch = this.githubSync.branch ? this.githubSync.branch : 'main';
+    const token = this.githubSync.token;
     const payload = { players:this.players, transactions:this.transactions, generalTransactions:this.generalTransactions, footballs:[], exportDate:new Date().toISOString(), version:'2.0' };
     const body = {
       message: 'Actualización app',
       content: b64EncodeUnicode(JSON.stringify(payload, null, 2)),
-      branch: branch || 'main',
+      branch: branch,
     };
     if(this.githubSync.sha) body.sha = this.githubSync.sha;
     const headers = { Authorization: `Bearer ${token}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' };
     try{
       let res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) });
       if(res.status === 409){
-        const fresh = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch||'main')}`, { headers });
+        const fresh = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}`, { headers });
         if(fresh.ok){ const fd = await fresh.json(); body.sha = fd.sha; }
         res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) });
       }
@@ -438,10 +456,14 @@ class App{
   }
 
   addPlayer(data){
+    const pSkill = data.skill ? data.skill : 'medio';
+    const pStamina = data.stamina ? data.stamina : 'medio';
+    const pPos = data.position ? data.position : '';
+    const pBK = data.bilbaoKirolak ? data.bilbaoKirolak : false;
     this.players.push({ 
       id:uid(), name:data.name.trim(), type:data.type, isRegular:data.isRegular, 
-      skill:data.skill||'medio', stamina:data.stamina||'medio', position:data.position||'', 
-      bilbaoKirolak:data.bilbaoKirolak || false, createdAt:new Date().toISOString() 
+      skill:pSkill, stamina:pStamina, position:pPos, 
+      bilbaoKirolak:pBK, createdAt:new Date().toISOString() 
     });
     this.save(); this.closeModal(); this.toast('Jugador añadido');
   }
@@ -462,7 +484,8 @@ class App{
 
   addTransaction(playerIds, amount, matchType, reason){
     if(playerIds.length===0 || !amount) { this.toast('Falta jugador o importe'); return; }
-    this.transactions.push({ id:uid(), playerIds, amount:parseFloat(amount), matchType, reason:reason||'', createdAt:new Date().toISOString() });
+    const res = reason ? reason : '';
+    this.transactions.push({ id:uid(), playerIds, amount:parseFloat(amount), matchType, reason:res, createdAt:new Date().toISOString() });
     this.save(); this.closeModal(); this.toast('Movimiento registrado');
   }
   updateTransaction(id, data){
@@ -477,7 +500,8 @@ class App{
   }
   addGeneralTransaction(amount, matchType, reason){
     if(!amount){ this.toast('Falta el importe'); return; }
-    this.generalTransactions.push({ id:uid(), amount:parseFloat(amount), matchType, reason:reason||'', createdAt:new Date().toISOString() });
+    const res = reason ? reason : '';
+    this.generalTransactions.push({ id:uid(), amount:parseFloat(amount), matchType, reason:res, createdAt:new Date().toISOString() });
     this.save(); this.closeModal(); this.toast('Movimiento del bote registrado');
   }
   deleteGeneralTransaction(id){
@@ -504,9 +528,9 @@ class App{
       try{
         const data = JSON.parse(e.target.result);
         if(!confirm('Esto reemplazará todos los datos actuales. ¿Continuar?')) return;
-        this.players = data.players || [];
-        this.transactions = data.transactions || [];
-        this.generalTransactions = data.generalTransactions || [];
+        this.players = data.players ? data.players : [];
+        this.transactions = data.transactions ? data.transactions : [];
+        this.generalTransactions = data.generalTransactions ? data.generalTransactions : [];
         this.save(); this.render(); this.toast('Datos importados');
       }catch(err){ alert('El archivo no es un backup válido.'); }
     };
@@ -514,7 +538,11 @@ class App{
   }
 
   requiredTeamSizes(matchType){ return matchType === 'F5' ? [10,12] : [14, 16]; }
-  findPresentPerson(id){ return this.players.find(x=>x.id===id) || this.teamsGuests.find(x=>x.id===id); }
+  findPresentPerson(id){ 
+    const fp = this.players.find(x=>x.id===id);
+    if(fp) return fp;
+    return this.teamsGuests.find(x=>x.id===id);
+  }
   presentWithoutPosition(){ return Array.from(this.teamsPresent).map(id=>this.findPresentPerson(id)).filter(p=>p && !p.position); }
   
   generateTeams(balanced){
@@ -530,13 +558,19 @@ class App{
     let pool = ids.map(id=>{
       const p = this.findPresentPerson(id);
       if(!p) return null;
-      return { id:p.id, name:p.name, weight: (SKILL_WEIGHT[p.skill] || 3) + (STAMINA_WEIGHT[p.stamina] || 2), position:p.position||'sin posición' };
+      const wSkill = SKILL_WEIGHT[p.skill] ? SKILL_WEIGHT[p.skill] : 3;
+      const wStamina = STAMINA_WEIGHT[p.stamina] ? STAMINA_WEIGHT[p.stamina] : 2;
+      const pPos = p.position ? p.position : 'sin posición';
+      return { id:p.id, name:p.name, weight: wSkill + wStamina, position:pPos };
     }).filter(Boolean);
     
     const teamRojo=[], teamBlanco=[]; let sumRojo=0, sumBlanco=0;
     if(balanced){
       const byPos = {};
-      pool.forEach(p=>{ (byPos[p.position] = byPos[p.position] || []).push(p); });
+      pool.forEach(p=>{ 
+        if(!byPos[p.position]) byPos[p.position] = [];
+        byPos[p.position].push(p); 
+      });
       Object.values(byPos).forEach(group=>{
         group.sort(()=>Math.random()-0.5);
         group.sort((a,b)=>b.weight-a.weight);
@@ -558,7 +592,11 @@ class App{
   }
   sortByPosition(list){
     const order = { portero:0, defensa:1, medio:2, delantero:3, 'sin posición':4 };
-    list.sort((a,b)=> (order[a.position] ?? 4) - (order[b.position] ?? 4));
+    list.sort((a,b)=> {
+      const valA = order[a.position] !== undefined ? order[a.position] : 4;
+      const valB = order[b.position] !== undefined ? order[b.position] : 4;
+      return valA - valB;
+    });
     return list;
   }
   swapTeamPlayer(team, idx){
@@ -641,7 +679,9 @@ class App{
     drawList('Con crédito', '#2D8659', credit, creditAlloc, 22, 30, 3, 13, 13); y += 12;
     ctx.fillStyle = '#FFFFFF'; ctx.fillRect(PAD, y, W-PAD*2, 34);
     ctx.fillStyle = '#9AA69E'; ctx.fillRect(PAD, y, 4, 34);
-    ctx.font = '600 14px Oswald'; ctx.fillStyle = '#4B5750'; ctx.fillText(`✅  ${neutral.length} jugador${neutral.length===1?'':'es'} al día`, PAD+14, y+22);
+    ctx.font = '600 14px Oswald'; ctx.fillStyle = '#4B5750'; 
+    const playerTxt = neutral.length === 1 ? 'jugador' : 'jugadores';
+    ctx.fillText(`✅  ${neutral.length} ${playerTxt} al día`, PAD+14, y+22);
     canvas.toBlob((blob)=>{
       const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `cuentas-${matchType}.png`; a.click(); URL.revokeObjectURL(url);
     }, 'image/png');
@@ -652,7 +692,7 @@ class App{
     let txt = `⚽ EQUIPOS ${this.teamsMatchType}\n\n🔴 Equipo Rojo\n` + r.teamRojo.map(p=>`- ${p.name}`).join('\n');
     txt += `\n\n🔵 Equipo Azul\n` + r.teamBlanco.map(p=>`- ${p.name}`).join('\n');
     if(navigator.share){ navigator.share({ text: txt }).catch(()=>{}); }
-    else { navigator.clipboard.writeText(txt).then(()=>this.toast('Copiado')); }
+    else { navigator.clipboard.writeText(txt).then(()=>{ this.toast('Copiado'); }); }
   }
 
   async exportTeamsImage(){
@@ -673,8 +713,10 @@ class App{
       ctx.textAlign = 'left';
       let ry = 96 + 56 + 12;
       list.forEach(p=>{
-        ctx.fillStyle = POSITION_COLOR[p.position] || '#8A8A8A'; ctx.fillRect(x+12, ry+(42-26)/2, 56, 26);
-        ctx.textAlign = 'center'; ctx.font = '700 12px Oswald'; ctx.fillStyle = '#FFFFFF'; ctx.fillText(POSITION_ABBR[p.position]||'-', x+12+28, ry+21+4);
+        const bcol = POSITION_COLOR[p.position] ? POSITION_COLOR[p.position] : '#8A8A8A';
+        const babbr = POSITION_ABBR[p.position] ? POSITION_ABBR[p.position] : '-';
+        ctx.fillStyle = bcol; ctx.fillRect(x+12, ry+(42-26)/2, 56, 26);
+        ctx.textAlign = 'center'; ctx.font = '700 12px Oswald'; ctx.fillStyle = '#FFFFFF'; ctx.fillText(babbr, x+12+28, ry+21+4);
         ctx.textAlign = 'left'; ctx.font = '600 16px -apple-system, sans-serif'; ctx.fillStyle = '#12241B';
         ctx.fillText(p.name.substring(0,16), x+12+56+12, ry+21+5);
         ry += 42;
@@ -697,7 +739,8 @@ class App{
       this._smSelected = new Set();
       this.teamsPresent.forEach(id => { if(!String(id).startsWith('guest_')) this._smSelected.add(id); });
     }
-    this.modal = {type, payload: payload || {}}; this.render(); 
+    const pl = payload ? payload : {};
+    this.modal = {type: type, payload: pl}; this.render(); 
   }
   closeModal(){ this.modal = null; this.render(); }
   setPage(p){ this.page = p; this.modal = null; this.pageAnim = true; this.render(); this.pageAnim = false; }
@@ -705,12 +748,22 @@ class App{
   render(){
     const el = document.getElementById('app');
     const prevContent = el.querySelector('.content'); const contentScroll = prevContent ? prevContent.scrollTop : 0;
-    el.innerHTML = `${this.renderTopbar()}<div class="content ${this.pageAnim ? 'animate-fade' : ''}">${this.renderPage()}</div>${this.renderFab()}${this.renderBottomNav()}${this.modal ? this.renderModal() : ''}${this.toastMsg ? `<div class="toast">${escapeHtml(this.toastMsg)}</div>` : ''}`;
+    
+    let inner = this.renderTopbar();
+    inner += `<div class="content ${this.pageAnim ? 'animate-fade' : ''}">${this.renderPage()}</div>`;
+    inner += this.renderFab();
+    inner += this.renderBottomNav();
+    if (this.modal) inner += this.renderModal();
+    if (this.toastMsg) inner += `<div class="toast">${escapeHtml(this.toastMsg)}</div>`;
+    el.innerHTML = inner;
+
     const newContent = el.querySelector('.content'); if(newContent) newContent.scrollTop = contentScroll;
   }
 
   renderTopbar(){
-    return `<div class="topbar"><div class="brand">${ICONS.ball}<div><h1>Cuentas F5·F7</h1><div class="date">${todayStr()}</div></div></div><div class="match-switch"><button class="${this.matchFilter==='F5'?'active':''}" onclick="app.matchFilter='F5';app.render()">F5</button><button class="${this.matchFilter==='F7'?'active':''}" onclick="app.matchFilter='F7';app.render()">F7</button></div></div>`;
+    const f5act = this.matchFilter === 'F5' ? 'active' : '';
+    const f7act = this.matchFilter === 'F7' ? 'active' : '';
+    return `<div class="topbar"><div class="brand">${ICONS.ball}<div><h1>Cuentas F5·F7</h1><div class="date">${todayStr()}</div></div></div><div class="match-switch"><button class="${f5act}" onclick="app.matchFilter='F5';app.render()">F5</button><button class="${f7act}" onclick="app.matchFilter='F7';app.render()">F7</button></div></div>`;
   }
   renderScoreboard(matchType){
     const bote = this.getTotalPot(matchType); const {credit, debt} = this.classify(matchType); const jugadores = [...credit, ...debt].reduce((s,x)=>s+x.b,0); const balance = bote + jugadores;
@@ -723,8 +776,21 @@ class App{
 
   renderResumen(){
     const mt = this.matchFilter; const {credit, neutral, debt} = this.classify(mt);
-    const row = (item, kind) => `<div class="ticket ${kind}" onclick="app.openModal('quickTx', {playerId:'${item.p.id}', matchType:'${mt}'})"><div><div class="name">${escapeHtml(item.p.name)}</div><div class="sub">${item.p.type}${item.p.isRegular?' · habitual':''}</div></div><div class="amt mono ${item.b>0?'pos':(item.b<0?'neg':'zero')}">${fmt(item.b)}</div></div>`;
-    return `${this.renderScoreboard(mt)}<button class="btn btn-sm btn-outline" onclick="app.exportSummaryImage('${mt}')">${ICONS.download} Exportar imagen</button><div class="section-title"><span class="dot" style="background:var(--credit)"></span>Con crédito<span class="count">${credit.length}</span></div>${credit.map(i=>row(i,'credit')).join('') || '<div class="empty-state">Nadie tiene crédito todavía</div>'}<div class="section-title"><span class="dot" style="background:var(--line)"></span>Al día<span class="count">${neutral.length}</span></div>${neutral.map(i=>row(i,'neutral')).join('') || '<div class="empty-state">—</div>'}<div class="section-title"><span class="dot" style="background:var(--debt)"></span>Con deuda<span class="count">${debt.length}</span></div>${debt.map(i=>row(i,'debt')).join('') || '<div class="empty-state">Nadie tiene deudas 🎉</div>'}`;
+    const row = (item, kind) => {
+      const regTxt = item.p.isRegular ? ' · habitual' : '';
+      const colorCls = item.b>0 ? 'pos' : (item.b<0 ? 'neg' : 'zero');
+      return `<div class="ticket ${kind}" onclick="app.openModal('quickTx', {playerId:'${item.p.id}', matchType:'${mt}'})"><div><div class="name">${escapeHtml(item.p.name)}</div><div class="sub">${item.p.type}${regTxt}</div></div><div class="amt mono ${colorCls}">${fmt(item.b)}</div></div>`;
+    };
+    
+    let html = this.renderScoreboard(mt);
+    html += `<button class="btn btn-sm btn-outline" onclick="app.exportSummaryImage('${mt}')">${ICONS.download} Exportar imagen</button>`;
+    html += `<div class="section-title"><span class="dot" style="background:var(--credit)"></span>Con crédito<span class="count">${credit.length}</span></div>`;
+    html += credit.length ? credit.map(i=>row(i,'credit')).join('') : '<div class="empty-state">Nadie tiene crédito todavía</div>';
+    html += `<div class="section-title"><span class="dot" style="background:var(--line)"></span>Al día<span class="count">${neutral.length}</span></div>`;
+    html += neutral.length ? neutral.map(i=>row(i,'neutral')).join('') : '<div class="empty-state">—</div>';
+    html += `<div class="section-title"><span class="dot" style="background:var(--debt)"></span>Con deuda<span class="count">${debt.length}</span></div>`;
+    html += debt.length ? debt.map(i=>row(i,'debt')).join('') : '<div class="empty-state">Nadie tiene deudas 🎉</div>';
+    return html;
   }
 
   renderJugadores(){
@@ -733,28 +799,76 @@ class App{
     if(this.jugFilterType) list = list.filter(p=> p.type===this.jugFilterType || p.type==='F5/F7');
     if(this.jugFilterRegular) list = list.filter(p=> String(p.isRegular)===this.jugFilterRegular);
     list.sort((a,b)=>a.name.localeCompare(b.name));
-    return `<input type="search" class="search-bar" placeholder="Buscar jugador..." value="${escapeHtml(this.jugSearch)}" oninput="app.jugSearch=this.value; app.render()" /><div class="filter-bar"><button class="chip ${this.jugFilterType===''?'active':''}" onclick="app.jugFilterType='';app.render()">Todos</button><button class="chip ${this.jugFilterType==='F5'?'active':''}" onclick="app.jugFilterType='F5';app.render()">F5</button><button class="chip ${this.jugFilterType==='F7'?'active':''}" onclick="app.jugFilterType='F7';app.render()">F7</button></div><div class="section-title">Jugadores<span class="count">${list.length}</span></div>${list.map(p=>{ const total = this.getPlayerTotalBalance(p.id); const bKLabel = p.bilbaoKirolak ? ' · Bilbao Kirolak' : ''; return `<div class="ticket neutral" onclick="app.openModal('editPlayer',{id:'${p.id}'})"><div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${p.type}${p.isRegular?' · habitual':' · esporádico'}${bKLabel}</div></div><div class="amt mono ${total>0?'pos':(total<0?'neg':'zero')}">${fmt(total)}</div></div>`; }).join('') || '<div class="empty-state">No hay jugadores.</div>'}`;
+    
+    let html = `<input type="search" class="search-bar" placeholder="Buscar jugador..." value="${escapeHtml(this.jugSearch)}" oninput="app.jugSearch=this.value; app.render()" />`;
+    html += `<div class="filter-bar"><button class="chip ${this.jugFilterType===''?'active':''}" onclick="app.jugFilterType='';app.render()">Todos</button><button class="chip ${this.jugFilterType==='F5'?'active':''}" onclick="app.jugFilterType='F5';app.render()">F5</button><button class="chip ${this.jugFilterType==='F7'?'active':''}" onclick="app.jugFilterType='F7';app.render()">F7</button></div>`;
+    html += `<div class="section-title">Jugadores<span class="count">${list.length}</span></div>`;
+    
+    const pList = list.map(p=>{ 
+      const total = this.getPlayerTotalBalance(p.id); 
+      const bKLabel = p.bilbaoKirolak ? ' · Bilbao Kirolak' : ''; 
+      const regTxt = p.isRegular ? ' · habitual' : ' · esporádico';
+      const colCls = total>0 ? 'pos' : (total<0 ? 'neg' : 'zero');
+      return `<div class="ticket neutral" onclick="app.openModal('editPlayer',{id:'${p.id}'})"><div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${p.type}${regTxt}${bKLabel}</div></div><div class="amt mono ${colCls}">${fmt(total)}</div></div>`; 
+    }).join('');
+    
+    html += pList ? pList : '<div class="empty-state">No hay jugadores.</div>';
+    return html;
   }
 
   renderMovimientos(){
-    return `<div class="subtabs"><button class="chip ${this.movTab==='jugador'?'active':''}" style="flex:1" onclick="app.movTab='jugador';app.render()">A jugadores</button><button class="chip ${this.movTab==='bote'?'active':''}" style="flex:1" onclick="app.movTab='bote';app.render()">Al bote</button></div>${this.movTab==='jugador' ? this.renderMovJugadorForm() : this.renderMovBoteForm()}`;
+    let html = `<div class="subtabs"><button class="chip ${this.movTab==='jugador'?'active':''}" style="flex:1" onclick="app.movTab='jugador';app.render()">A jugadores</button><button class="chip ${this.movTab==='bote'?'active':''}" style="flex:1" onclick="app.movTab='bote';app.render()">Al bote</button></div>`;
+    html += this.movTab==='jugador' ? this.renderMovJugadorForm() : this.renderMovBoteForm();
+    return html;
   }
   renderMovJugadorForm(){
-    const mt = this._movMatchType || this.matchFilter; const sign = this._movSign || 'plus'; const players = this.getPlayersForMatch(mt); const sel = this._movSelected || new Set();
-    return `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app._movMatchType='F5';app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app._movMatchType='F7';app.render()">F7</button></div><div class="field-row" style="align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:5px"><label style="margin:0">Jugadores</label><div style="display:flex; gap:6px;"><button class="icon-btn" style="color:var(--pitch); font-size:12px; font-weight:600; background:var(--turf-soft); padding:4px 10px; border-radius:12px; width:auto;" onclick="app.selectPresentPlayers()">Del partido de hoy</button><button class="icon-btn" style="color:var(--muted); font-size:12px; font-weight:600; background:var(--line); padding:4px 10px; border-radius:12px; width:auto;" onclick="app.clearMovPlayers()">Vaciar</button></div></div><div class="checklist">${players.map(p=>`<label><input type="checkbox" value="${p.id}" ${sel.has(p.id)?'checked':''} onchange="app.toggleMovPlayer('${p.id}')" />${escapeHtml(p.name)}</label>`).join('') || '<div class="empty-state">No hay jugadores</div>'}</div><label>Importe (por jugador)</label><div class="sign-toggle"><button class="${sign==='plus'?'active plus':''}" onclick="app._movSign='plus';app.render()">+ Abona</button><button class="${sign==='minus'?'active minus':''}" onclick="app._movSign='minus';app.render()">− Carga</button></div><input type="number" step="0.01" min="0" id="movAmount" placeholder="0.00" value="${this._movAmount||''}" oninput="app._movAmount=this.value" style="margin-top:8px" /><label>Motivo (opcional)</label><input type="text" id="movReason" placeholder="Partido, balón..." value="${this._movReason||''}" oninput="app._movReason=this.value" /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitMovJugador()">Registrar movimiento</button>`;
+    const mt = this._movMatchType ? this._movMatchType : this.matchFilter; 
+    const sign = this._movSign ? this._movSign : 'plus'; 
+    const players = this.getPlayersForMatch(mt); 
+    const sel = this._movSelected ? this._movSelected : new Set();
+    
+    let html = `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app._movMatchType='F5';app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app._movMatchType='F7';app.render()">F7</button></div><div class="field-row" style="align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:5px"><label style="margin:0">Jugadores</label><div style="display:flex; gap:6px;"><button class="icon-btn" style="color:var(--pitch); font-size:12px; font-weight:600; background:var(--turf-soft); padding:4px 10px; border-radius:12px; width:auto;" onclick="app.selectPresentPlayers()">Del partido de hoy</button><button class="icon-btn" style="color:var(--muted); font-size:12px; font-weight:600; background:var(--line); padding:4px 10px; border-radius:12px; width:auto;" onclick="app.clearMovPlayers()">Vaciar</button></div></div>`;
+    
+    const pList = players.map(p=>{
+      const chk = sel.has(p.id) ? 'checked' : '';
+      return `<label><input type="checkbox" value="${p.id}" ${chk} onchange="app.toggleMovPlayer('${p.id}')" />${escapeHtml(p.name)}</label>`;
+    }).join('');
+    
+    html += `<div class="checklist">${pList ? pList : '<div class="empty-state">No hay jugadores</div>'}</div>`;
+    html += `<label>Importe (por jugador)</label><div class="sign-toggle"><button class="${sign==='plus'?'active plus':''}" onclick="app._movSign='plus';app.render()">+ Abona</button><button class="${sign==='minus'?'active minus':''}" onclick="app._movSign='minus';app.render()">− Carga</button></div>`;
+    
+    const valAmt = this._movAmount ? this._movAmount : '';
+    const valRes = this._movReason ? this._movReason : '';
+    html += `<input type="number" step="0.01" min="0" id="movAmount" placeholder="0.00" value="${valAmt}" oninput="app._movAmount=this.value" style="margin-top:8px" /><label>Motivo (opcional)</label><input type="text" id="movReason" placeholder="Partido, balón..." value="${valRes}" oninput="app._movReason=this.value" /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitMovJugador()">Registrar movimiento</button>`;
+    return html;
   }
   toggleMovPlayer(id){ if(!this._movSelected) this._movSelected = new Set(); if(this._movSelected.has(id)) this._movSelected.delete(id); else this._movSelected.add(id); }
   clearMovPlayers(){ this._movSelected = new Set(); this.render(); }
   selectPresentPlayers(){ if(this.teamsPresent.size === 0){ this.toast('Ve a Equipos y marca quién juega hoy'); return; } if(!this._movSelected) this._movSelected = new Set(); this.teamsPresent.forEach(id => { if(!String(id).startsWith('guest_')) this._smSelected.add(id); }); this.render(); }
-  submitMovJugador(){ const mt = this._movMatchType || this.matchFilter; const sel = Array.from(this._movSelected || []); let amount = parseFloat(this._movAmount); if(isNaN(amount)){ this.toast('Introduce un importe'); return; } if((this._movSign||'plus')==='minus') amount = -Math.abs(amount); else amount = Math.abs(amount); this.addTransaction(sel, amount, mt, this._movReason); this._movSelected = new Set(); this._movAmount=''; this._movReason=''; this.render(); }
+  submitMovJugador(){ const mt = this._movMatchType ? this._movMatchType : this.matchFilter; const sel = Array.from(this._movSelected ? this._movSelected : []); let amount = parseFloat(this._movAmount); if(isNaN(amount)){ this.toast('Introduce un importe'); return; } const cSign = this._movSign ? this._movSign : 'plus'; if(cSign==='minus') amount = -Math.abs(amount); else amount = Math.abs(amount); this.addTransaction(sel, amount, mt, this._movReason); this._movSelected = new Set(); this._movAmount=''; this._movReason=''; this.render(); }
   
   renderMovBoteForm(){
-    const mt = this._boteMatchType || this.matchFilter; const sign = this._boteSign || 'plus';
-    return `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app._boteMatchType='F5';app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app._boteMatchType='F7';app.render()">F7</button></div><label>Importe</label><div class="sign-toggle"><button class="${sign==='plus'?'active plus':''}" onclick="app._boteSign='plus';app.render()">+ Ingreso</button><button class="${sign==='minus'?'active minus':''}" onclick="app._boteSign='minus';app.render()">− Gasto</button></div><input type="number" step="0.01" min="0" placeholder="0.00" value="${this._boteAmount||''}" oninput="app._boteAmount=this.value" style="margin-top:8px" /><label>Motivo (opcional)</label><input type="text" placeholder="Balón, pista..." value="${this._boteReason||''}" oninput="app._boteReason=this.value" /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitMovBote()">Registrar en el bote</button><div class="section-title" style="margin-top:24px">Últimos movimientos del bote</div>${this.generalTransactions.filter(t=>t.matchType===mt).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,8).map(t=>`<div class="ticket neutral"><div><div class="name">${escapeHtml(t.reason)||'Movimiento del bote'}</div><div class="sub">${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div><div style="display:flex;align-items:center;gap:10px"><div class="amt mono ${t.amount>0?'pos':'neg'}">${fmt(t.amount)}</div><button class="icon-btn" onclick="event.stopPropagation();app.deleteGeneralTransaction('${t.id}')">${ICONS.trash}</button></div></div>`).join('') || '<div class="empty-state">Sin movimientos</div>'}`;
+    const mt = this._boteMatchType ? this._boteMatchType : this.matchFilter; 
+    const sign = this._boteSign ? this._boteSign : 'plus';
+    
+    let html = `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app._boteMatchType='F5';app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app._boteMatchType='F7';app.render()">F7</button></div><label>Importe</label><div class="sign-toggle"><button class="${sign==='plus'?'active plus':''}" onclick="app._boteSign='plus';app.render()">+ Ingreso</button><button class="${sign==='minus'?'active minus':''}" onclick="app._boteSign='minus';app.render()">− Gasto</button></div>`;
+    
+    const valAmt = this._boteAmount ? this._boteAmount : '';
+    const valRes = this._boteReason ? this._boteReason : '';
+    html += `<input type="number" step="0.01" min="0" placeholder="0.00" value="${valAmt}" oninput="app._boteAmount=this.value" style="margin-top:8px" /><label>Motivo (opcional)</label><input type="text" placeholder="Balón, pista..." value="${valRes}" oninput="app._boteReason=this.value" /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitMovBote()">Registrar en el bote</button><div class="section-title" style="margin-top:24px">Últimos movimientos del bote</div>`;
+    
+    const hList = this.generalTransactions.filter(t=>t.matchType===mt).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,8).map(t=>{
+      const rName = t.reason ? escapeHtml(t.reason) : 'Movimiento del bote';
+      const colCls = t.amount>0 ? 'pos' : 'neg';
+      return `<div class="ticket neutral"><div><div class="name">${rName}</div><div class="sub">${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div><div style="display:flex;align-items:center;gap:10px"><div class="amt mono ${colCls}">${fmt(t.amount)}</div><button class="icon-btn" onclick="event.stopPropagation();app.deleteGeneralTransaction('${t.id}')">${ICONS.trash}</button></div></div>`;
+    }).join('');
+    
+    html += hList ? hList : '<div class="empty-state">Sin movimientos</div>';
+    return html;
   }
-  submitMovBote(){ const mt = this._boteMatchType || this.matchFilter; let amount = parseFloat(this._boteAmount); if(isNaN(amount)){ this.toast('Introduce importe'); return; } if((this._boteSign||'plus')==='minus') amount = -Math.abs(amount); else amount = Math.abs(amount); this.addGeneralTransaction(amount, mt, this._boteReason); this._boteAmount=''; this._boteReason=''; this.render(); }
+  submitMovBote(){ const mt = this._boteMatchType ? this._boteMatchType : this.matchFilter; let amount = parseFloat(this._boteAmount); if(isNaN(amount)){ this.toast('Introduce importe'); return; } const cSign = this._boteSign ? this._boteSign : 'plus'; if(cSign==='minus') amount = -Math.abs(amount); else amount = Math.abs(amount); this.addGeneralTransaction(amount, mt, this._boteReason); this._boteAmount=''; this._boteReason=''; this.render(); }
 
-renderEquipos(){
+  renderEquipos(){
     const mt = this.teamsMatchType; 
     const players = this.getPlayersForMatch(mt).sort((a,b)=>a.name.localeCompare(b.name)); 
     const r = this.teamsResult; 
@@ -764,35 +878,84 @@ renderEquipos(){
     const missingPosition = this.presentWithoutPosition(); 
     const ok = sizeOk && missingPosition.length === 0;
 
-    const playersHtml = players.length > 0 ? players.map(p=>`<label><input type="checkbox" ${this.teamsPresent.has(p.id)?'checked':''} onchange="app.togglePresent('${p.id}')" />${escapeHtml(p.name)}${p.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>'} <span class="lvl-badge" style="margin-left:auto">Niv:${SKILL_LABEL[p.skill] ? SKILL_LABEL[p.skill] : 'Medio'} - Fis:${STAMINA_LABEL[p.stamina] ? STAMINA_LABEL[p.stamina] : 'Medio'}</span></label>`).join('') : '<div class="empty-state">No hay jugadores</div>';
+    let html = `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app.teamsMatchType='F5';app.teamsPresent=new Set();app.teamsGuests=[];app.teamsResult=null;app.saveTeamsLocal();app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app.teamsMatchType='F7';app.teamsPresent=new Set();app.teamsGuests=[];app.teamsResult=null;app.saveTeamsLocal();app.render()">F7</button></div>`;
     
-    const guestsHtml = this.teamsGuests.map(g=>`<label><input type="checkbox" ${this.teamsPresent.has(g.id)?'checked':''} onchange="app.togglePresent('${g.id}')" />${escapeHtml(g.name)} <span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Invitado</span>${g.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>'}<span class="lvl-badge" style="margin-left:auto">Niv:${SKILL_LABEL[g.skill] ? SKILL_LABEL[g.skill] : 'Medio'} - Fis:${STAMINA_LABEL[g.stamina] ? STAMINA_LABEL[g.stamina] : 'Medio'}</span><button class="icon-btn" onclick="event.preventDefault();app.removeGuest('${g.id}')">${ICONS.trash}</button></label>`).join('');
+    const colCount = sizeOk ? 'var(--credit)' : 'var(--debt)';
+    html += `<label>Jugadores presentes hoy <span class="mono" style="text-transform:none;font-weight:700;color:${colCount}">${count} / ${required.join(' o ')}</span></label>`;
+    
+    const playersHtml = players.length > 0 ? players.map(p=>{
+      const chk = this.teamsPresent.has(p.id) ? 'checked' : '';
+      const noPos = p.position ? '' : ' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>';
+      const sk = SKILL_LABEL[p.skill] ? SKILL_LABEL[p.skill] : 'Medio';
+      const st = STAMINA_LABEL[p.stamina] ? STAMINA_LABEL[p.stamina] : 'Medio';
+      return `<label><input type="checkbox" ${chk} onchange="app.togglePresent('${p.id}')" />${escapeHtml(p.name)}${noPos} <span class="lvl-badge" style="margin-left:auto">Niv:${sk} • Fis:${st}</span></label>`;
+    }).join('') : '<div class="empty-state">No hay jugadores</div>';
+    
+    const guestsHtml = this.teamsGuests.map(g=>{
+      const chk = this.teamsPresent.has(g.id) ? 'checked' : '';
+      const noPos = g.position ? '' : ' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>';
+      const sk = SKILL_LABEL[g.skill] ? SKILL_LABEL[g.skill] : 'Medio';
+      const st = STAMINA_LABEL[g.stamina] ? STAMINA_LABEL[g.stamina] : 'Medio';
+      return `<label><input type="checkbox" ${chk} onchange="app.togglePresent('${g.id}')" />${escapeHtml(g.name)} <span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Invitado</span>${noPos}<span class="lvl-badge" style="margin-left:auto">Niv:${sk} • Fis:${st}</span><button class="icon-btn" onclick="event.preventDefault();app.removeGuest('${g.id}')">${ICONS.trash}</button></label>`;
+    }).join('');
 
-    return `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app.teamsMatchType='F5';app.teamsPresent=new Set();app.teamsGuests=[];app.teamsResult=null;app.saveTeamsLocal();app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app.teamsMatchType='F7';app.teamsPresent=new Set();app.teamsGuests=[];app.teamsResult=null;app.saveTeamsLocal();app.render()">F7</button></div><label>Jugadores presentes hoy <span class="mono" style="text-transform:none;font-weight:700;color:${sizeOk?'var(--credit)':'var(--debt)'}">${count} / ${required.join(' o ')}</span></label><div class="checklist" style="margin-bottom:8px">${playersHtml}${guestsHtml}</div><div class="field-row" style="margin-bottom:14px"><button class="btn btn-sm btn-outline" onclick="app.openModal('addGuest')">${ICONS.plus} Añadir invitado</button></div>${!sizeOk ? `<div class="empty-state" style="text-align:left;padding:8px 2px">Para generar equipos de ${mt} hacen falta exactamente${required.join(' o ')} jugadores presentes.</div>` : ''}${sizeOk && missingPosition.length>0 ? `<div class="empty-state" style="text-align:left;padding:8px 2px;color:var(--debt)">Falta asignar posición a: ${missingPosition.map(p=>escapeHtml(p.name)).join(', ')}.</div>` : ''}<div class="field-row"><button class="btn btn-primary" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(true)">${ICONS.shuffle} Equilibrar</button><button class="btn btn-outline" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(false)">Aleatorio</button></div>${count > 0 ? `<button class="btn btn-block" style="margin-top:12px; background:var(--gold-soft); color:#8a5a12; border:1.5px solid var(--gold);" onclick="app.openModal('settleMatch')">💰 Liquidar Partido Automático</button>` : ''}${r ? this.renderTeamsResult(r) : ''}`;
+    html += `<div class="checklist" style="margin-bottom:8px">${playersHtml}${guestsHtml}</div>`;
+    html += `<div class="field-row" style="margin-bottom:14px"><button class="btn btn-sm btn-outline" onclick="app.openModal('addGuest')">${ICONS.plus} Añadir invitado</button></div>`;
+    
+    if(!sizeOk) html += `<div class="empty-state" style="text-align:left;padding:8px 2px">Para generar equipos de ${mt} hacen falta exactamente ${required.join(' o ')} jugadores presentes.</div>`;
+    if(sizeOk && missingPosition.length>0) html += `<div class="empty-state" style="text-align:left;padding:8px 2px;color:var(--debt)">Falta asignar posición a: ${missingPosition.map(p=>escapeHtml(p.name)).join(', ')}.</div>`;
+    
+    const disBtn = !ok ? 'disabled style="opacity:.45"' : '';
+    html += `<div class="field-row"><button class="btn btn-primary" ${disBtn} onclick="app.generateTeams(true)">${ICONS.shuffle} Equilibrar</button><button class="btn btn-outline" ${disBtn} onclick="app.generateTeams(false)">Aleatorio</button></div>`;
+    
+    if(count > 0) html += `<button class="btn btn-block" style="margin-top:12px; background:var(--gold-soft); color:#8a5a12; border:1.5px solid var(--gold);" onclick="app.openModal('settleMatch')">💰 Liquidar Partido Automático</button>`;
+    
+    if(r) html += this.renderTeamsResult(r);
+    return html;
   }
-
   togglePresent(id){ if(this.teamsPresent.has(id)) this.teamsPresent.delete(id); else this.teamsPresent.add(id); this.saveTeamsLocal(); this.render(); }
   removeGuest(id){ this.teamsGuests = this.teamsGuests.filter(g=>g.id!==id); this.teamsPresent.delete(id); this.saveTeamsLocal(); this.render(); }
   submitGuest(){ const name = document.getElementById('guestName').value.trim(); if(!name){ this.toast('Falta nombre'); return; } const skill = document.querySelector('#guestSkillGroup .chip.active').dataset.val; const stamina = document.querySelector('#guestStaminaGroup .chip.active').dataset.val; const position = document.querySelector('#guestPosGroup .chip.active').dataset.val; const guest = { id:'guest_'+uid(), name, skill, stamina, position, bilbaoKirolak: false }; this.teamsGuests.push(guest); this.teamsPresent.add(guest.id); this.saveTeamsLocal(); this.closeModal(); this.toast('Invitado añadido'); }
-
   renderTeamsResult(r){
     const avg = list => list.length ? (list.reduce((s,p)=>s+p.weight,0)/list.length) : 0;
     const avgRojo = avg(r.teamRojo), avgBlanco = avg(r.teamBlanco);
     
     const teamBlock = (team, label, list, average, accent) => {
-      const playersHtml = list.length > 0 ? list.map((p,i)=>`<div class="team-player ${this.teamsSwapSel && this.teamsSwapSel.team===team && this.teamsSwapSel.idx===i ? 'selected':''}" onclick="app.swapTeamPlayer('${team}', ${i})"><span>${escapeHtml(p.name)} <span class="lvl-badge" style="background:${POSITION_COLOR[p.position] ? POSITION_COLOR[p.position] : '#8A8A8A'};color:#fff">${POSITION_ABBR[p.position] ? POSITION_ABBR[p.position] : '-'}</span></span><span class="lvl-badge">★ ${p.weight}</span></div>`).join('') : '<div class="empty-state">Sin jugadores</div>';
-      return `<div class="team-card" style="border-left:4px solid ${accent}"><h3><span>${label}</span><span class="mono" style="font-size:12px;color:var(--muted)">peso global ${average.toFixed(1)}</span></h3>${playersHtml}</div>`;
+      const pList = list.length > 0 ? list.map((p,i)=>{
+        const sel = this.teamsSwapSel && this.teamsSwapSel.team===team && this.teamsSwapSel.idx===i ? 'selected' : '';
+        const bg = POSITION_COLOR[p.position] ? POSITION_COLOR[p.position] : '#8A8A8A';
+        const abbr = POSITION_ABBR[p.position] ? POSITION_ABBR[p.position] : '-';
+        return `<div class="team-player ${sel}" onclick="app.swapTeamPlayer('${team}', ${i})"><span>${escapeHtml(p.name)} <span class="lvl-badge" style="background:${bg};color:#fff">${abbr}</span></span><span class="lvl-badge">★ ${p.weight}</span></div>`;
+      }).join('') : '<div class="empty-state">Sin jugadores</div>';
+      return `<div class="team-card" style="border-left:4px solid ${accent}"><h3><span>${label}</span><span class="mono" style="font-size:12px;color:var(--muted)">peso global ${average.toFixed(1)}</span></h3>${pList}</div>`;
     };
     
-    return `<div class="section-title" style="margin-top:22px">Equipos generados <span class="count">toca dos jugadores para intercambiarlos</span></div>${teamBlock('rojo', '🔴 Equipo Rojo', r.teamRojo, avgRojo, '#C3423F')}${teamBlock('blanco', '🔵 Equipo Azul', r.teamBlanco, avgBlanco, '#1E3A8A')}<div class="field-row" style="margin-top:6px"><button class="btn btn-sm btn-outline" onclick="app.exportTeamsImage()">${ICONS.download} Exportar imagen</button><button class="btn btn-sm btn-gold" onclick="app.shareTeams()">${ICONS.share} Compartir texto</button></div>`;
+    let html = `<div class="section-title" style="margin-top:22px">Equipos generados <span class="count">toca dos jugadores para intercambiarlos</span></div>`;
+    html += teamBlock('rojo', '🔴 Equipo Rojo', r.teamRojo, avgRojo, '#C3423F');
+    html += teamBlock('blanco', '🔵 Equipo Azul', r.teamBlanco, avgBlanco, '#1E3A8A');
+    html += `<div class="field-row" style="margin-top:6px"><button class="btn btn-sm btn-outline" onclick="app.exportTeamsImage()">${ICONS.download} Exportar imagen</button><button class="btn btn-sm btn-gold" onclick="app.shareTeams()">${ICONS.share} Compartir texto</button></div>`;
+    return html;
   }
 
   renderGithubSyncBox(){
-    if(!this.githubSync){ return `<div class="ticket neutral" style="cursor:default;display:block"><div style="font-size:13px;line-height:1.5;margin-bottom:10px">Guarda los datos en tu repo de GitHub para que se sincronicen automáticamente entre el móvil, el ordenador, etc. Necesitas un <b>token de acceso personal</b> con permiso de escritura sobre ese repo.</div><label>Usuario u organización</label><input type="text" id="ghOwner" placeholder="ividat84" value="${this.githubSync?.owner||''}" /><label>Repositorio</label><input type="text" id="ghRepo" placeholder="CuentasFutbito" value="${this.githubSync?.repo||''}" /><label>Archivo dentro del repo</label><input type="text" id="ghPath" placeholder="futbol-cuentas-backup.json" value="futbol-cuentas-backup.json" /><label>Rama</label><input type="text" id="ghBranch" placeholder="main" value="main" /><label>Token de acceso personal</label><input type="password" id="ghToken" placeholder="github_pat_..." /><button class="btn btn-primary btn-block" style="margin-top:14px" onclick="app.submitGithubConfig()">Guardar y sincronizar</button></div>`; }
-    const s = this.githubSyncStatus; const pending = s && !s.ok; const cloudLine = s ? (s.ok ? `✅ Sincronizado con la nube ${timeAgo(s.at)}` : `⚠️ Sin sincronizar: ${escapeHtml(s.error)} (${timeAgo(s.at)})`) : 'Sincronizando…';
-    return `<div class="ticket ${pending ? 'debt':'credit'}" style="cursor:default;display:block"><div class="name">${escapeHtml(this.githubSync.owner)}/${escapeHtml(this.githubSync.repo)}</div><div class="sub">${escapeHtml(this.githubSync.path)} · rama ${escapeHtml(this.githubSync.branch||'main')}</div><div class="sub" style="margin-top:8px">📱 Guardado en este dispositivo</div><div class="sub">${cloudLine}</div>${pending ? `<div class="sub" style="margin-top:4px;color:var(--muted)">Tus últimos cambios están a salvo en el móvil. En cuanto haya conexión con GitHub se subirán solos, o pulsa "Reintentar" para forzarlo ahora.</div>` : ''}</div><div class="field-row" style="margin-top:8px"><button class="btn btn-outline" onclick="app.pullFromGithub(false)">Descargar de la nube</button>${pending ? `<button class="btn btn-primary" onclick="app.pushToGithub()">Reintentar subida</button>` : ''}</div><button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.clearGithubConfig()">Desconectar</button>`;
+    if(!this.githubSync){ 
+      const ghO = this.githubSync && this.githubSync.owner ? this.githubSync.owner : '';
+      const ghR = this.githubSync && this.githubSync.repo ? this.githubSync.repo : '';
+      return `<div class="ticket neutral" style="cursor:default;display:block"><div style="font-size:13px;line-height:1.5;margin-bottom:10px">Guarda los datos en tu repo de GitHub para que se sincronicen automáticamente entre el móvil, el ordenador, etc. Necesitas un <b>token de acceso personal</b> con permiso de escritura sobre ese repo.</div><label>Usuario u organización</label><input type="text" id="ghOwner" placeholder="ividat84" value="${ghO}" /><label>Repositorio</label><input type="text" id="ghRepo" placeholder="CuentasFutbito" value="${ghR}" /><label>Archivo dentro del repo</label><input type="text" id="ghPath" placeholder="futbol-cuentas-backup.json" value="futbol-cuentas-backup.json" /><label>Rama</label><input type="text" id="ghBranch" placeholder="main" value="main" /><label>Token de acceso personal</label><input type="password" id="ghToken" placeholder="github_pat_..." /><button class="btn btn-primary btn-block" style="margin-top:14px" onclick="app.submitGithubConfig()">Guardar y sincronizar</button></div>`; 
+    }
+    const s = this.githubSyncStatus; const pending = s && !s.ok; 
+    let cloudLine = 'Sincronizando…';
+    if(s) cloudLine = s.ok ? `✅ Sincronizado con la nube ${timeAgo(s.at)}` : `⚠️ Sin sincronizar: ${escapeHtml(s.error)} (${timeAgo(s.at)})`;
+    
+    const bName = this.githubSync.branch ? this.githubSync.branch : 'main';
+    let html = `<div class="ticket ${pending ? 'debt':'credit'}" style="cursor:default;display:block"><div class="name">${escapeHtml(this.githubSync.owner)}/${escapeHtml(this.githubSync.repo)}</div><div class="sub">${escapeHtml(this.githubSync.path)} · rama ${escapeHtml(bName)}</div><div class="sub" style="margin-top:8px">📱 Guardado en este dispositivo</div><div class="sub">${cloudLine}</div>`;
+    if(pending) html += `<div class="sub" style="margin-top:4px;color:var(--muted)">Tus últimos cambios están a salvo en el móvil. En cuanto haya conexión con GitHub se subirán solos, o pulsa "Reintentar" para forzarlo ahora.</div>`;
+    html += `</div><div class="field-row" style="margin-top:8px"><button class="btn btn-outline" onclick="app.pullFromGithub(false)">Descargar de la nube</button>`;
+    if(pending) html += `<button class="btn btn-primary" onclick="app.pushToGithub()">Reintentar subida</button>`;
+    html += `</div><button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.clearGithubConfig()">Desconectar</button>`;
+    return html;
   }
-  submitGithubConfig(){ const owner = document.getElementById('ghOwner').value.trim(); const repo = document.getElementById('ghRepo').value.trim(); const path = document.getElementById('ghPath').value.trim() || 'futbol-cuentas-backup.json'; const branch = document.getElementById('ghBranch').value.trim() || 'main'; const token = document.getElementById('ghToken').value.trim(); if(!owner || !repo || !token){ this.toast('Rellena usuario, repositorio y token'); return; } this.saveGithubConfig({owner, repo, path, branch, token, sha:null}); this.render(); this.pullFromGithub(false); }
+  submitGithubConfig(){ const owner = document.getElementById('ghOwner').value.trim(); const repo = document.getElementById('ghRepo').value.trim(); const path = document.getElementById('ghPath').value.trim() ? document.getElementById('ghPath').value.trim() : 'futbol-cuentas-backup.json'; const branch = document.getElementById('ghBranch').value.trim() ? document.getElementById('ghBranch').value.trim() : 'main'; const token = document.getElementById('ghToken').value.trim(); if(!owner || !repo || !token){ this.toast('Rellena usuario, repositorio y token'); return; } this.saveGithubConfig({owner, repo, path, branch, token, sha:null}); this.render(); this.pullFromGithub(false); }
 
   renderAjustes(){
     return `<div class="section-title">Sincronización con GitHub</div>${this.renderGithubSyncBox()}<div class="section-title" style="margin-top:24px">Copia de seguridad manual</div><div class="field-row"><button class="btn btn-sm btn-outline" onclick="app.exportBackup()">${ICONS.download} Exportar JSON</button><input type="file" id="importFile" accept="application/json" style="display:none" onchange="app.importBackup(this.files[0])" /><button class="btn btn-sm btn-outline" onclick="document.getElementById('importFile').click()">${ICONS.upload} Importar JSON</button></div><div class="section-title" style="margin-top:24px">Historial de movimientos</div>${this.renderHistorial()}<div class="section-title" style="margin-top:24px">Instalar como app</div><div class="ticket neutral" style="cursor:default"><div style="font-size:13px;line-height:1.5">En Chrome (Android) pulsa el menú ⋮ y elige <b>"Instalar app"</b> o <b>"Añadir a pantalla de inicio"</b>.</div></div>`;
@@ -801,30 +964,38 @@ renderEquipos(){
   renderHistorial(){
     let all = [ ...this.transactions.map(t=>({...t, kind:'jugador'})), ...this.generalTransactions.map(t=>({...t, kind:'bote'})) ];
     if(this.histMatchFilter) all = all.filter(t=>t.matchType===this.histMatchFilter);
-    if(this.histSearch){ const q = this.histSearch.toLowerCase(); all = all.filter(t=>{ const names = (t.playerIds||[]).map(id=>{ const p=this.players.find(x=>x.id===id); return p?p.name:''; }).join(' ').toLowerCase(); return names.includes(q) || (t.reason||'').toLowerCase().includes(q); }); }
+    if(this.histSearch){ 
+      const q = this.histSearch.toLowerCase(); 
+      all = all.filter(t=>{ 
+        const plIds = t.playerIds ? t.playerIds : [];
+        const names = plIds.map(id=>{ const p=this.players.find(x=>x.id===id); return p?p.name:''; }).join(' ').toLowerCase(); 
+        const resText = t.reason ? t.reason : '';
+        return names.includes(q) || resText.toLowerCase().includes(q); 
+      }); 
+    }
     all.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
     const totalItems = all.length; all = all.slice(0, this.histLimit);
     
-    return `<input type="search" class="search-bar" placeholder="Buscar en historial..." value="${escapeHtml(this.histSearch)}" oninput="app.histSearch=this.value;app.histLimit=40;app.render()" />
-    <div class="filter-bar">
-      <button class="chip ${this.histMatchFilter===''?'active':''}" onclick="app.histMatchFilter='';app.histLimit=40;app.render()">Todos</button>
-      <button class="chip ${this.histMatchFilter==='F5'?'active':''}" onclick="app.histMatchFilter='F5';app.histLimit=40;app.render()">F5</button>
-      <button class="chip ${this.histMatchFilter==='F7'?'active':''}" onclick="app.histMatchFilter='F7';app.histLimit=40;app.render()">F7</button>
-    </div>
-    ${all.map(t=>{ 
-      const names = t.kind==='jugador' ? (t.playerIds||[]).map(id=>{ const p=this.players.find(x=>x.id===id); return p?p.name:'(borrado)'; }).join(', ') : 'Bote general'; 
-      return \`<div class="ticket \${t.amount>0?'credit':'debt'}">
-        <div>
-          <div class="name">\${escapeHtml(names)}</div>
-          <div class="sub">\${t.matchType} · \${escapeHtml(t.reason)||'sin motivo'} · \${new Date(t.createdAt).toLocaleDateString('es-ES')}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="amt mono \${t.amount>0?'pos':'neg'}">\${fmt(t.amount)}</div>
-          <button class="icon-btn" onclick="app.\${t.kind==='jugador'?'deleteTransaction':'deleteGeneralTransaction'}('\${t.id}')">\${ICONS.trash}</button>
-        </div>
-      </div>\`; 
-    }).join('') || '<div class="empty-state">Sin movimientos</div>'}
-    ${this.histLimit < totalItems ? \`<button class="btn btn-outline btn-block" style="margin-top:16px" onclick="app.histLimit += 40; app.render()">Cargar más (\${totalItems - this.histLimit} restantes)</button>\` : ''}`;
+    let html = `<input type="search" class="search-bar" placeholder="Buscar en historial..." value="${escapeHtml(this.histSearch)}" oninput="app.histSearch=this.value;app.histLimit=40;app.render()" /><div class="filter-bar"><button class="chip ${this.histMatchFilter===''?'active':''}" onclick="app.histMatchFilter='';app.histLimit=40;app.render()">Todos</button><button class="chip ${this.histMatchFilter==='F5'?'active':''}" onclick="app.histMatchFilter='F5';app.histLimit=40;app.render()">F5</button><button class="chip ${this.histMatchFilter==='F7'?'active':''}" onclick="app.histMatchFilter='F7';app.histLimit=40;app.render()">F7</button></div>`;
+    
+    const tList = all.map(t=>{ 
+      let names = 'Bote general';
+      if(t.kind==='jugador'){
+        const plIds = t.playerIds ? t.playerIds : [];
+        names = plIds.map(id=>{ const p=this.players.find(x=>x.id===id); return p?p.name:'(borrado)'; }).join(', ');
+      }
+      const kindCls = t.amount>0 ? 'credit' : 'debt';
+      const colCls = t.amount>0 ? 'pos' : 'neg';
+      const reasonTxt = t.reason ? escapeHtml(t.reason) : 'sin motivo';
+      const actionFn = t.kind==='jugador' ? 'deleteTransaction' : 'deleteGeneralTransaction';
+      return `<div class="ticket ${kindCls}"><div><div class="name">${escapeHtml(names)}</div><div class="sub">${t.matchType} · ${reasonTxt} · ${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div><div style="display:flex;align-items:center;gap:8px"><div class="amt mono ${colCls}">${fmt(t.amount)}</div><button class="icon-btn" onclick="app.${actionFn}('${t.id}')">${ICONS.trash}</button></div></div>`; 
+    }).join('');
+    
+    html += tList ? tList : '<div class="empty-state">Sin movimientos</div>';
+    if(this.histLimit < totalItems){
+      html += `<button class="btn btn-outline btn-block" style="margin-top:16px" onclick="app.histLimit += 40; app.render()">Cargar más (${totalItems - this.histLimit} restantes)</button>`;
+    }
+    return html;
   }
 
   renderFab(){ if(this.page==='resumen') return `<button class="fab" onclick="app.setPage('movimientos')">${ICONS.plus}</button>`; if(this.page==='jugadores') return `<button class="fab" onclick="app.openModal('addPlayer')">${ICONS.plus}</button>`; return ''; }
@@ -835,7 +1006,23 @@ renderEquipos(){
     if(type==='editPlayer' && !this.players.find(x=>x.id===payload.id)){ this.modal = null; return ''; }
     if(type==='addPlayer' || type==='editPlayer'){
       const p = type==='editPlayer' ? this.players.find(x=>x.id===payload.id) : null;
-      body = `<h2>${p?'Editar jugador':'Nuevo jugador'}</h2><label>Nombre</label><input type="text" id="pName" value="${p?escapeHtml(p.name):''}" placeholder="Nombre y apellido" /><label>Tipo</label><div class="chip-group" id="pTypeGroup">${['F5','F7','F5/F7'].map(t=>`<button class="chip ${((p&&p.type===t)||(!p&&t==='F5/F7'))?'active':''}" data-val="${t}" onclick="app.pickChip(this,'pTypeGroup')">${t}</button>`).join('')}</div><label>Habilidad Técnica</label><div class="chip-group" id="pSkillGroup">${Object.keys(SKILL_LABEL).map(s=>`<button class="chip ${((p&&p.skill===s)||(!p&&s==='medio'))?'active':''}" data-val="${s}" onclick="app.pickChip(this,'pSkillGroup')">${SKILL_LABEL[s]}</button>`).join('')}</div><label>Físico / Resistencia</label><div class="chip-group" id="pStaminaGroup">${Object.keys(STAMINA_LABEL).map(s=>`<button class="chip ${((p&&p.stamina===s)||(!p&&s==='medio'))?'active':''}" data-val="${s}" onclick="app.pickChip(this,'pStaminaGroup')">${STAMINA_LABEL[s]}</button>`).join('')}</div><label>Posición</label><div class="chip-group" id="pPosGroup"><button class="chip ${(!p||!p.position)?'active':''}" data-val="" onclick="app.pickChip(this,'pPosGroup')">-</button>${POSITIONS.map(pos=>`<button class="chip ${(p&&p.position===pos)?'active':''}" data-val="${pos}" onclick="app.pickChip(this,'pPosGroup')">${pos}</button>`).join('')}</div><label>Abonado Bilbao Kirolak</label><div class="chip-group" id="pBKGroup"><button class="chip ${(p&&p.bilbaoKirolak)?'active':''}" data-val="true" onclick="app.pickChip(this,'pBKGroup')">Sí</button><button class="chip ${(!p||!p.bilbaoKirolak)?'active':''}" data-val="false" onclick="app.pickChip(this,'pBKGroup')">No</button></div><label>Habitual</label><div class="chip-group" id="pRegGroup"><button class="chip ${(!p||p.isRegular)?'active':''}" data-val="true" onclick="app.pickChip(this,'pRegGroup')">Sí</button><button class="chip ${(p&&!p.isRegular)?'active':''}" data-val="false" onclick="app.pickChip(this,'pRegGroup')">Esporádico</button></div><button class="btn btn-primary btn-block" style="margin-top:18px" onclick="app.savePlayerForm(${p?`'${p.id}'`:'null'})">Guardar</button>${p?`<button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.deletePlayer('${p.id}')">Eliminar jugador</button>`:''}`;
+      
+      const isF5 = (p && p.type==='F5') || (!p && 'F5/F7'==='F5') ? 'active' : '';
+      const isF7 = (p && p.type==='F7') || (!p && 'F5/F7'==='F7') ? 'active' : '';
+      const isF57 = (p && p.type==='F5/F7') || (!p && 'F5/F7'==='F5/F7') ? 'active' : '';
+      
+      let typeHtml = `<button class="chip ${isF5}" data-val="F5" onclick="app.pickChip(this,'pTypeGroup')">F5</button>`;
+      typeHtml += `<button class="chip ${isF7}" data-val="F7" onclick="app.pickChip(this,'pTypeGroup')">F7</button>`;
+      typeHtml += `<button class="chip ${isF57}" data-val="F5/F7" onclick="app.pickChip(this,'pTypeGroup')">F5/F7</button>`;
+
+      const pTitle = p ? 'Editar jugador' : 'Nuevo jugador';
+      const pName = p ? escapeHtml(p.name) : '';
+      body = `<h2>${pTitle}</h2><label>Nombre</label><input type="text" id="pName" value="${pName}" placeholder="Nombre y apellido" /><label>Tipo</label><div class="chip-group" id="pTypeGroup">${typeHtml}</div><label>Habilidad Técnica</label><div class="chip-group" id="pSkillGroup">${Object.keys(SKILL_LABEL).map(s=>`<button class="chip ${((p&&p.skill===s)||(!p&&s==='medio'))?'active':''}" data-val="${s}" onclick="app.pickChip(this,'pSkillGroup')">${SKILL_LABEL[s]}</button>`).join('')}</div><label>Físico / Resistencia</label><div class="chip-group" id="pStaminaGroup">${Object.keys(STAMINA_LABEL).map(s=>`<button class="chip ${((p&&p.stamina===s)||(!p&&s==='medio'))?'active':''}" data-val="${s}" onclick="app.pickChip(this,'pStaminaGroup')">${STAMINA_LABEL[s]}</button>`).join('')}</div><label>Posición</label><div class="chip-group" id="pPosGroup"><button class="chip ${(!p||!p.position)?'active':''}" data-val="" onclick="app.pickChip(this,'pPosGroup')">-</button>${POSITIONS.map(pos=>`<button class="chip ${(p&&p.position===pos)?'active':''}" data-val="${pos}" onclick="app.pickChip(this,'pPosGroup')">${pos}</button>`).join('')}</div><label>Abonado Bilbao Kirolak</label><div class="chip-group" id="pBKGroup"><button class="chip ${(p&&p.bilbaoKirolak)?'active':''}" data-val="true" onclick="app.pickChip(this,'pBKGroup')">Sí</button><button class="chip ${(!p||!p.bilbaoKirolak)?'active':''}" data-val="false" onclick="app.pickChip(this,'pBKGroup')">No</button></div><label>Habitual</label><div class="chip-group" id="pRegGroup"><button class="chip ${(!p||p.isRegular)?'active':''}" data-val="true" onclick="app.pickChip(this,'pRegGroup')">Sí</button><button class="chip ${(p&&!p.isRegular)?'active':''}" data-val="false" onclick="app.pickChip(this,'pRegGroup')">Esporádico</button></div>`;
+      
+      const idStr = p ? `'${p.id}'` : 'null';
+      body += `<button class="btn btn-primary btn-block" style="margin-top:18px" onclick="app.savePlayerForm(${idStr})">Guardar</button>`;
+      if(p) body += `<button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.deletePlayer('${p.id}')">Eliminar jugador</button>`;
+      
     } else if(type==='quickTx'){
       const p = this.players.find(x=>x.id===payload.playerId); const bal = this.getPlayerBalance(p.id, payload.matchType);
       body = `<h2>${escapeHtml(p.name)}</h2><div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:10px">Saldo actual ${payload.matchType}: <b class="mono">${fmt(bal)}</b></div><label>Importe</label><div class="sign-toggle"><button id="qtxPlus" class="active plus" onclick="app.qtxSign='plus';app.render()">+ Abona</button><button id="qtxMinus" class="${this.qtxSign==='minus'?'active minus':''}" onclick="app.qtxSign='minus';app.render()">− Carga</button></div><input type="number" step="0.01" min="0" id="qtxAmount" placeholder="0.00" style="margin-top:8px" /><label>Motivo (opcional)</label><input type="text" id="qtxReason" placeholder="Partido, balón..." /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitQuickTx('${p.id}','${payload.matchType}')">Registrar</button>${bal < -0.001 ? `<button class="btn btn-outline btn-block" style="margin-top:12px; border-color:var(--credit); color:var(--credit);" onclick="app.settleDebt('${p.id}', '${payload.matchType}',${Math.abs(bal)})">✅ Saldar deuda exacta (${fmtPlain(Math.abs(bal))})</button>` : ''}`;
@@ -866,7 +1053,8 @@ renderEquipos(){
   }
   submitQuickTx(playerId, matchType){
     let amount = parseFloat(document.getElementById('qtxAmount').value); if(isNaN(amount)){ this.toast('Introduce importe'); return; }
-    if((this.qtxSign||'plus')==='minus') amount = -Math.abs(amount); else amount = Math.abs(amount);
+    const cSign = this.qtxSign ? this.qtxSign : 'plus';
+    if(cSign==='minus') amount = -Math.abs(amount); else amount = Math.abs(amount);
     const reason = document.getElementById('qtxReason').value; this.qtxSign = null; this.addTransaction([playerId], amount, matchType, reason);
   }
   toggleSmPlayer(id){ if(this._smSelected.has(id)) this._smSelected.delete(id); else this._smSelected.add(id); this.render(); }
