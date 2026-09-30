@@ -1,35 +1,51 @@
-const CACHE = 'cuentas-f5f7-v2';
-const ASSETS = ['./index.html', './manifest.json', './icon.svg'];
+const CACHE_NAME = 'cuentas-futbol-v6';
+const ASSETS = [
+  './',
+  './index.html',
+  './icon.svg',
+  './manifest.json'
+];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(ASSETS)).catch(() => {})
-  );
+self.addEventListener('install', e => {
   self.skipWaiting();
+  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    )
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+      );
+    })
   );
   self.clients.claim();
 });
 
-// Primero red: si hay conexión, siempre coge la versión más reciente del servidor
-// (y la guarda en caché de paso). Si no hay conexión, cae a la última copia guardada.
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  event.respondWith(
-    fetch(event.request)
-      .then((res) => {
-        if (res && res.status === 200) {
-          const copy = res.clone();
-          caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+self.addEventListener('fetch', e => {
+  // Bloqueo total a extensiones y scripts externos que no sean web normales
+  if (!e.request.url.startsWith('http')) {
+    return;
+  }
+
+  e.respondWith(
+    caches.match(e.request).then(response => {
+      if (response) return response;
+      
+      return fetch(e.request).then(fetchRes => {
+        // Solo guardamos en caché si la respuesta es válida y limpia
+        if (!fetchRes || fetchRes.status !== 200 || fetchRes.type !== 'basic') {
+            return fetchRes;
         }
-        return res;
-      })
-      .catch(() => caches.match(event.request))
+        return caches.open(CACHE_NAME).then(cache => {
+          try {
+            cache.put(e.request, fetchRes.clone());
+          } catch (err) {} // Ignoramos errores de put en silencio
+          return fetchRes;
+        });
+      }).catch(() => {
+        return caches.match('./index.html');
+      });
+    })
   );
 });
