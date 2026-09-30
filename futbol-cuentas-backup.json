@@ -1,27 +1,6 @@
 {
   "players": [
     {
-      "id": "1790616908815312",
-      "name": "Hoyuki Ander",
-      "type": "F5/F7",
-      "isRegular": true,
-      "skill": "muy_alto",
-      "stamina": "medio",
-      "position": "delantero",
-      "createdAt": "2026-09-28T17:35:08.815Z",
-      "bilbaoKirolak": true
-    },
-    {
-      "id": "1790616929299341",
-      "name": "Txopi Aitor",
-      "type": "F5/F7",
-      "isRegular": true,
-      "skill": "muy_alto",
-      "stamina": "alto",
-      "position": "delantero",
-      "createdAt": "2026-09-28T17:35:29.299Z"
-    },
-    {
       "id": "1790616949341112",
       "name": "Aiert",
       "type": "F5/F7",
@@ -42,6 +21,17 @@
       "createdAt": "2026-09-28T17:37:38.258Z"
     },
     {
+      "id": "1790628990483718",
+      "name": "Diego Recio",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "medio",
+      "stamina": "medio",
+      "position": "medio",
+      "createdAt": "2026-09-28T20:56:30.483Z",
+      "bilbaoKirolak": true
+    },
+    {
       "id": "1790617093188726",
       "name": "Ego",
       "type": "F5/F7",
@@ -50,38 +40,6 @@
       "stamina": "bajo",
       "position": "medio",
       "createdAt": "2026-09-28T17:38:13.188Z",
-      "bilbaoKirolak": true
-    },
-    {
-      "id": "1790617184733961",
-      "name": "Jose",
-      "type": "F5/F7",
-      "isRegular": true,
-      "skill": "bajo",
-      "stamina": "medio",
-      "position": "medio",
-      "createdAt": "2026-09-28T17:39:44.734Z",
-      "bilbaoKirolak": true
-    },
-    {
-      "id": "1790617300232532",
-      "name": "Job Ezequiel",
-      "type": "F5/F7",
-      "isRegular": true,
-      "skill": "bajo",
-      "stamina": "medio",
-      "position": "defensa",
-      "createdAt": "2026-09-28T17:41:40.232Z"
-    },
-    {
-      "id": "1790617380927257",
-      "name": "Juan g.",
-      "type": "F5/F7",
-      "isRegular": true,
-      "skill": "medio",
-      "stamina": "medio",
-      "position": "defensa",
-      "createdAt": "2026-09-28T17:43:00.927Z",
       "bilbaoKirolak": true
     },
     {
@@ -96,14 +54,46 @@
       "bilbaoKirolak": true
     },
     {
-      "id": "1790617596728380",
-      "name": "Patxo",
+      "id": "1790616908815312",
+      "name": "Hoyuki Ander",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "muy_alto",
+      "stamina": "medio",
+      "position": "delantero",
+      "createdAt": "2026-09-28T17:35:08.815Z",
+      "bilbaoKirolak": true
+    },
+    {
+      "id": "1790617300232532",
+      "name": "Job Ezequiel",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "bajo",
+      "stamina": "medio",
+      "position": "defensa",
+      "createdAt": "2026-09-28T17:41:40.232Z"
+    },
+    {
+      "id": "1790617184733961",
+      "name": "Jose",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "bajo",
+      "stamina": "medio",
+      "position": "medio",
+      "createdAt": "2026-09-28T17:39:44.734Z",
+      "bilbaoKirolak": true
+    },
+    {
+      "id": "1790617380927257",
+      "name": "Juan g.",
       "type": "F5/F7",
       "isRegular": true,
       "skill": "medio",
       "stamina": "medio",
-      "position": "medio",
-      "createdAt": "2026-09-28T17:46:36.728Z",
+      "position": "defensa",
+      "createdAt": "2026-09-28T17:43:00.927Z",
       "bilbaoKirolak": true
     },
     {
@@ -118,20 +108,66 @@
       "bilbaoKirolak": true
     },
     {
-      "id": "1790628990483718",
-      "name": "Diego Recio",
+      "id": "1790617596728380",
+      "name": "Patxo",
       "type": "F5/F7",
       "isRegular": true,
       "skill": "medio",
       "stamina": "medio",
       "position": "medio",
-      "createdAt": "2026-09-28T20:56:30.483Z",
+      "createdAt": "2026-09-28T17:46:36.728Z",
       "bilbaoKirolak": true
+    },
+    {
+      "id": "1790616929299341",
+      "name": "Txopi Aitor",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "muy_alto",
+      "stamina": "alto",
+      "position": "delantero",
+      "createdAt": "2026-09-28T17:35:29.299Z"
     }
   ],
-  "transactions": [],
-  "generalTransactions": [],
+  "transactions": [
+    {
+      "id": "1790749862153856",
+      "playerIds": [
+        "1790628990483718",
+        "1790617093188726",
+        "1790617571023650",
+        "1790616908815312",
+        "1790617184733961",
+        "1790617380927257",
+        "1790617607175939",
+        "1790617596728380"
+      ],
+      "amount": -3,
+      "matchType": "F5",
+      "reason": "Cuota partido (BK)",
+      "createdAt": "2026-09-30T06:31:02.153Z"
+    },
+    {
+      "id": "1790749862153379",
+      "playerIds": [
+        "1790617571023650"
+      ],
+      "amount": 19.55,
+      "matchType": "F5",
+      "reason": "Pago pista adelantado",
+      "createdAt": "2026-09-30T06:31:02.153Z"
+    }
+  ],
+  "generalTransactions": [
+    {
+      "id": "1790749862153518",
+      "amount": 4.449999999999999,
+      "matchType": "F5",
+      "reason": "Sobrante partido",
+      "createdAt": "2026-09-30T06:31:02.153Z"
+    }
+  ],
   "footballs": [],
-  "exportDate": "2026-09-30T06:29:34.789Z",
+  "exportDate": "2026-09-30T06:31:02.854Z",
   "version": "2.0"
 }
