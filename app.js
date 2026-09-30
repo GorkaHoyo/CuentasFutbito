@@ -84,13 +84,20 @@ class App {
     localStorage.setItem('football-teams-present', JSON.stringify(Array.from(this.teamsPresent))); 
     localStorage.setItem('football-teams-guests', JSON.stringify(this.teamsGuests)); 
     localStorage.setItem('football-teams-result', JSON.stringify(this.teamsResult)); 
-    this.scheduleGithubPush(); // Sincroniza alineaciones en GitHub al cambiar
+    this.scheduleGithubPush(); 
   }
 
-  save() { 
+  // --- SOLUCIÓN AL BUCLE DE SINCRONIZACIÓN ---
+  // Función para guardar solo en el móvil/PC, sin disparar la subida a GitHub
+  saveLocalOnly() {
     localStorage.setItem('football-players', JSON.stringify(this.players)); 
     localStorage.setItem('football-transactions', JSON.stringify(this.transactions)); 
     localStorage.setItem('football-general-transactions', JSON.stringify(this.generalTransactions)); 
+  }
+
+  // Función para guardar localmente y además programar la subida a GitHub
+  save() { 
+    this.saveLocalOnly();
     this.scheduleGithubPush(); 
   }
 
@@ -112,11 +119,10 @@ class App {
     this._pushTimer = setTimeout(()=>this.pushToGithub(), 700); 
   }
   
-async pullFromGithub(silent){
+  async pullFromGithub(silent){
     if(!this.githubSync) return;
     const branch = this.githubSync.branch ?? 'main'; 
     try{
-      // MAGIA ANTI-CACHÉ: Añadimos un timestamp y cache: 'no-store' para obligar al navegador a traer la versión real de GitHub
       const res = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&t=${Date.now()}`, { 
         headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json' },
         cache: 'no-store'
@@ -139,7 +145,8 @@ async pullFromGithub(silent){
       if (json.teamsGuests) this.teamsGuests = json.teamsGuests;
       if (json.teamsResult !== undefined) this.teamsResult = json.teamsResult;
 
-      this.save(); 
+      // Usamos saveLocalOnly() para ROMPER el bucle. Ahora descargar no disparará otra subida.
+      this.saveLocalOnly(); 
       
       localStorage.setItem('football-teams-match', this.teamsMatchType);
       localStorage.setItem('football-teams-present', JSON.stringify(Array.from(this.teamsPresent)));
@@ -165,7 +172,7 @@ async pullFromGithub(silent){
       transactions: this.transactions, 
       generalTransactions: this.generalTransactions, 
       teamsMatchType: this.teamsMatchType,
-      teamsPresent: Array.from(this.teamsPresent),
+      teamsPresent: Array.from(this.teamsPresent), 
       teamsGuests: this.teamsGuests,
       teamsResult: this.teamsResult,
       exportDate: new Date().toISOString(), 
@@ -178,9 +185,11 @@ async pullFromGithub(silent){
     
     try{
       let res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) });
-      if(res.status === 409){ 
-        // MAGIA ANTI-CACHÉ: Resolvemos el conflicto HTTP 409 forzando la petición limpia
-        const fresh = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&t=${Date.now()}`, { headers, cache: 'no-store' }); 
+      if(res.status === 409 || res.status === 422){ 
+        const fresh = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&t=${Date.now()}`, { 
+          headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json' }, 
+          cache: 'no-store' 
+        }); 
         if(fresh.ok){ const fd = await fresh.json(); body.sha = fd.sha; } 
         res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) }); 
       }
