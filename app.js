@@ -121,13 +121,23 @@ class App {
   
   async pullFromGithub(silent){
     if(!this.githubSync) return;
+    // SEMÁFORO: Si ya está sincronizando, no hacemos nada para evitar colisiones
+    if(this._isSyncing) return;
+    this._isSyncing = true;
+    
     const branch = this.githubSync.branch ?? 'main'; 
     try{
-      const res = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&t=${Date.now()}`, { 
-        headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json' },
-        cache: 'no-store'
+      // DESTRUCTOR DE CACHÉ: Añadimos Math.random() y cabeceras estrictas
+      const res = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&nocache=${Math.random()}`, { 
+        headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json', 'Cache-Control': 'no-cache, no-store, must-revalidate' } 
       });
-      if(res.status === 404){ this.githubSync.sha = null; this.saveGithubConfig(this.githubSync); await this.pushToGithub(); return; }
+      if(res.status === 404){ 
+        this.githubSync.sha = null; 
+        this.saveGithubConfig(this.githubSync); 
+        this._isSyncing = false; // Soltamos el semáforo antes de llamar a push
+        await this.pushToGithub(); 
+        return; 
+      }
       if(res.status === 401 || res.status === 403) throw new Error('Token inválido o sin permisos');
       if(!res.ok) throw new Error(`HTTP ${res.status}`);
       
@@ -145,7 +155,6 @@ class App {
       if (json.teamsGuests) this.teamsGuests = json.teamsGuests;
       if (json.teamsResult !== undefined) this.teamsResult = json.teamsResult;
 
-      // Usamos saveLocalOnly() para ROMPER el bucle. Ahora descargar no disparará otra subida.
       this.saveLocalOnly(); 
       
       localStorage.setItem('football-teams-match', this.teamsMatchType);
@@ -155,53 +164,73 @@ class App {
 
       this.githubSyncStatus = {ok:true, at:new Date()};
       if(!silent) this.toast('Sincronizado con GitHub');
-      this.render();
     } catch(err){ 
       this.githubSyncStatus = {ok:false, error: err.message, at:new Date()}; 
       if(!silent) this.toast(`No se pudo sincronizar: ${err.message}`); 
+    } finally {
+      // Liberamos el semáforo pase lo que pase
+      this._isSyncing = false;
       this.render(); 
     }
   }
 
   async pushToGithub(){
     if(!this.githubSync) return;
+    // SEMÁFORO EN COLA: Si está ocupado, espera 1 segundo y reintenta para no perder cambios
+    if(this._isSyncing) {
+       clearTimeout(this._pushTimer);
+       this._pushTimer = setTimeout(()=>this.pushToGithub(), 1000);
+       return;
+    }
+    this._isSyncing = true;
     const branch = this.githubSync.branch ?? 'main'; 
     
-    const payload = { 
-      players: this.players, 
-      transactions: this.transactions, 
-      generalTransactions: this.generalTransactions, 
-      teamsMatchType: this.teamsMatchType,
-      teamsPresent: Array.from(this.teamsPresent), 
-      teamsGuests: this.teamsGuests,
-      teamsResult: this.teamsResult,
-      exportDate: new Date().toISOString(), 
-      version: '2.0' 
-    };
-    
-    const body = { message: 'Actualización app', content: b64EncodeUnicode(JSON.stringify(payload, null, 2)), branch };
-    if(this.githubSync.sha) body.sha = this.githubSync.sha;
-    const headers = { Authorization: `Bearer ${this.githubSync.token}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' };
-    
-    try{
+    try {
+      const payload = { 
+        players: this.players, 
+        transactions: this.transactions, 
+        generalTransactions: this.generalTransactions, 
+        teamsMatchType: this.teamsMatchType,
+        teamsPresent: Array.from(this.teamsPresent), 
+        teamsGuests: this.teamsGuests,
+        teamsResult: this.teamsResult,
+        exportDate: new Date().toISOString(), 
+        version: '2.0' 
+      };
+      
+      const body = { message: 'Actualización app', content: b64EncodeUnicode(JSON.stringify(payload, null, 2)), branch };
+      if(this.githubSync.sha) body.sha = this.githubSync.sha;
+      const headers = { Authorization: `Bearer ${this.githubSync.token}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' };
+      
       let res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) });
+      
       if(res.status === 409 || res.status === 422){ 
-        const fresh = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&t=${Date.now()}`, { 
-          headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json' }, 
-          cache: 'no-store' 
+        // BYPASS DE CACHÉ TOTAL si hay colisión
+        const fresh = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&nocache=${Math.random()}`, { 
+          headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json', 'Cache-Control': 'no-cache, no-store, must-revalidate' } 
         }); 
-        if(fresh.ok){ const fd = await fresh.json(); body.sha = fd.sha; } 
-        res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) }); 
+        if(fresh.ok){ 
+          const fd = await fresh.json(); 
+          body.sha = fd.sha; 
+          this.githubSync.sha = fd.sha;
+          this.saveGithubConfig(this.githubSync);
+          // Reintentamos con el SHA fresco de verdad
+          res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) }); 
+        } 
       }
+      
       if(!res.ok) throw new Error(`HTTP ${res.status}`);
       const rd = await res.json(); 
       this.githubSync.sha = rd.content.sha; 
       this.saveGithubConfig(this.githubSync); 
       this.githubSyncStatus = {ok:true, at:new Date()};
+      
     } catch(err){ 
       this.githubSyncStatus = {ok:false, error: err.message, at:new Date()}; 
+    } finally {
+      this._isSyncing = false;
+      this.render();
     }
-    this.render();
   }
 
   toast(msg){ this.toastMsg = msg; this.render(); setTimeout(()=>{ this.toastMsg=null; this.render(); }, 1800); }
