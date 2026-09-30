@@ -129,9 +129,35 @@
       "createdAt": "2026-09-28T17:35:29.299Z"
     }
   ],
-  "transactions": [],
-  "generalTransactions": [],
+  "transactions": [
+    {
+      "id": "1790769982467160",
+      "playerIds": [
+        "1790628990483718",
+        "1790617093188726",
+        "1790617571023650",
+        "1790616908815312",
+        "1790617184733961",
+        "1790617380927257",
+        "1790617607175939",
+        "1790617596728380"
+      ],
+      "amount": -3,
+      "matchType": "F5",
+      "reason": "Cuota partido (BK)",
+      "createdAt": "2026-09-30T12:06:22.467Z"
+    }
+  ],
+  "generalTransactions": [
+    {
+      "id": "1790769982467820",
+      "amount": 4.449999999999999,
+      "matchType": "F5",
+      "reason": "Sobrante partido",
+      "createdAt": "2026-09-30T12:06:22.467Z"
+    }
+  ],
   "footballs": [],
-  "exportDate": "2026-09-30T12:06:01.433Z",
+  "exportDate": "2026-09-30T12:06:23.169Z",
   "version": "2.0"
 }
