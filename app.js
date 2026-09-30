@@ -126,11 +126,11 @@ class App {
     
     const branch = this.githubSync.branch ?? 'main'; 
     try{
-      // CORRECCIÓN: Eliminada la cabecera 'Cache-Control' que bloqueaba CORS. Mantenemos solo cache: 'no-store'
+      // ELIMINADO "cache: 'no-store'". Solo usamos el truco matemático en la URL
       const res = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&nocache=${Math.random()}`, { 
-        headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json' },
-        cache: 'no-store'
+        headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json' }
       });
+      
       if(res.status === 404){ 
         this.githubSync.sha = null; 
         this.saveGithubConfig(this.githubSync); 
@@ -203,10 +203,8 @@ class App {
       let res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) });
       
       if(res.status === 409 || res.status === 422){ 
-        // CORRECCIÓN: Igual que arriba, evitamos el bloqueo CORS al hacer el bypass
         const fresh = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&nocache=${Math.random()}`, { 
-          headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json' },
-          cache: 'no-store' 
+          headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json' }
         }); 
         if(fresh.ok){ 
           const fd = await fresh.json(); 
@@ -230,7 +228,6 @@ class App {
       this.render();
     }
   }
-
   toast(msg){ this.toastMsg = msg; this.render(); setTimeout(()=>{ this.toastMsg=null; this.render(); }, 1800); }
 
   getPlayerBalance(playerId, matchType){
