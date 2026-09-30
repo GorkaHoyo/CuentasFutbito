@@ -156,76 +156,6 @@
       "matchType": "F5",
       "reason": "Pago pista adelantado",
       "createdAt": "2026-09-30T06:31:02.153Z"
-    },
-    {
-      "id": "1790749903844112",
-      "playerIds": [
-        "1790628990483718"
-      ],
-      "amount": 3,
-      "matchType": "F5",
-      "reason": "Saldar deuda",
-      "createdAt": "2026-09-30T06:31:43.844Z"
-    },
-    {
-      "id": "1790749905473204",
-      "playerIds": [
-        "1790617093188726"
-      ],
-      "amount": 3,
-      "matchType": "F5",
-      "reason": "Saldar deuda",
-      "createdAt": "2026-09-30T06:31:45.473Z"
-    },
-    {
-      "id": "1790749906562252",
-      "playerIds": [
-        "1790616908815312"
-      ],
-      "amount": 3,
-      "matchType": "F5",
-      "reason": "Saldar deuda",
-      "createdAt": "2026-09-30T06:31:46.563Z"
-    },
-    {
-      "id": "1790749907668605",
-      "playerIds": [
-        "1790617184733961"
-      ],
-      "amount": 3,
-      "matchType": "F5",
-      "reason": "Saldar deuda",
-      "createdAt": "2026-09-30T06:31:47.668Z"
-    },
-    {
-      "id": "1790749908912571",
-      "playerIds": [
-        "1790617380927257"
-      ],
-      "amount": 3,
-      "matchType": "F5",
-      "reason": "Saldar deuda",
-      "createdAt": "2026-09-30T06:31:48.912Z"
-    },
-    {
-      "id": "1790749910005327",
-      "playerIds": [
-        "1790617607175939"
-      ],
-      "amount": 3,
-      "matchType": "F5",
-      "reason": "Saldar deuda",
-      "createdAt": "2026-09-30T06:31:50.005Z"
-    },
-    {
-      "id": "1790749911143997",
-      "playerIds": [
-        "1790617596728380"
-      ],
-      "amount": 3,
-      "matchType": "F5",
-      "reason": "Saldar deuda",
-      "createdAt": "2026-09-30T06:31:51.144Z"
     }
   ],
   "generalTransactions": [
@@ -238,6 +168,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-30T06:31:51.844Z",
+  "exportDate": "2026-09-30T06:32:07.213Z",
   "version": "2.0"
 }
