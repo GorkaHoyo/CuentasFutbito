@@ -112,7 +112,7 @@ class App {
     this._pushTimer = setTimeout(()=>this.pushToGithub(), 700); 
   }
   
-  async pullFromGithub(silent){
+async pullFromGithub(silent){
     if(!this.githubSync) return;
     const branch = this.githubSync.branch ?? 'main'; 
     try{
@@ -128,10 +128,25 @@ class App {
       this.saveGithubConfig(this.githubSync);
       const json = JSON.parse(b64DecodeUnicode(data.content));
       
+      // Descargamos datos económicos y de jugadores
       this.players = json.players ?? []; 
       this.transactions = json.transactions ?? []; 
       this.generalTransactions = json.generalTransactions ?? [];
+      
+      // NUEVO: Descargamos el estado de los equipos y la convocatoria
+      if (json.teamsMatchType) this.teamsMatchType = json.teamsMatchType;
+      if (json.teamsPresent) this.teamsPresent = new Set(json.teamsPresent);
+      if (json.teamsGuests) this.teamsGuests = json.teamsGuests;
+      if (json.teamsResult !== undefined) this.teamsResult = json.teamsResult;
+
       this.save(); 
+      
+      // Guardamos la configuración de equipos en el dispositivo local para que no se pierda al refrescar
+      localStorage.setItem('football-teams-match', this.teamsMatchType);
+      localStorage.setItem('football-teams-present', JSON.stringify(Array.from(this.teamsPresent)));
+      localStorage.setItem('football-teams-guests', JSON.stringify(this.teamsGuests));
+      localStorage.setItem('football-teams-result', JSON.stringify(this.teamsResult));
+
       this.githubSyncStatus = {ok:true, at:new Date()};
       if(!silent) this.toast('Sincronizado con GitHub');
       this.render();
@@ -145,10 +160,20 @@ class App {
   async pushToGithub(){
     if(!this.githubSync) return;
     const branch = this.githubSync.branch ?? 'main'; 
+    
+    // NUEVO: Añadimos las variables de los equipos al payload que viaja a GitHub
     const payload = { 
-      players: this.players, transactions: this.transactions, generalTransactions: this.generalTransactions, 
-      footballs: [], exportDate: new Date().toISOString(), version: '2.0' 
+      players: this.players, 
+      transactions: this.transactions, 
+      generalTransactions: this.generalTransactions, 
+      teamsMatchType: this.teamsMatchType,
+      teamsPresent: Array.from(this.teamsPresent), // Convertimos el Set a Array para que JSON lo entienda
+      teamsGuests: this.teamsGuests,
+      teamsResult: this.teamsResult,
+      exportDate: new Date().toISOString(), 
+      version: '2.0' 
     };
+    
     const body = { message: 'Actualización app', content: b64EncodeUnicode(JSON.stringify(payload, null, 2)), branch };
     if(this.githubSync.sha) body.sha = this.githubSync.sha;
     const headers = { Authorization: `Bearer ${this.githubSync.token}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' };
@@ -156,7 +181,6 @@ class App {
     try{
       let res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) });
       if(res.status === 409){ 
-        // Lógica de "merge" si hay conflicto en GitHub
         const fresh = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}`, { headers }); 
         if(fresh.ok){ const fd = await fresh.json(); body.sha = fd.sha; } 
         res = await fetch(this.githubApiUrl(), { method:'PUT', headers, body: JSON.stringify(body) }); 
