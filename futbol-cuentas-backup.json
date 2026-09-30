@@ -143,9 +143,17 @@
   "transactions": [],
   "generalTransactions": [],
   "teamsMatchType": "F5",
-  "teamsPresent": [],
+  "teamsPresent": [
+    "1790616949341112",
+    "1790617058257940",
+    "1790628990483718",
+    "1790617093188726",
+    "1790617571023650",
+    "1790616908815312",
+    "1790617300232532"
+  ],
   "teamsGuests": [],
   "teamsResult": null,
-  "exportDate": "2026-09-30T15:08:12.726Z",
+  "exportDate": "2026-09-30T15:09:00.743Z",
   "version": "2.0"
 }
