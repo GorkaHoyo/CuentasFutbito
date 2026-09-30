@@ -166,6 +166,16 @@
       "matchType": "F5",
       "reason": "Saldar deuda",
       "createdAt": "2026-09-30T06:31:43.844Z"
+    },
+    {
+      "id": "1790749905473204",
+      "playerIds": [
+        "1790617093188726"
+      ],
+      "amount": 3,
+      "matchType": "F5",
+      "reason": "Saldar deuda",
+      "createdAt": "2026-09-30T06:31:45.473Z"
     }
   ],
   "generalTransactions": [
@@ -178,6 +188,6 @@
     }
   ],
   "footballs": [],
-  "exportDate": "2026-09-30T06:31:44.546Z",
+  "exportDate": "2026-09-30T06:31:46.174Z",
   "version": "2.0"
 }
