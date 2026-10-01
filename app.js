@@ -769,7 +769,6 @@ class App {
       `;
     }
   }
-
   renderTopbar(){
     return `
       <div class="topbar">
