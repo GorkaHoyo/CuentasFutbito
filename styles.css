@@ -203,3 +203,27 @@ input:focus, select:focus, textarea:focus{ outline:2px solid var(--turf); outlin
 }
 
 ::-webkit-scrollbar{ width:0; height:0; }
+/* ---------- ESTADÍSTICAS Y CROMOS ---------- */
+.stat-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+.stat-table th { text-align: left; padding: 8px 4px; color: var(--muted); border-bottom: 2px solid var(--line); font-family: "Oswald"; font-weight: 600; text-transform: uppercase; font-size: 11px; }
+.stat-table td { padding: 10px 4px; border-bottom: 1px solid rgba(0,0,0,0.05); color: var(--ink); font-weight: 500; }
+.stat-table tr:last-child td { border-bottom: none; }
+.stat-table .num { font-family: "Space Mono", monospace; text-align: right; }
+.stat-table th.num { text-align: right; }
+
+.goal-counter { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.goal-counter button { width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--line); color: var(--ink); font-weight: bold; font-size: 16px; cursor: pointer; display:flex; align-items:center; justify-content:center; }
+.goal-counter button:active { background: var(--gold); }
+.goal-counter span { font-family: "Space Mono", monospace; font-size: 15px; font-weight: 700; width: 20px; text-align: center; }
+
+.cromo-preview { background: var(--pitch-dark); border: 2px solid var(--gold); border-radius: 12px; padding: 20px; color: var(--chalk); text-align: center; margin-bottom: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
+.cromo-preview h3 { margin: 0 0 4px 0; font-size: 24px; color: var(--gold); }
+.cromo-preview .pos-badge { display: inline-block; background: var(--pitch); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 16px; }
+.cromo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cromo-stat { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; }
+.cromo-stat .val { font-family: "Space Mono", monospace; font-size: 22px; font-weight: 700; color: var(--chalk); }
+.cromo-stat .lbl { font-size: 10px; text-transform: uppercase; color: #9FC2AC; margin-top: 4px; letter-spacing: 0.5px; }
+
+.score-input-group { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 16px 0; padding: 16px; background: var(--paper); border-radius: 12px; border: 1px solid var(--line); }
+.score-input-group input { width: 60px; height: 50px; font-size: 24px; font-weight: 700; text-align: center; border: 2px solid var(--line); border-radius: 8px; background: var(--chalk); font-family: "Space Mono", monospace; }
+.score-input-group span { font-size: 20px; font-weight: 700; color: var(--muted); }
