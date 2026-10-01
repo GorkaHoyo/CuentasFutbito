@@ -1386,7 +1386,21 @@ class App {
 }
 
 let app;
-window.addEventListener('DOMContentLoaded', ()=>{ app = new App(); window.app = app; document.body.addEventListener('click', (e)=>{ if(e.target.closest('.fab') || e.target.closest('.bottom-nav')) return; }); });
+
+function iniciarApp() {
+  if(window.app) return; // Evita que se duplique
+  app = new App(); 
+  window.app = app; 
+  document.body.addEventListener('click', (e)=>{ if(e.target.closest('.fab') || e.target.closest('.bottom-nav')) return; });
+}
+
+// Arranque antibalas: si la página ya cargó, arranca directo. Si no, espera a la señal.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', iniciarApp);
+} else {
+  iniciarApp();
+}
+
 document.addEventListener('click', function(e){ const t = e.target.closest('[data-open-add-player]'); if(t) app.openModal('addPlayer'); });
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
 window.addEventListener('online', ()=>{ if(window.app && app.githubSync && app.githubSyncStatus && !app.githubSyncStatus.ok){ app.pushToGithub(); } });
