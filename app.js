@@ -769,6 +769,7 @@ class App {
       `;
     }
   }
+
   renderTopbar(){
     return `
       <div class="topbar">
@@ -854,7 +855,6 @@ class App {
       ${pList || '<div class="empty-state">No hay jugadores.</div>'}
     `;
   }
-
   renderMovimientos(){
     return `
       <div class="subtabs">
