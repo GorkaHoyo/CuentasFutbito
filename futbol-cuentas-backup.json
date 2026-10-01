@@ -127,17 +127,6 @@
       "stamina": "alto",
       "position": "delantero",
       "createdAt": "2026-09-28T17:35:29.299Z"
-    },
-    {
-      "id": "1790770061333831",
-      "name": "test test",
-      "type": "F5/F7",
-      "isRegular": true,
-      "skill": "medio",
-      "stamina": "medio",
-      "position": "portero",
-      "bilbaoKirolak": true,
-      "createdAt": "2026-09-30T12:07:41.333Z"
     }
   ],
   "transactions": [],
@@ -299,6 +288,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-01T13:20:24.052Z",
+  "exportDate": "2026-10-01T13:20:36.046Z",
   "version": "2.1"
 }
