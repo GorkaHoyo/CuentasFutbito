@@ -142,7 +142,62 @@
   ],
   "transactions": [],
   "generalTransactions": [],
-  "matches": [],
+  "matches": [
+    {
+      "id": "match_1790851420948747",
+      "date": "2026-10-01T10:43:40.948Z",
+      "season": "2026/2027",
+      "matchType": "F5",
+      "teamRojo": [
+        {
+          "id": "1790617380927257",
+          "name": "Juan g."
+        },
+        {
+          "id": "1790617571023650",
+          "name": "Gorka"
+        },
+        {
+          "id": "1790617093188726",
+          "name": "Ego"
+        },
+        {
+          "id": "1790617184733961",
+          "name": "Jose"
+        },
+        {
+          "id": "1790616929299341",
+          "name": "Txopi Aitor"
+        }
+      ],
+      "teamBlanco": [
+        {
+          "id": "1790617607175939",
+          "name": "Pablo"
+        },
+        {
+          "id": "1790617058257940",
+          "name": "Diego OpaOpi"
+        },
+        {
+          "id": "1790617300232532",
+          "name": "Job Ezequiel"
+        },
+        {
+          "id": "1790628990483718",
+          "name": "Diego Recio"
+        },
+        {
+          "id": "1790616908815312",
+          "name": "Hoyuki Ander"
+        }
+      ],
+      "scoreRojo": 0,
+      "scoreBlanco": 0,
+      "goals": {},
+      "status": "pending"
+    }
+  ],
   "currentSeason": "2026/2027",
   "teamsMatchType": "F5",
   "teamsPresent": [
@@ -224,6 +279,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-01T10:42:40.687Z",
+  "exportDate": "2026-10-01T10:43:41.652Z",
   "version": "2.1"
 }
