@@ -247,14 +247,14 @@
         "position": "defensa"
       },
       {
-        "id": "1790617596728380",
-        "name": "Patxo",
+        "id": "1790617093188726",
+        "name": "Ego",
         "weight": 5,
         "position": "medio"
       },
       {
-        "id": "1790617093188726",
-        "name": "Ego",
+        "id": "1790628990483718",
+        "name": "Diego Recio",
         "weight": 5,
         "position": "medio"
       },
@@ -285,8 +285,8 @@
         "position": "defensa"
       },
       {
-        "id": "1790628990483718",
-        "name": "Diego Recio",
+        "id": "1790617596728380",
+        "name": "Patxo",
         "weight": 5,
         "position": "medio"
       },
@@ -304,6 +304,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-01T10:36:21.473Z",
+  "exportDate": "2026-10-01T10:37:01.901Z",
   "version": "2.1"
 }
