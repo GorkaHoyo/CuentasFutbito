@@ -1277,7 +1277,6 @@ class App {
     return `<div class="sheet-backdrop" onclick="if(event.target===this) app.closeModal()"><div class="sheet"><div class="sheet-handle"></div><button class="close-x" onclick="app.closeModal()">✕</button>${body}</div></div>`;
   }
 
-  // --- LÓGICA DIRECTA DOM PARA GOLES Y MARCADOR ---
   modScore(matchId, team, val) {
     const m = this.matches.find(x => x.id === matchId);
     if(m) {
@@ -1295,7 +1294,6 @@ class App {
       
       m.goals[playerId] = next;
       
-      // Auto-update global score
       if(teamColor === 'rojo') {
           m.scoreRojo = (m.scoreRojo || 0) + delta;
           if(m.scoreRojo < 0) m.scoreRojo = 0;
@@ -1308,7 +1306,6 @@ class App {
           if(elScore) elScore.value = m.scoreBlanco;
       }
       
-      // Update DOM dynamically without full re-render (fixes jumpy UX)
       const elGoalTarget = document.getElementById(`goal_val_${m.id}_${playerId}`);
       if(elGoalTarget) elGoalTarget.innerText = next;
     }
@@ -1388,13 +1385,12 @@ class App {
 let app;
 
 function iniciarApp() {
-  if(window.app) return; // Evita que se duplique
+  if(window.app) return;
   app = new App(); 
   window.app = app; 
   document.body.addEventListener('click', (e)=>{ if(e.target.closest('.fab') || e.target.closest('.bottom-nav')) return; });
 }
 
-// Arranque antibalas: si la página ya cargó, arranca directo. Si no, espera a la señal.
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', iniciarApp);
 } else {
