@@ -60,6 +60,7 @@ class App {
     this.githubSync = ghConfig ?? null; 
     this.githubSyncStatus = null; 
     this._pushTimer = null;
+    this._isSyncing = false;
     
     this.load(); 
     this.render();
@@ -87,15 +88,12 @@ class App {
     this.scheduleGithubPush(); 
   }
 
-  // --- SOLUCIÓN AL BUCLE DE SINCRONIZACIÓN ---
-  // Función para guardar solo en el móvil/PC, sin disparar la subida a GitHub
   saveLocalOnly() {
     localStorage.setItem('football-players', JSON.stringify(this.players)); 
     localStorage.setItem('football-transactions', JSON.stringify(this.transactions)); 
     localStorage.setItem('football-general-transactions', JSON.stringify(this.generalTransactions)); 
   }
 
-  // Función para guardar localmente y además programar la subida a GitHub
   save() { 
     this.saveLocalOnly();
     this.scheduleGithubPush(); 
@@ -118,6 +116,20 @@ class App {
     clearTimeout(this._pushTimer); 
     this._pushTimer = setTimeout(()=>this.pushToGithub(), 700); 
   }
+
+  // Nueva función para forzar el borrado de la caché del Service Worker
+  hardResetApp() {
+    if(confirm('¿Forzar actualización de la app? Esto limpiará la memoria interna y descargará la última versión de tu código.')) {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for(let r of registrations) r.unregister();
+                window.location.reload(true);
+            });
+        } else {
+            window.location.reload(true);
+        }
+    }
+  }
   
   async pullFromGithub(silent){
     if(!this.githubSync) return;
@@ -126,11 +138,9 @@ class App {
     
     const branch = this.githubSync.branch ?? 'main'; 
     try{
-      // ELIMINADO "cache: 'no-store'". Solo usamos el truco matemático en la URL
       const res = await fetch(`${this.githubApiUrl()}?ref=${encodeURIComponent(branch)}&nocache=${Math.random()}`, { 
         headers: { Authorization: `Bearer ${this.githubSync.token}`, Accept: 'application/vnd.github+json' }
       });
-      
       if(res.status === 404){ 
         this.githubSync.sha = null; 
         this.saveGithubConfig(this.githubSync); 
@@ -193,7 +203,7 @@ class App {
         teamsGuests: this.teamsGuests,
         teamsResult: this.teamsResult,
         exportDate: new Date().toISOString(), 
-        version: '2.0' 
+        version: '2.1' 
       };
       
       const body = { message: 'Actualización app', content: b64EncodeUnicode(JSON.stringify(payload, null, 2)), branch };
@@ -228,6 +238,7 @@ class App {
       this.render();
     }
   }
+
   toast(msg){ this.toastMsg = msg; this.render(); setTimeout(()=>{ this.toastMsg=null; this.render(); }, 1800); }
 
   getPlayerBalance(playerId, matchType){
@@ -860,6 +871,11 @@ class App {
         <input type="file" id="importFile" accept="application/json" style="display:none" onchange="app.importBackup(this.files[0])" />
         <button class="btn btn-sm btn-outline" onclick="document.getElementById('importFile').click()">${ICONS.upload} Importar JSON</button>
       </div>
+      <div class="section-title" style="margin-top:24px">Solución de problemas</div>
+      <div class="ticket neutral" style="cursor:default">
+        <div style="font-size:13px;line-height:1.5;margin-bottom:10px">Si notas que la app no se actualiza o hay errores en los dispositivos de otras personas, pídeles que pulsen este botón para borrar la memoria interna y forzar la descarga de la última versión.</div>
+        <button class="btn btn-danger btn-block" onclick="app.hardResetApp()">↻ Forzar actualización de la App</button>
+      </div>
       <div class="section-title" style="margin-top:24px">Historial de movimientos</div>${this.renderHistorial()}
       <div class="section-title" style="margin-top:24px">Instalar como app</div>
       <div class="ticket neutral" style="cursor:default"><div style="font-size:13px;line-height:1.5">En Chrome (Android) pulsa el menú ⋮ y elige <b>"Instalar app"</b> o <b>"Añadir a pantalla de inicio"</b>.</div></div>
@@ -1014,7 +1030,7 @@ class App {
 let app;
 window.addEventListener('DOMContentLoaded', ()=>{ app = new App(); window.app = app; document.body.addEventListener('click', (e)=>{ if(e.target.closest('.fab') || e.target.closest('.bottom-nav')) return; }); });
 document.addEventListener('click', function(e){ const t = e.target.closest('[data-open-add-player]'); if(t) app.openModal('addPlayer'); });
+
+// Mantenemos solo el Service Worker y el detector de red. Eliminamos los comandos al minimizar la app para evitar corrupción.
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
 window.addEventListener('online', ()=>{ if(window.app && app.githubSync && app.githubSyncStatus && !app.githubSyncStatus.ok){ app.pushToGithub(); } });
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === 'hidden' && window.app) window.app.saveTeamsLocal(); });
-window.addEventListener("beforeunload", () => { if (window.app) window.app.saveTeamsLocal(); });
