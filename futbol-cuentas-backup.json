@@ -130,7 +130,7 @@
     },
     {
       "id": "1790770061333831",
-      "name": "test",
+      "name": "test test",
       "type": "F5/F7",
       "isRegular": true,
       "skill": "medio",
@@ -222,6 +222,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-01T06:27:07.162Z",
+  "exportDate": "2026-10-01T06:27:31.527Z",
   "version": "2.1"
 }
