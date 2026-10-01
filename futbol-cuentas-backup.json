@@ -201,9 +201,12 @@
         }
       ],
       "scoreRojo": 0,
-      "scoreBlanco": 0,
-      "goals": {},
-      "status": "pending"
+      "scoreBlanco": 2,
+      "goals": {
+        "1790616929299341": 1,
+        "1790617184733961": 1
+      },
+      "status": "completed"
     }
   ],
   "currentSeason": "2026/2027",
@@ -301,6 +304,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-01T10:34:59.724Z",
+  "exportDate": "2026-10-01T10:35:09.602Z",
   "version": "2.1"
 }
