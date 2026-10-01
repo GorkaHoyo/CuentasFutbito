@@ -12,6 +12,7 @@ const ICONS = {
   upload: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21V9m0 0l-4 4m4-4l4 4M4 5h16"/></svg>`,
   share: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="18" cy="5" r="2.3"/><circle cx="6" cy="12" r="2.3"/><circle cx="18" cy="19" r="2.3"/><path d="M8 10.8l8-4.4M8 13.2l8 4.4"/></svg>`,
   shuffle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h3.5L15 18h6M14.5 6H21M3 18h3.5L11 12"/><path d="M18.5 3.5L21 6l-2.5 2.5M18.5 15.5L21 18l-2.5 2.5"/></svg>`,
+  chart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>`
 };
 
 const SKILL_WEIGHT = { muy_bajo:1, bajo:2, medio:3, alto:4, muy_alto:5 };
@@ -54,6 +55,7 @@ class App {
     this.histMatchFilter = '';
     this.histLimit = 40;
     this.movTab = 'jugador';
+    this.statTab = 'clasificacion';
     
     let ghConfig = null; 
     try { ghConfig = JSON.parse(localStorage.getItem('githubSyncConfig')); } catch(e) {}
@@ -71,8 +73,11 @@ class App {
     try { this.players = JSON.parse(localStorage.getItem('football-players')) ?? []; } catch(e) { this.players = []; }
     try { this.transactions = JSON.parse(localStorage.getItem('football-transactions')) ?? []; } catch(e) { this.transactions = []; }
     try { this.generalTransactions = JSON.parse(localStorage.getItem('football-general-transactions')) ?? []; } catch(e) { this.generalTransactions = []; }
+    try { this.matches = JSON.parse(localStorage.getItem('football-matches')) ?? []; } catch(e) { this.matches = []; }
     
+    this.currentSeason = localStorage.getItem('football-season') ?? '2026/2027';
     this.teamsMatchType = localStorage.getItem('football-teams-match') ?? 'F5';
+    
     try { this.teamsPresent = new Set(JSON.parse(localStorage.getItem('football-teams-present')) ?? []); } catch(e) { this.teamsPresent = new Set(); }
     try { this.teamsGuests = JSON.parse(localStorage.getItem('football-teams-guests')) ?? []; } catch(e) { this.teamsGuests = []; }
     try { this.teamsResult = JSON.parse(localStorage.getItem('football-teams-result')); } catch(e) { this.teamsResult = null; }
@@ -92,6 +97,8 @@ class App {
     localStorage.setItem('football-players', JSON.stringify(this.players)); 
     localStorage.setItem('football-transactions', JSON.stringify(this.transactions)); 
     localStorage.setItem('football-general-transactions', JSON.stringify(this.generalTransactions)); 
+    localStorage.setItem('football-matches', JSON.stringify(this.matches));
+    localStorage.setItem('football-season', this.currentSeason);
   }
 
   save() { 
@@ -117,7 +124,6 @@ class App {
     this._pushTimer = setTimeout(()=>this.pushToGithub(), 700); 
   }
 
-  // Nueva función para forzar el borrado de la caché del Service Worker
   hardResetApp() {
     if(confirm('¿Forzar actualización de la app? Esto limpiará la memoria interna y descargará la última versión de tu código.')) {
         if ('serviceWorker' in navigator) {
@@ -159,6 +165,8 @@ class App {
       this.players = json.players ?? []; 
       this.transactions = json.transactions ?? []; 
       this.generalTransactions = json.generalTransactions ?? [];
+      this.matches = json.matches ?? [];
+      if (json.currentSeason) this.currentSeason = json.currentSeason;
       
       if (json.teamsMatchType) this.teamsMatchType = json.teamsMatchType;
       if (json.teamsPresent) this.teamsPresent = new Set(json.teamsPresent);
@@ -198,6 +206,8 @@ class App {
         players: this.players, 
         transactions: this.transactions, 
         generalTransactions: this.generalTransactions, 
+        matches: this.matches,
+        currentSeason: this.currentSeason,
         teamsMatchType: this.teamsMatchType,
         teamsPresent: Array.from(this.teamsPresent), 
         teamsGuests: this.teamsGuests,
@@ -341,7 +351,7 @@ class App {
   }
 
   exportBackup(){
-    const data = { players:this.players, transactions:this.transactions, generalTransactions:this.generalTransactions, footballs:[], exportDate:new Date().toISOString(), version:'2.0' };
+    const data = { players:this.players, transactions:this.transactions, generalTransactions:this.generalTransactions, matches:this.matches, exportDate:new Date().toISOString(), version:'2.1' };
     const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = `futbol-cuentas-backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
@@ -357,6 +367,7 @@ class App {
         this.players = data.players || []; 
         this.transactions = data.transactions || []; 
         this.generalTransactions = data.generalTransactions || [];
+        this.matches = data.matches || [];
         this.save(); this.render(); this.toast('Datos importados');
       }catch(err){ alert('El archivo no es un backup válido.'); }
     };
@@ -430,6 +441,77 @@ class App {
     this.sortByPosition(this.teamsResult.teamRojo); this.sortByPosition(this.teamsResult.teamBlanco);
     
     this.teamsSwapSel = null; this.saveTeamsLocal(); this.render();
+  }
+
+  // --- NUEVO: SISTEMA DE PARTIDOS Y ESTADÍSTICAS ---
+  sellarPartidoOficial() {
+    if(!this.teamsResult) return;
+    if(confirm('¿Sellar como partido oficial? Quedará pendiente de anotar el resultado final.')) {
+      const match = {
+        id: 'match_' + uid(),
+        date: new Date().toISOString(),
+        season: this.currentSeason,
+        matchType: this.teamsMatchType,
+        teamRojo: this.teamsResult.teamRojo.map(p => ({ id: p.id, name: p.name })),
+        teamBlanco: this.teamsResult.teamBlanco.map(p => ({ id: p.id, name: p.name })),
+        scoreRojo: 0,
+        scoreBlanco: 0,
+        goals: {}, // { playerId: number }
+        status: 'pending'
+      };
+      this.matches.push(match);
+      this.save();
+      this.toast('Partido sellado correctamente');
+      this.setPage('estadisticas');
+      this.statTab = 'partidos';
+      this.render();
+    }
+  }
+
+  calcularClasificacion(season) {
+    const stats = {};
+    // Solo contar jugadores reales de la base de datos (no invitados borrados)
+    this.players.forEach(p => {
+      stats[p.id] = { p, pj:0, pg:0, pe:0, pp:0, goles:0 };
+    });
+
+    const matchesToCount = this.matches.filter(m => m.status === 'completed' && m.season === season);
+    
+    matchesToCount.forEach(m => {
+      let winner = null;
+      if(m.scoreRojo > m.scoreBlanco) winner = 'rojo';
+      else if(m.scoreBlanco > m.scoreRojo) winner = 'blanco';
+
+      const processTeam = (team, color) => {
+        team.forEach(player => {
+          if(!stats[player.id]) return; // Si es un invitado o borrado, lo ignoramos en la general
+          stats[player.id].pj++;
+          if(winner === null) stats[player.id].pe++;
+          else if(winner === color) stats[player.id].pg++;
+          else stats[player.id].pp++;
+          
+          if(m.goals[player.id]) stats[player.id].goles += m.goals[player.id];
+        });
+      };
+
+      processTeam(m.teamRojo, 'rojo');
+      processTeam(m.teamBlanco, 'blanco');
+    });
+
+    // Filtramos solo los que han jugado y calculamos winrate
+    const clasificacion = Object.values(stats)
+      .filter(s => s.pj > 0)
+      .map(s => {
+        s.winrate = Math.round((s.pg / s.pj) * 100);
+        return s;
+      });
+
+    // Ordenar: 1º Winrate, 2º Partidos Jugados, 3º Goles
+    return clasificacion.sort((a, b) => {
+      if(b.winrate !== a.winrate) return b.winrate - a.winrate;
+      if(b.pj !== a.pj) return b.pj - a.pj;
+      return b.goles - a.goles;
+    });
   }
 
   async ensureFonts(){ 
@@ -533,6 +615,99 @@ class App {
     canvas.toBlob((blob)=>{ const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `equipos.png`; a.click(); URL.revokeObjectURL(url); }, 'image/png');
   }
 
+  async exportClasificacionImage(){
+    await this.ensureFonts();
+    const clasificacion = this.calcularClasificacion(this.currentSeason);
+    const DPR = 2, W = 800, PAD = 30, rowH = 40, headerH = 120;
+    const canvas = document.createElement('canvas'); 
+    canvas.width = Math.ceil(W*DPR); 
+    canvas.height = Math.ceil((headerH + (clasificacion.length * rowH) + 60)*DPR);
+    const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
+    
+    ctx.fillStyle = '#F6F2E9'; ctx.fillRect(0,0,W, canvas.height/DPR);
+    ctx.fillStyle = '#0F3D2E'; ctx.fillRect(0,0,W,84);
+    ctx.fillStyle = '#E8A33D'; ctx.fillRect(0,80,W,4);
+    
+    ctx.textAlign = 'left'; ctx.fillStyle = '#F6F2E9'; ctx.font = '700 28px Oswald'; ctx.fillText('🏆 CLASIFICACIÓN GENERAL', PAD, 46);
+    ctx.font = '600 16px Oswald'; ctx.fillStyle = '#CFE0D6'; ctx.fillText(`Temporada ${this.currentSeason}`, PAD, 70);
+    ctx.textAlign = 'right'; ctx.font = '400 14px -apple-system, sans-serif'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(new Date().toLocaleDateString('es-ES'), W-PAD, 70);
+    
+    let y = headerH;
+    ctx.textAlign = 'left'; ctx.fillStyle = '#6E7C73'; ctx.font = '600 14px Oswald';
+    ctx.fillText('JUGADOR', PAD+30, y);
+    ctx.textAlign = 'center';
+    ctx.fillText('PJ', W-320, y); ctx.fillText('PG', W-260, y); ctx.fillText('PE', W-200, y); ctx.fillText('PP', W-140, y); ctx.fillText('GOLES', W-80, y); ctx.fillText('% VICTORIA', W-30, y);
+    y += 15;
+    
+    clasificacion.forEach((s, i) => {
+      ctx.fillStyle = i % 2 === 0 ? '#FFFFFF' : '#F6F2E9';
+      ctx.fillRect(PAD, y, W-(PAD*2), rowH);
+      
+      ctx.textAlign = 'left'; ctx.fillStyle = '#12241B'; ctx.font = '700 16px "Space Mono"';
+      ctx.fillText(`${i+1}.`, PAD+6, y+25);
+      
+      ctx.font = '600 16px -apple-system, sans-serif';
+      ctx.fillText(s.p.name, PAD+30, y+25);
+      
+      ctx.textAlign = 'center'; ctx.font = '400 16px "Space Mono"';
+      ctx.fillText(s.pj, W-320, y+25);
+      ctx.fillStyle = 'var(--credit)'; ctx.fillText(s.pg, W-260, y+25);
+      ctx.fillStyle = 'var(--muted)'; ctx.fillText(s.pe, W-200, y+25);
+      ctx.fillStyle = 'var(--debt)'; ctx.fillText(s.pp, W-140, y+25);
+      ctx.fillStyle = '#12241B'; ctx.font = '700 16px "Space Mono"'; ctx.fillText(s.goles, W-80, y+25);
+      
+      ctx.fillStyle = '#0F3D2E';
+      ctx.fillText(`${s.winrate}%`, W-30, y+25);
+      
+      y += rowH;
+    });
+
+    canvas.toBlob((blob)=>{ const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `clasificacion-${this.currentSeason.replace('/','-')}.png`; a.click(); URL.revokeObjectURL(url); }, 'image/png');
+  }
+
+  async exportCromoImage(playerId){
+    const s = this.calcularClasificacion(this.currentSeason).find(x => x.p.id === playerId);
+    if(!s) return;
+    await this.ensureFonts();
+    const DPR = 2, W = 400, H = 500;
+    const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
+    const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
+    
+    // Fondo carta
+    ctx.fillStyle = '#0F3D2E'; ctx.fillRect(0,0,W,H);
+    const gradient = ctx.createLinearGradient(0,0,0,H);
+    gradient.addColorStop(0, '#154934'); gradient.addColorStop(1, '#082018');
+    ctx.fillStyle = gradient; ctx.fillRect(4,4,W-8,H-8);
+    ctx.strokeStyle = '#E8A33D'; ctx.lineWidth = 4; ctx.strokeRect(4,4,W-8,H-8);
+
+    // Nombre y posición
+    ctx.textAlign = 'center'; ctx.fillStyle = '#E8A33D'; ctx.font = '700 36px Oswald';
+    ctx.fillText(s.p.name.toUpperCase(), W/2, 80);
+    ctx.fillStyle = '#FFFFFF'; ctx.font = '600 18px Oswald';
+    const posName = POSITION_LABEL[s.p.position] || 'Sin Posición';
+    ctx.fillText(posName.toUpperCase(), W/2, 110);
+    
+    // Escudo/Icono
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.beginPath(); ctx.arc(W/2, 230, 80, 0, Math.PI*2); ctx.fill();
+    ctx.font = '700 80px "Space Mono"'; ctx.fillStyle = '#E8A33D';
+    ctx.fillText(s.winrate, W/2, 250);
+    ctx.font = '600 20px Oswald'; ctx.fillStyle = '#CFE0D6';
+    ctx.fillText('WINRATE %', W/2, 285);
+
+    // Stats bottom
+    const drawStatBox = (lbl, val, x, y) => {
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(x-45, y-30, 90, 60);
+        ctx.fillStyle = '#FFFFFF'; ctx.font = '700 24px "Space Mono"'; ctx.fillText(val, x, y-2);
+        ctx.fillStyle = '#9FC2AC'; ctx.font = '600 12px Oswald'; ctx.fillText(lbl, x, y+18);
+    };
+    drawStatBox('PARTIDOS', s.pj, W/4, 400);
+    drawStatBox('VICTORIAS', s.pg, W/2, 400);
+    drawStatBox('GOLES', s.goles, (W/4)*3, 400);
+
+    canvas.toBlob((blob)=>{ const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `cromo-${s.p.name}.png`; a.click(); URL.revokeObjectURL(url); }, 'image/png');
+  }
+
   openModal(type, payload){ 
     if(type === 'settleMatch') { 
       this._smCost = "19.55"; this._smQuotaBK = "3.00"; this._smQuotaNormal = "0.00"; this._smPayer = 'bote'; this._smSelected = new Set(); 
@@ -601,6 +776,7 @@ class App {
       case 'jugadores': return this.renderJugadores(); 
       case 'movimientos': return this.renderMovimientos(); 
       case 'equipos': return this.renderEquipos(); 
+      case 'estadisticas': return this.renderEstadisticas();
       case 'ajustes': return this.renderAjustes(); 
       default: return this.renderResumen(); 
     }
@@ -824,7 +1000,84 @@ class App {
       <div class="field-row" style="margin-top:6px">
         <button class="btn btn-sm btn-outline" onclick="app.exportTeamsImage()">${ICONS.download} Exportar imagen</button>
         <button class="btn btn-sm btn-gold" onclick="app.shareTeams()">${ICONS.share} Compartir texto</button>
-      </div>`;
+      </div>
+      <button class="btn btn-block" style="margin-top:12px; background:var(--pitch); color:#fff;" onclick="app.sellarPartidoOficial()">⚽ Sellar como Partido Oficial</button>
+      `;
+  }
+
+  // --- ESTADÍSTICAS Y PARTIDOS OFICIALES ---
+  renderEstadisticas() {
+    return `
+      <div class="subtabs">
+        <button class="chip ${this.statTab==='clasificacion'?'active':''}" style="flex:1" onclick="app.statTab='clasificacion';app.render()">Clasificación</button>
+        <button class="chip ${this.statTab==='partidos'?'active':''}" style="flex:1" onclick="app.statTab='partidos';app.render()">Partidos</button>
+      </div>
+      ${this.statTab==='clasificacion' ? this.renderClasificacion() : this.renderListaPartidos()}
+    `;
+  }
+
+  renderClasificacion() {
+    const data = this.calcularClasificacion(this.currentSeason);
+    let tableHtml = `<div class="empty-state">No hay partidos jugados esta temporada.</div>`;
+    
+    if (data.length > 0) {
+      tableHtml = `
+        <div style="background:var(--paper); border:1px solid var(--line); border-radius:12px; overflow:hidden;">
+          <table class="stat-table">
+            <thead>
+              <tr><th>Jugador</th><th class="num">PJ</th><th class="num">PG</th><th class="num">G</th><th class="num">% WIN</th></tr>
+            </thead>
+            <tbody>
+              ${data.map((row, i) => `
+                <tr onclick="app.openModal('cromoPlayer', '${row.p.id}')" style="cursor:pointer; background:${i%2===0?'#fff':'#f9f9f9'}">
+                  <td><b>${i+1}.</b>${escapeHtml(row.p.name)}</td>
+                  <td class="num">${row.pj}</td>
+                  <td class="num" style="color:var(--credit)">${row.pg}</td>
+                  <td class="num"><b>${row.goles}</b></td>
+                  <td class="num"><b>${row.winrate}%</b></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        <button class="btn btn-block btn-outline" style="margin-top:16px" onclick="app.exportClasificacionImage()">📸 Exportar Clasificación General</button>
+      `;
+    }
+
+    return `
+      <label>Temporada actual</label>
+      <input type="text" value="${this.currentSeason}" onchange="app.currentSeason = this.value; app.save(); app.render();" placeholder="Ej: 2026/2027" style="margin-bottom:16px; font-family:'Space Mono'; text-align:center" />
+      ${tableHtml}
+    `;
+  }
+
+  renderListaPartidos() {
+    let html = `<div class="section-title">Partidos de la Temporada ${this.currentSeason}</div>`;
+    const partidosTemp = this.matches.filter(m => m.season === this.currentSeason).sort((a,b) => new Date(b.date) - new Date(a.date));
+    
+    if (partidosTemp.length === 0) return html + '<div class="empty-state">No se han registrado partidos. Genera equipos y séllalos para empezar.</div>';
+
+    html += partidosTemp.map(m => {
+      const isPending = m.status === 'pending';
+      const fecha = new Date(m.date).toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'});
+      const boxStyle = isPending ? 'border-left-color:var(--gold); background:var(--gold-soft);' : 'border-left-color:var(--credit);';
+      
+      let resHtml = isPending 
+        ? `<button class="btn btn-sm btn-gold" onclick="app.openModal('resolveMatch', '${m.id}')">Anotar Resultado</button>`
+        : `<div style="font-size:24px; font-weight:700; font-family:'Space Mono'; color:var(--pitch)"><span style="color:var(--debt)">${m.scoreRojo}</span> - <span style="color:#1E3A8A">${m.scoreBlanco}</span></div>`;
+
+      return `
+        <div class="ticket" style="${boxStyle}">
+          <div>
+            <div class="name">${m.matchType} · ${fecha}</div>
+            <div class="sub">${m.teamRojo.length} vs ${m.teamBlanco.length} jugadores</div>
+          </div>
+          <div>${resHtml}</div>
+        </div>
+      `;
+    }).join('');
+    
+    return html;
   }
 
   renderGithubSyncBox(){
@@ -920,7 +1173,7 @@ class App {
   renderFab(){ return this.page==='resumen' ? `<button class="fab" onclick="app.setPage('movimientos')">${ICONS.plus}</button>` : (this.page==='jugadores' ? `<button class="fab" onclick="app.openModal('addPlayer')">${ICONS.plus}</button>` : ''); }
   
   renderBottomNav(){ 
-    return `<div class="bottom-nav">${[ {id:'resumen', label:'Resumen', icon:ICONS.home}, {id:'jugadores', label:'Jugadores', icon:ICONS.users}, {id:'movimientos', label:'Movim.', icon:ICONS.euro}, {id:'equipos', label:'Equipos', icon:ICONS.shirts}, {id:'ajustes', label:'Ajustes', icon:ICONS.gear} ].map(t=>`<button class="${this.page===t.id?'active':''}" onclick="app.setPage('${t.id}')">${t.icon}<span class="tab-label">${t.label}</span></button>`).join('')}</div>`; 
+    return `<div class="bottom-nav">${[ {id:'resumen', label:'Resumen', icon:ICONS.home}, {id:'jugadores', label:'Jugadores', icon:ICONS.users}, {id:'movimientos', label:'Movim.', icon:ICONS.euro}, {id:'equipos', label:'Equipos', icon:ICONS.shirts}, {id:'estadisticas', label:'Estadísticas', icon:ICONS.chart}, {id:'ajustes', label:'Ajustes', icon:ICONS.gear} ].map(t=>`<button class="${this.page===t.id?'active':''}" onclick="app.setPage('${t.id}')">${t.icon}<span class="tab-label">${t.label}</span></button>`).join('')}</div>`; 
   }
 
   renderModal(){
@@ -939,6 +1192,62 @@ class App {
         <label>Habitual</label><div class="chip-group" id="pRegGroup"><button class="chip ${p?.isRegular !== false ? 'active' : ''}" data-val="true" onclick="app.pickChip(this,'pRegGroup')">Sí</button><button class="chip ${p?.isRegular === false ? 'active' : ''}" data-val="false" onclick="app.pickChip(this,'pRegGroup')">Esporádico</button></div>
         <button class="btn btn-primary btn-block" style="margin-top:18px" onclick="app.savePlayerForm(${p ? `'${p.id}'` : 'null'})">Guardar</button>
         ${p ? `<button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.deletePlayer('${p.id}')">Eliminar jugador</button>` : ''}`;
+    
+    } else if(type==='resolveMatch'){
+      const m = this.matches.find(x=>x.id===payload);
+      if(!m) return '';
+      
+      const renderTeamGoals = (team, color) => team.map(p => {
+        const goles = m.goals[p.id] || 0;
+        return `
+          <div class="team-player">
+            <span style="font-weight:600">${escapeHtml(p.name)}</span>
+            <div class="goal-counter">
+              <button onclick="app.modGoal('${m.id}', '${p.id}', -1)">-</button>
+              <span>${goles}</span>
+              <button onclick="app.modGoal('${m.id}', '${p.id}', 1)">+</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      body = `
+        <h2>Anotar Resultado</h2>
+        <div class="sub" style="margin-bottom:12px">Introduce el marcador final y los goles de cada jugador.</div>
+        
+        <div class="score-input-group">
+          <div style="text-align:center"><div style="color:var(--debt);font-weight:700;margin-bottom:4px">ROJO</div><input type="number" min="0" value="${m.scoreRojo}" onchange="app.modScore('${m.id}', 'rojo', this.value)" /></div>
+          <span>-</span>
+          <div style="text-align:center"><div style="color:#1E3A8A;font-weight:700;margin-bottom:4px">AZUL</div><input type="number" min="0" value="${m.scoreBlanco}" onchange="app.modScore('${m.id}', 'blanco', this.value)" /></div>
+        </div>
+
+        <div class="section-title">Goleadores Equipo Rojo 🔴</div>
+        <div class="team-card" style="border-left:4px solid var(--debt); padding: 4px 12px">${renderTeamGoals(m.teamRojo, 'rojo')}</div>
+        
+        <div class="section-title">Goleadores Equipo Azul 🔵</div>
+        <div class="team-card" style="border-left:4px solid #1E3A8A; padding: 4px 12px">${renderTeamGoals(m.teamBlanco, 'blanco')}</div>
+
+        <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.finishMatch('${m.id}')">💾 Guardar Partido Oficial</button>
+        <button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.deleteMatch('${m.id}')">🗑️ Eliminar Partido</button>
+      `;
+
+    } else if(type==='cromoPlayer'){
+      const s = this.calcularClasificacion(this.currentSeason).find(x => x.p.id === payload);
+      if(!s) return '';
+      const posName = POSITION_LABEL[s.p.position] || 'SIN POSICIÓN';
+      body = `
+        <div class="cromo-preview" id="cromoCapture">
+          <h3>${escapeHtml(s.p.name.toUpperCase())}</h3>
+          <div class="pos-badge">${posName}</div>
+          <div class="cromo-grid">
+            <div class="cromo-stat"><div class="val">${s.winrate}%</div><div class="lbl">Victoria</div></div>
+            <div class="cromo-stat"><div class="val">${s.goles}</div><div class="lbl">Goles</div></div>
+            <div class="cromo-stat"><div class="val">${s.pj}</div><div class="lbl">Partidos</div></div>
+            <div class="cromo-stat"><div class="val">${s.pg}</div><div class="lbl">Ganados</div></div>
+          </div>
+        </div>
+        <button class="btn btn-gold btn-block" onclick="app.exportCromoImage('${s.p.id}')">📸 Exportar Cromo</button>
+      `;
+      
     } else if(type==='quickTx'){
       const p = this.players.find(x=>x.id===payload.playerId); const bal = this.getPlayerBalance(p.id, payload.matchType);
       body = `
@@ -973,6 +1282,44 @@ class App {
         <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitSettleMatch()">Confirmar y Liquidar</button>`;
     }
     return `<div class="sheet-backdrop" onclick="if(event.target===this) app.closeModal()"><div class="sheet"><div class="sheet-handle"></div><button class="close-x" onclick="app.closeModal()">✕</button>${body}</div></div>`;
+  }
+
+  // --- LÓGICA DE PARTIDOS MODAL ---
+  modScore(matchId, team, val) {
+    const m = this.matches.find(x => x.id === matchId);
+    if(m) {
+      if(team === 'rojo') m.scoreRojo = parseInt(val) || 0;
+      if(team === 'blanco') m.scoreBlanco = parseInt(val) || 0;
+    }
+  }
+
+  modGoal(matchId, playerId, delta) {
+    const m = this.matches.find(x => x.id === matchId);
+    if(m) {
+      const current = m.goals[playerId] || 0;
+      const next = current + delta;
+      m.goals[playerId] = next < 0 ? 0 : next;
+      this.render(); // Refrescar modal
+    }
+  }
+
+  finishMatch(matchId) {
+    const m = this.matches.find(x => x.id === matchId);
+    if(m) {
+      m.status = 'completed';
+      this.save();
+      this.closeModal();
+      this.toast('Partido guardado');
+    }
+  }
+
+  deleteMatch(matchId) {
+    if(confirm('¿Seguro que quieres eliminar este partido para siempre?')) {
+      this.matches = this.matches.filter(m => m.id !== matchId);
+      this.save();
+      this.closeModal();
+      this.toast('Partido eliminado');
+    }
   }
 
   pickChip(btn, groupId){ document.getElementById(groupId).querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); }
@@ -1030,7 +1377,5 @@ class App {
 let app;
 window.addEventListener('DOMContentLoaded', ()=>{ app = new App(); window.app = app; document.body.addEventListener('click', (e)=>{ if(e.target.closest('.fab') || e.target.closest('.bottom-nav')) return; }); });
 document.addEventListener('click', function(e){ const t = e.target.closest('[data-open-add-player]'); if(t) app.openModal('addPlayer'); });
-
-// Mantenemos solo el Service Worker y el detector de red. Eliminamos los comandos al minimizar la app para evitar corrupción.
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
 window.addEventListener('online', ()=>{ if(window.app && app.githubSync && app.githubSyncStatus && !app.githubSyncStatus.ok){ app.pushToGithub(); } });
