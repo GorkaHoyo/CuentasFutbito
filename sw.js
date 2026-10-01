@@ -1,26 +1,19 @@
-const CACHE_NAME = 'futbol-cache-v5';
+const CACHE_NAME = 'futbol-cache-v6';
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting(); // Se instala al instante
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  // EL EXTERMINADOR: Al activarse, borra TODAS las cachés antiguas para desatascar la app
   event.waitUntil(
     caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          return caches.delete(cacheName);
-        })
-      );
+      return Promise.all(cacheNames.map(name => caches.delete(name)));
     })
   );
   event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {
-  // Pide siempre a internet primero.
-  event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
-  );
+  if (!event.request.url.startsWith('http')) return;
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
 });
