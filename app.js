@@ -70,7 +70,6 @@ class App {
   }
 
   load() {
-    // BLINDAJE ANTI-CORRUPCIÓN DE LOCALSTORAGE
     const safeArray = (key) => {
       try { const val = JSON.parse(localStorage.getItem(key)); return Array.isArray(val) ? val : []; } 
       catch(e) { return []; }
@@ -740,7 +739,7 @@ class App {
           if(document.activeElement.selectionStart !== undefined && document.activeElement.selectionStart !== null) {
             selStart = document.activeElement.selectionStart;
           }
-        } catch(e) {} // Ignorar navegadores que lanzan InvalidStateError en inputs numéricos
+        } catch(e) {}
       }
       
       let inner = `${this.renderTopbar()}<div class="content ${this.pageAnim ? 'animate-fade' : ''}">${this.renderPage()}</div>${this.renderFab()}${this.renderBottomNav()}`;
@@ -762,7 +761,7 @@ class App {
       }
     } catch(err) {
       el.innerHTML = `
-        <div style="padding: 20px; color: red; background: white; margin: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <div style="padding: 20px; color: red; background: white; border-radius: 8px; margin: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index:9999; position:relative;">
           <h3 style="margin-top:0">🚨 Error de Renderizado</h3>
           <p>Por favor, haz una captura de este código y envíamela:</p>
           <pre style="background: #f0f0f0; padding: 10px; overflow-x: auto; font-size: 11px;">${err.message}\n${err.stack}</pre>
@@ -1424,7 +1423,7 @@ function iniciarApp() {
     document.body.addEventListener('click', (e)=>{ if(e.target.closest('.fab') || e.target.closest('.bottom-nav')) return; });
   } catch(err) {
     document.getElementById('app').innerHTML = `
-      <div style="padding: 20px; color: red; background: white; border-radius: 8px; margin: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <div style="padding: 20px; color: red; background: white; border-radius: 8px; margin: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index:9999; position:relative;">
         <h3 style="margin-top:0">🚨 Error de Arranque de la App</h3>
         <p>Hazle una captura de pantalla a este código y envíasela al programador:</p>
         <pre style="background: #f0f0f0; padding: 10px; overflow-x: auto; font-size: 11px;">${err.message}\n${err.stack}</pre>
