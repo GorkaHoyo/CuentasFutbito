@@ -129,28 +129,7 @@
       "createdAt": "2026-09-28T17:35:29.299Z"
     }
   ],
-  "transactions": [
-    {
-      "id": "1790860853072113",
-      "playerIds": [
-        "1790617571023650"
-      ],
-      "amount": -5,
-      "matchType": "F5",
-      "reason": "",
-      "createdAt": "2026-10-01T13:20:53.072Z"
-    },
-    {
-      "id": "1790860855761571",
-      "playerIds": [
-        "1790617571023650"
-      ],
-      "amount": 5,
-      "matchType": "F5",
-      "reason": "Saldar deuda",
-      "createdAt": "2026-10-01T13:20:55.761Z"
-    }
-  ],
+  "transactions": [],
   "generalTransactions": [],
   "matches": [
     {
@@ -309,6 +288,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-01T13:20:56.464Z",
+  "exportDate": "2026-10-01T13:21:06.886Z",
   "version": "2.1"
 }
