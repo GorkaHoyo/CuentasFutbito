@@ -761,7 +761,7 @@ class App {
       }
     } catch(err) {
       el.innerHTML = `
-        <div style="padding: 20px; color: red; background: white; border-radius: 8px; margin: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index:9999; position:relative;">
+        <div style="padding: 20px; color: red; background: white; margin: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index:9999; position:relative;">
           <h3 style="margin-top:0">🚨 Error de Renderizado</h3>
           <p>Por favor, haz una captura de este código y envíamela:</p>
           <pre style="background: #f0f0f0; padding: 10px; overflow-x: auto; font-size: 11px;">${err.message}\n${err.stack}</pre>
@@ -855,6 +855,7 @@ class App {
       ${pList || '<div class="empty-state">No hay jugadores.</div>'}
     `;
   }
+
   renderMovimientos(){
     return `
       <div class="subtabs">
