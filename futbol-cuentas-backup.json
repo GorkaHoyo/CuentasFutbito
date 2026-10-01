@@ -236,20 +236,20 @@
         "position": "defensa"
       },
       {
-        "id": "1790617380927257",
-        "name": "Juan g.",
+        "id": "1790617058257940",
+        "name": "Diego OpaOpi",
         "weight": 5,
         "position": "defensa"
       },
       {
-        "id": "1790617093188726",
-        "name": "Ego",
+        "id": "1790628990483718",
+        "name": "Diego Recio",
         "weight": 5,
         "position": "medio"
       },
       {
-        "id": "1790628990483718",
-        "name": "Diego Recio",
+        "id": "1790617596728380",
+        "name": "Patxo",
         "weight": 5,
         "position": "medio"
       },
@@ -268,8 +268,8 @@
         "position": "defensa"
       },
       {
-        "id": "1790617058257940",
-        "name": "Diego OpaOpi",
+        "id": "1790617380927257",
+        "name": "Juan g.",
         "weight": 5,
         "position": "defensa"
       },
@@ -280,8 +280,8 @@
         "position": "defensa"
       },
       {
-        "id": "1790617596728380",
-        "name": "Patxo",
+        "id": "1790617093188726",
+        "name": "Ego",
         "weight": 5,
         "position": "medio"
       },
@@ -299,6 +299,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-01T12:37:38.874Z",
+  "exportDate": "2026-10-01T12:37:41.705Z",
   "version": "2.1"
 }
