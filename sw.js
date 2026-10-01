@@ -1,28 +1,26 @@
-const CACHE_NAME = 'futbol-cache-v3';
+const CACHE_NAME = 'futbol-cache-v5';
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  self.skipWaiting(); // Se instala al instante
 });
 
 self.addEventListener('activate', (event) => {
+  // EL EXTERMINADOR: Al activarse, borra TODAS las cachés antiguas para desatascar la app
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          return caches.delete(cacheName);
+        })
+      );
+    })
+  );
   event.waitUntil(self.clients.claim());
 });
 
-// Estrategia: Network First (Primero busca en internet, si falla, usa caché)
 self.addEventListener('fetch', (event) => {
+  // Pide siempre a internet primero.
   event.respondWith(
-    fetch(event.request)
-      .then((networkResponse) => {
-        // Si hay internet, guardamos una copia fresca en la caché
-        const responseClone = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
-        return networkResponse;
-      })
-      .catch(() => {
-        // Si no hay internet (estamos offline), devolvemos lo que tengamos en caché
-        return caches.match(event.request);
-      })
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });
