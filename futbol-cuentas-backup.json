@@ -161,15 +161,21 @@
   "teamsResult": {
     "teamRojo": [
       {
-        "id": "1790617380927257",
-        "name": "Juan g.",
+        "id": "1790617571023650",
+        "name": "Gorka",
         "weight": 5,
         "position": "defensa"
       },
       {
-        "id": "1790617300232532",
-        "name": "Job Ezequiel",
-        "weight": 4,
+        "id": "1790617058257940",
+        "name": "Diego OpaOpi",
+        "weight": 5,
+        "position": "defensa"
+      },
+      {
+        "id": "1790617380927257",
+        "name": "Juan g.",
+        "weight": 5,
         "position": "defensa"
       },
       {
@@ -185,23 +191,29 @@
         "position": "medio"
       },
       {
-        "id": "1790616929299341",
-        "name": "Txopi Aitor",
-        "weight": 8,
+        "id": "1790616908815312",
+        "name": "Hoyuki Ander",
+        "weight": 7,
         "position": "delantero"
       }
     ],
     "teamBlanco": [
       {
-        "id": "1790617571023650",
-        "name": "Gorka",
-        "weight": 5,
+        "id": "1790616949341112",
+        "name": "Aiert",
+        "weight": 6,
         "position": "defensa"
       },
       {
         "id": "1790617607175939",
         "name": "Pablo",
         "weight": 5,
+        "position": "defensa"
+      },
+      {
+        "id": "1790617300232532",
+        "name": "Job Ezequiel",
+        "weight": 4,
         "position": "defensa"
       },
       {
@@ -217,13 +229,13 @@
         "position": "medio"
       },
       {
-        "id": "1790616908815312",
-        "name": "Hoyuki Ander",
-        "weight": 7,
+        "id": "1790616929299341",
+        "name": "Txopi Aitor",
+        "weight": 8,
         "position": "delantero"
       }
     ]
   },
-  "exportDate": "2026-10-01T06:28:36.595Z",
+  "exportDate": "2026-10-01T06:29:20.651Z",
   "version": "2.1"
 }
