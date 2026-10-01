@@ -13,23 +13,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   
-  <!-- Magia Anti-Caché para el CSS -->
-  <script>
-    const css = document.createElement('link');
-    css.rel = 'stylesheet';
-    css.href = 'styles.css?v=' + Date.now();
-    document.head.appendChild(css);
-  </script>
+  <!-- Cargamos el CSS de forma estándar -->
+  <link rel="stylesheet" href="styles.css?v=3" />
 </head>
 <body>
   
   <div id="app"></div>
 
-  <!-- Magia Anti-Caché para el Javascript -->
-  <script>
-    const js = document.createElement('script');
-    js.src = 'app.js?v=' + Date.now();
-    document.body.appendChild(js);
-  </script>
+  <!-- Cargamos el JS de forma estándar para que no se pierda la carga inicial -->
+  <script src="app.js?v=3"></script>
 </body>
 </html>
