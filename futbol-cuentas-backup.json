@@ -224,46 +224,8 @@
   "teamsResult": {
     "teamRojo": [
       {
-        "id": "1790770061333831",
-        "name": "test test",
-        "weight": 5,
-        "position": "portero"
-      },
-      {
         "id": "1790617607175939",
         "name": "Pablo",
-        "weight": 5,
-        "position": "defensa"
-      },
-      {
-        "id": "1790617058257940",
-        "name": "Diego OpaOpi",
-        "weight": 5,
-        "position": "defensa"
-      },
-      {
-        "id": "1790628990483718",
-        "name": "Diego Recio",
-        "weight": 5,
-        "position": "medio"
-      },
-      {
-        "id": "1790617596728380",
-        "name": "Patxo",
-        "weight": 5,
-        "position": "medio"
-      },
-      {
-        "id": "1790616929299341",
-        "name": "Txopi Aitor",
-        "weight": 8,
-        "position": "delantero"
-      }
-    ],
-    "teamBlanco": [
-      {
-        "id": "1790617571023650",
-        "name": "Gorka",
         "weight": 5,
         "position": "defensa"
       },
@@ -274,14 +236,52 @@
         "position": "defensa"
       },
       {
+        "id": "1790617571023650",
+        "name": "Gorka",
+        "weight": 5,
+        "position": "defensa"
+      },
+      {
+        "id": "1790628990483718",
+        "name": "Diego Recio",
+        "weight": 5,
+        "position": "medio"
+      },
+      {
+        "id": "1790617093188726",
+        "name": "Ego",
+        "weight": 5,
+        "position": "medio"
+      },
+      {
+        "id": "1790616908815312",
+        "name": "Hoyuki Ander",
+        "weight": 7,
+        "position": "delantero"
+      }
+    ],
+    "teamBlanco": [
+      {
+        "id": "1790616949341112",
+        "name": "Aiert",
+        "weight": 6,
+        "position": "defensa"
+      },
+      {
+        "id": "1790617058257940",
+        "name": "Diego OpaOpi",
+        "weight": 5,
+        "position": "defensa"
+      },
+      {
         "id": "1790617300232532",
         "name": "Job Ezequiel",
         "weight": 4,
         "position": "defensa"
       },
       {
-        "id": "1790617093188726",
-        "name": "Ego",
+        "id": "1790617596728380",
+        "name": "Patxo",
         "weight": 5,
         "position": "medio"
       },
@@ -292,13 +292,13 @@
         "position": "medio"
       },
       {
-        "id": "1790616908815312",
-        "name": "Hoyuki Ander",
-        "weight": 7,
+        "id": "1790616929299341",
+        "name": "Txopi Aitor",
+        "weight": 8,
         "position": "delantero"
       }
     ]
   },
-  "exportDate": "2026-10-01T12:38:18.714Z",
+  "exportDate": "2026-10-01T12:38:21.408Z",
   "version": "2.1"
 }
