@@ -70,16 +70,30 @@ class App {
   }
 
   load() {
-    try { this.players = JSON.parse(localStorage.getItem('football-players')) ?? []; } catch(e) { this.players = []; }
-    try { this.transactions = JSON.parse(localStorage.getItem('football-transactions')) ?? []; } catch(e) { this.transactions = []; }
-    try { this.generalTransactions = JSON.parse(localStorage.getItem('football-general-transactions')) ?? []; } catch(e) { this.generalTransactions = []; }
-    try { this.matches = JSON.parse(localStorage.getItem('football-matches')) ?? []; } catch(e) { this.matches = []; }
+    // BLINDAJE ANTI-CORRUPCIÓN DE LOCALSTORAGE
+    const safeArray = (key) => {
+      try { const val = JSON.parse(localStorage.getItem(key)); return Array.isArray(val) ? val : []; } 
+      catch(e) { return []; }
+    };
+
+    this.players = safeArray('football-players');
+    this.transactions = safeArray('football-transactions');
+    this.generalTransactions = safeArray('football-general-transactions');
+    this.matches = safeArray('football-matches');
     
-    this.currentSeason = localStorage.getItem('football-season') ?? '2026/2027';
-    this.teamsMatchType = localStorage.getItem('football-teams-match') ?? 'F5';
+    this.currentSeason = localStorage.getItem('football-season') || '2026/2027';
+    this.teamsMatchType = localStorage.getItem('football-teams-match') || 'F5';
     
-    try { this.teamsPresent = new Set(JSON.parse(localStorage.getItem('football-teams-present')) ?? []); } catch(e) { this.teamsPresent = new Set(); }
-    try { this.teamsGuests = JSON.parse(localStorage.getItem('football-teams-guests')) ?? []; } catch(e) { this.teamsGuests = []; }
+    try { 
+      const parsed = JSON.parse(localStorage.getItem('football-teams-present'));
+      this.teamsPresent = new Set(Array.isArray(parsed) ? parsed : []);
+    } catch(e) { this.teamsPresent = new Set(); }
+    
+    try { 
+      const parsed = JSON.parse(localStorage.getItem('football-teams-guests'));
+      this.teamsGuests = Array.isArray(parsed) ? parsed : [];
+    } catch(e) { this.teamsGuests = []; }
+    
     try { this.teamsResult = JSON.parse(localStorage.getItem('football-teams-result')); } catch(e) { this.teamsResult = null; }
     
     this.teamsSwapSel = null;
@@ -713,29 +727,47 @@ class App {
 
   render(){
     const el = document.getElementById('app');
-    let prevContent = el.querySelector('.content'); 
-    let contentScroll = prevContent ? prevContent.scrollTop : 0;
-    
-    let activeId = null; let selStart = null;
-    if(document.activeElement){
-      activeId = document.activeElement.id;
-      if(document.activeElement.selectionStart != null) selStart = document.activeElement.selectionStart;
-    }
-    
-    let inner = `${this.renderTopbar()}<div class="content ${this.pageAnim ? 'animate-fade' : ''}">${this.renderPage()}</div>${this.renderFab()}${this.renderBottomNav()}`;
-    if (this.modal) inner += this.renderModal();
-    if (this.toastMsg) inner += `<div class="toast">${escapeHtml(this.toastMsg)}</div>`;
-    el.innerHTML = inner;
+    if(!el) return;
 
-    let newContent = el.querySelector('.content'); 
-    if(newContent) newContent.scrollTop = contentScroll;
-
-    if(activeId){
-      let actEl = document.getElementById(activeId);
-      if(actEl){
-        actEl.focus();
-        if(selStart != null && actEl.setSelectionRange) { try { actEl.setSelectionRange(selStart, selStart); } catch(e){} }
+    try {
+      let prevContent = el.querySelector('.content'); 
+      let contentScroll = prevContent ? prevContent.scrollTop : 0;
+      
+      let activeId = null; let selStart = null;
+      if(document.activeElement && document.activeElement.id){
+        activeId = document.activeElement.id;
+        try {
+          if(document.activeElement.selectionStart !== undefined && document.activeElement.selectionStart !== null) {
+            selStart = document.activeElement.selectionStart;
+          }
+        } catch(e) {} // Ignorar navegadores que lanzan InvalidStateError en inputs numéricos
       }
+      
+      let inner = `${this.renderTopbar()}<div class="content ${this.pageAnim ? 'animate-fade' : ''}">${this.renderPage()}</div>${this.renderFab()}${this.renderBottomNav()}`;
+      if (this.modal) inner += this.renderModal();
+      if (this.toastMsg) inner += `<div class="toast">${escapeHtml(this.toastMsg)}</div>`;
+      el.innerHTML = inner;
+
+      let newContent = el.querySelector('.content'); 
+      if(newContent) newContent.scrollTop = contentScroll;
+
+      if(activeId){
+        let actEl = document.getElementById(activeId);
+        if(actEl){
+          actEl.focus();
+          try {
+            if(selStart != null && actEl.setSelectionRange) actEl.setSelectionRange(selStart, selStart); 
+          } catch(e){}
+        }
+      }
+    } catch(err) {
+      el.innerHTML = `
+        <div style="padding: 20px; color: red; background: white; margin: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+          <h3 style="margin-top:0">🚨 Error de Renderizado</h3>
+          <p>Por favor, haz una captura de este código y envíamela:</p>
+          <pre style="background: #f0f0f0; padding: 10px; overflow-x: auto; font-size: 11px;">${err.message}\n${err.stack}</pre>
+        </div>
+      `;
     }
   }
 
@@ -1385,10 +1417,20 @@ class App {
 let app;
 
 function iniciarApp() {
-  if(window.app) return;
-  app = new App(); 
-  window.app = app; 
-  document.body.addEventListener('click', (e)=>{ if(e.target.closest('.fab') || e.target.closest('.bottom-nav')) return; });
+  try {
+    if(window.app) return;
+    app = new App(); 
+    window.app = app; 
+    document.body.addEventListener('click', (e)=>{ if(e.target.closest('.fab') || e.target.closest('.bottom-nav')) return; });
+  } catch(err) {
+    document.getElementById('app').innerHTML = `
+      <div style="padding: 20px; color: red; background: white; border-radius: 8px; margin: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <h3 style="margin-top:0">🚨 Error de Arranque de la App</h3>
+        <p>Hazle una captura de pantalla a este código y envíasela al programador:</p>
+        <pre style="background: #f0f0f0; padding: 10px; overflow-x: auto; font-size: 11px;">${err.message}\n${err.stack}</pre>
+      </div>
+    `;
+  }
 }
 
 if (document.readyState === 'loading') {
