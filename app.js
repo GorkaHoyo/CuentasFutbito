@@ -33,6 +33,14 @@ function todayStr(){ return new Date().toLocaleDateString('es-ES', { weekday:'lo
 function escapeHtml(s){ return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function b64EncodeUnicode(str){ return btoa(unescape(encodeURIComponent(str))); }
 function b64DecodeUnicode(str){ return decodeURIComponent(escape(atob(str.replace(/\n/g,'')))); }
+function timeAgo(date){ 
+  if(!date) return ''; 
+  const s = Math.floor((Date.now()-new Date(date).getTime())/1000); 
+  if(s<60) return 'hace un momento'; 
+  if(s<3600) return `hace ${Math.floor(s/60)} min`; 
+  if(s<86400) return `hace ${Math.floor(s/3600)} h`; 
+  return `hace ${Math.floor(s/86400)} d`; 
+}
 
 class App {
   constructor() {
