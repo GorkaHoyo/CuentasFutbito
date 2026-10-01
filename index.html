@@ -4,23 +4,44 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0F3D2E" />
-  <meta name="description" content="Cuentas de los partidos de F5 y F7" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="icon.svg" />
   <title>Cuentas F5·F7</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  
-  <!-- Estilos -->
-  <link rel="stylesheet" href="styles.css?v=4" />
+  <link rel="stylesheet" href="styles.css?v=5" />
 </head>
 <body>
-  
-  <div id="app"></div>
+  <div id="app">
+    <!-- Pantalla de carga que desaparecerá si el JS funciona bien -->
+    <div style="text-align:center; padding:40px; font-family:sans-serif; color:#154934;">
+      <h2>⏳ Cargando aplicación...</h2>
+      <p>Si esta pantalla no desaparece, hay un problema con tu archivo app.js</p>
+    </div>
+  </div>
 
-  <!-- Script (el defer asegura que el HTML cargue antes de ejecutar el JS) -->
-  <script src="app.js?v=4" defer></script>
+  <script>
+    // CHIVATO: Cazador de errores críticos
+    window.addEventListener('error', function(e) {
+      let msg = e.message;
+      let file = e.filename;
+      let line = e.lineno;
+      
+      // Si detectamos que el archivo JS no se ha encontrado (Error 404)
+      if (e.target && e.target.src) {
+        msg = "No se pudo encontrar o cargar el archivo: " + e.target.src;
+        file = "Posible error en el nombre del archivo en GitHub";
+        line = "Verifica que se llame exactamente app.js (en minúsculas)";
+      }
+
+      document.getElementById('app').innerHTML = `
+        <div style="padding:20px; margin:20px; background:white; color:red; border:2px solid red; border-radius:8px;">
+          <h3 style="margin-top:0">🚨 Error Crítico Detectado</h3>
+          <p><b>Mensaje:</b> ${msg}</p>
+          <p><b>Archivo:</b> ${file}</p>
+          <p><b>Línea:</b> ${line}</p>
+        </div>
+      `;
+    }, true);
+  </script>
+  
+  <!-- Cargamos el archivo app.js -->
+  <script src="app.js?v=5" defer></script>
 </body>
 </html>
