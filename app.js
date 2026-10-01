@@ -443,7 +443,6 @@ class App {
     this.teamsSwapSel = null; this.saveTeamsLocal(); this.render();
   }
 
-  // --- NUEVO: SISTEMA DE PARTIDOS Y ESTADÍSTICAS ---
   sellarPartidoOficial() {
     if(!this.teamsResult) return;
     if(confirm('¿Sellar como partido oficial? Quedará pendiente de anotar el resultado final.')) {
@@ -456,7 +455,7 @@ class App {
         teamBlanco: this.teamsResult.teamBlanco.map(p => ({ id: p.id, name: p.name })),
         scoreRojo: 0,
         scoreBlanco: 0,
-        goals: {}, // { playerId: number }
+        goals: {}, 
         status: 'pending'
       };
       this.matches.push(match);
@@ -470,7 +469,6 @@ class App {
 
   calcularClasificacion(season) {
     const stats = {};
-    // Solo contar jugadores reales de la base de datos (no invitados borrados)
     this.players.forEach(p => {
       stats[p.id] = { p, pj:0, pg:0, pe:0, pp:0, goles:0 };
     });
@@ -484,7 +482,7 @@ class App {
 
       const processTeam = (team, color) => {
         team.forEach(player => {
-          if(!stats[player.id]) return; // Si es un invitado o borrado, lo ignoramos en la general
+          if(!stats[player.id]) return; 
           stats[player.id].pj++;
           if(winner === null) stats[player.id].pe++;
           else if(winner === color) stats[player.id].pg++;
@@ -498,7 +496,6 @@ class App {
       processTeam(m.teamBlanco, 'blanco');
     });
 
-    // Filtramos solo los que han jugado y calculamos winrate
     const clasificacion = Object.values(stats)
       .filter(s => s.pj > 0)
       .map(s => {
@@ -506,7 +503,6 @@ class App {
         return s;
       });
 
-    // Ordenar: 1º Winrate, 2º Partidos Jugados, 3º Goles
     return clasificacion.sort((a, b) => {
       if(b.winrate !== a.winrate) return b.winrate - a.winrate;
       if(b.pj !== a.pj) return b.pj - a.pj;
@@ -673,21 +669,18 @@ class App {
     const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
     const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
     
-    // Fondo carta
     ctx.fillStyle = '#0F3D2E'; ctx.fillRect(0,0,W,H);
     const gradient = ctx.createLinearGradient(0,0,0,H);
     gradient.addColorStop(0, '#154934'); gradient.addColorStop(1, '#082018');
     ctx.fillStyle = gradient; ctx.fillRect(4,4,W-8,H-8);
     ctx.strokeStyle = '#E8A33D'; ctx.lineWidth = 4; ctx.strokeRect(4,4,W-8,H-8);
 
-    // Nombre y posición
     ctx.textAlign = 'center'; ctx.fillStyle = '#E8A33D'; ctx.font = '700 36px Oswald';
     ctx.fillText(s.p.name.toUpperCase(), W/2, 80);
     ctx.fillStyle = '#FFFFFF'; ctx.font = '600 18px Oswald';
-    const posName = POSITION_LABEL[s.p.position] || 'Sin Posición';
+    const posName = POSITION_LABEL[s.p.position] || 'SIN POSICIÓN';
     ctx.fillText(posName.toUpperCase(), W/2, 110);
     
-    // Escudo/Icono
     ctx.fillStyle = 'rgba(255,255,255,0.05)';
     ctx.beginPath(); ctx.arc(W/2, 230, 80, 0, Math.PI*2); ctx.fill();
     ctx.font = '700 80px "Space Mono"'; ctx.fillStyle = '#E8A33D';
@@ -695,7 +688,6 @@ class App {
     ctx.font = '600 20px Oswald'; ctx.fillStyle = '#CFE0D6';
     ctx.fillText('WINRATE %', W/2, 285);
 
-    // Stats bottom
     const drawStatBox = (lbl, val, x, y) => {
         ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(x-45, y-30, 90, 60);
         ctx.fillStyle = '#FFFFFF'; ctx.font = '700 24px "Space Mono"'; ctx.fillText(val, x, y-2);
@@ -1005,7 +997,6 @@ class App {
       `;
   }
 
-  // --- ESTADÍSTICAS Y PARTIDOS OFICIALES ---
   renderEstadisticas() {
     return `
       <div class="subtabs">
@@ -1060,14 +1051,14 @@ class App {
     html += partidosTemp.map(m => {
       const isPending = m.status === 'pending';
       const fecha = new Date(m.date).toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'});
-      const boxStyle = isPending ? 'border-left-color:var(--gold); background:var(--gold-soft);' : 'border-left-color:var(--credit);';
+      const boxStyle = isPending ? 'border-left-color:var(--gold); background:var(--gold-soft); cursor:pointer;' : 'border-left-color:var(--credit); cursor:pointer;';
       
       let resHtml = isPending 
-        ? `<button class="btn btn-sm btn-gold" onclick="app.openModal('resolveMatch', '${m.id}')">Anotar Resultado</button>`
+        ? `<span style="font-weight:700; color:#8a5a12; font-size:12px; text-transform:uppercase;">Anotar resultado ➔</span>`
         : `<div style="font-size:24px; font-weight:700; font-family:'Space Mono'; color:var(--pitch)"><span style="color:var(--debt)">${m.scoreRojo}</span> - <span style="color:#1E3A8A">${m.scoreBlanco}</span></div>`;
 
       return `
-        <div class="ticket" style="${boxStyle}">
+        <div class="ticket" style="${boxStyle}" onclick="app.openModal('resolveMatch', '${m.id}')">
           <div>
             <div class="name">${m.matchType} · ${fecha}</div>
             <div class="sub">${m.teamRojo.length} vs ${m.teamBlanco.length} jugadores</div>
@@ -1203,21 +1194,23 @@ class App {
           <div class="team-player">
             <span style="font-weight:600">${escapeHtml(p.name)}</span>
             <div class="goal-counter">
-              <button onclick="app.modGoal('${m.id}', '${p.id}', -1)">-</button>
-              <span>${goles}</span>
-              <button onclick="app.modGoal('${m.id}', '${p.id}', 1)">+</button>
+              <button onclick="app.modGoal('${m.id}', '${p.id}', -1, '${color}')">-</button>
+              <span id="goal_val_${m.id}_${p.id}">${goles}</span>
+              <button onclick="app.modGoal('${m.id}', '${p.id}', 1, '${color}')">+</button>
             </div>
           </div>`;
       }).join('');
 
+      const btnSaveText = m.status === 'pending' ? '💾 Guardar Partido Oficial' : '💾 Guardar Cambios';
+
       body = `
-        <h2>Anotar Resultado</h2>
-        <div class="sub" style="margin-bottom:12px">Introduce el marcador final y los goles de cada jugador.</div>
+        <h2>${m.status === 'pending' ? 'Anotar Resultado' : 'Editar Partido'}</h2>
+        <div class="sub" style="margin-bottom:12px">Introduce el marcador final y los goles de cada jugador. (El marcador se suma solo, pero puedes ajustarlo manualmente si hay goles en propia).</div>
         
         <div class="score-input-group">
-          <div style="text-align:center"><div style="color:var(--debt);font-weight:700;margin-bottom:4px">ROJO</div><input type="number" min="0" value="${m.scoreRojo}" onchange="app.modScore('${m.id}', 'rojo', this.value)" /></div>
+          <div style="text-align:center"><div style="color:var(--debt);font-weight:700;margin-bottom:4px">ROJO</div><input type="number" min="0" id="score_rojo_${m.id}" value="${m.scoreRojo}" onchange="app.modScore('${m.id}', 'rojo', this.value)" /></div>
           <span>-</span>
-          <div style="text-align:center"><div style="color:#1E3A8A;font-weight:700;margin-bottom:4px">AZUL</div><input type="number" min="0" value="${m.scoreBlanco}" onchange="app.modScore('${m.id}', 'blanco', this.value)" /></div>
+          <div style="text-align:center"><div style="color:#1E3A8A;font-weight:700;margin-bottom:4px">AZUL</div><input type="number" min="0" id="score_blanco_${m.id}" value="${m.scoreBlanco}" onchange="app.modScore('${m.id}', 'blanco', this.value)" /></div>
         </div>
 
         <div class="section-title">Goleadores Equipo Rojo 🔴</div>
@@ -1226,7 +1219,7 @@ class App {
         <div class="section-title">Goleadores Equipo Azul 🔵</div>
         <div class="team-card" style="border-left:4px solid #1E3A8A; padding: 4px 12px">${renderTeamGoals(m.teamBlanco, 'blanco')}</div>
 
-        <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.finishMatch('${m.id}')">💾 Guardar Partido Oficial</button>
+        <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.finishMatch('${m.id}')">${btnSaveText}</button>
         <button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.deleteMatch('${m.id}')">🗑️ Eliminar Partido</button>
       `;
 
@@ -1284,7 +1277,7 @@ class App {
     return `<div class="sheet-backdrop" onclick="if(event.target===this) app.closeModal()"><div class="sheet"><div class="sheet-handle"></div><button class="close-x" onclick="app.closeModal()">✕</button>${body}</div></div>`;
   }
 
-  // --- LÓGICA DE PARTIDOS MODAL ---
+  // --- LÓGICA DIRECTA DOM PARA GOLES Y MARCADOR ---
   modScore(matchId, team, val) {
     const m = this.matches.find(x => x.id === matchId);
     if(m) {
@@ -1293,13 +1286,31 @@ class App {
     }
   }
 
-  modGoal(matchId, playerId, delta) {
+  modGoal(matchId, playerId, delta, teamColor) {
     const m = this.matches.find(x => x.id === matchId);
     if(m) {
       const current = m.goals[playerId] || 0;
       const next = current + delta;
-      m.goals[playerId] = next < 0 ? 0 : next;
-      this.render(); // Refrescar modal
+      if (next < 0) return; 
+      
+      m.goals[playerId] = next;
+      
+      // Auto-update global score
+      if(teamColor === 'rojo') {
+          m.scoreRojo = (m.scoreRojo || 0) + delta;
+          if(m.scoreRojo < 0) m.scoreRojo = 0;
+          const elScore = document.getElementById(`score_rojo_${m.id}`);
+          if(elScore) elScore.value = m.scoreRojo;
+      } else if(teamColor === 'blanco') {
+          m.scoreBlanco = (m.scoreBlanco || 0) + delta;
+          if(m.scoreBlanco < 0) m.scoreBlanco = 0;
+          const elScore = document.getElementById(`score_blanco_${m.id}`);
+          if(elScore) elScore.value = m.scoreBlanco;
+      }
+      
+      // Update DOM dynamically without full re-render (fixes jumpy UX)
+      const elGoalTarget = document.getElementById(`goal_val_${m.id}_${playerId}`);
+      if(elGoalTarget) elGoalTarget.innerText = next;
     }
   }
 
@@ -1309,7 +1320,7 @@ class App {
       m.status = 'completed';
       this.save();
       this.closeModal();
-      this.toast('Partido guardado');
+      this.toast('Partido guardado con éxito');
     }
   }
 
