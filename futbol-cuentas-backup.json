@@ -200,10 +200,16 @@
           "name": "Txopi Aitor"
         }
       ],
-      "scoreRojo": 0,
-      "scoreBlanco": 0,
-      "goals": {},
-      "status": "pending"
+      "scoreRojo": 6,
+      "scoreBlanco": 5,
+      "goals": {
+        "1790617571023650": 2,
+        "1790616908815312": 4,
+        "1790616929299341": 3,
+        "1790617607175939": 1,
+        "1790617300232532": 1
+      },
+      "status": "completed"
     }
   ],
   "currentSeason": "2026/2027",
@@ -301,6 +307,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-01T07:00:36.462Z",
+  "exportDate": "2026-10-01T07:01:30.523Z",
   "version": "2.1"
 }
