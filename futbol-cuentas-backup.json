@@ -224,14 +224,20 @@
   "teamsResult": {
     "teamRojo": [
       {
-        "id": "1790617380927257",
-        "name": "Juan g.",
+        "id": "1790770061333831",
+        "name": "test test",
+        "weight": 5,
+        "position": "portero"
+      },
+      {
+        "id": "1790617607175939",
+        "name": "Pablo",
         "weight": 5,
         "position": "defensa"
       },
       {
-        "id": "1790617571023650",
-        "name": "Gorka",
+        "id": "1790617380927257",
+        "name": "Juan g.",
         "weight": 5,
         "position": "defensa"
       },
@@ -242,9 +248,9 @@
         "position": "medio"
       },
       {
-        "id": "1790617184733961",
-        "name": "Jose",
-        "weight": 4,
+        "id": "1790628990483718",
+        "name": "Diego Recio",
+        "weight": 5,
         "position": "medio"
       },
       {
@@ -256,8 +262,8 @@
     ],
     "teamBlanco": [
       {
-        "id": "1790617607175939",
-        "name": "Pablo",
+        "id": "1790617571023650",
+        "name": "Gorka",
         "weight": 5,
         "position": "defensa"
       },
@@ -274,9 +280,15 @@
         "position": "defensa"
       },
       {
-        "id": "1790628990483718",
-        "name": "Diego Recio",
+        "id": "1790617596728380",
+        "name": "Patxo",
         "weight": 5,
+        "position": "medio"
+      },
+      {
+        "id": "1790617184733961",
+        "name": "Jose",
+        "weight": 4,
         "position": "medio"
       },
       {
@@ -287,6 +299,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-01T12:37:19.226Z",
+  "exportDate": "2026-10-01T12:37:38.874Z",
   "version": "2.1"
 }
