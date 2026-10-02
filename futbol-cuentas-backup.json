@@ -313,6 +313,12 @@
         "position": "defensa"
       },
       {
+        "id": "1790617058257940",
+        "name": "Diego OpaOpi",
+        "weight": 5,
+        "position": "defensa"
+      },
+      {
         "id": "1790943742374453",
         "name": "Jon kijada",
         "weight": 6,
@@ -329,21 +335,9 @@
         "name": "Julio",
         "weight": 5,
         "position": "medio"
-      },
-      {
-        "id": "1790944633780966",
-        "name": "Fran Elorza",
-        "weight": 3,
-        "position": "medio"
       }
     ],
     "teamBlanco": [
-      {
-        "id": "1790617058257940",
-        "name": "Diego OpaOpi",
-        "weight": 5,
-        "position": "defensa"
-      },
       {
         "id": "1790944494844939",
         "name": "Iker",
@@ -355,6 +349,12 @@
         "name": "Asla",
         "weight": 4,
         "position": "defensa"
+      },
+      {
+        "id": "1790944633780966",
+        "name": "Fran Elorza",
+        "weight": 3,
+        "position": "medio"
       },
       {
         "id": "1790628990483718",
@@ -376,6 +376,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-02T12:39:43.788Z",
+  "exportDate": "2026-10-02T12:39:51.541Z",
   "version": "2.1"
 }
