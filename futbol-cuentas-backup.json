@@ -127,6 +127,17 @@
       "stamina": "alto",
       "position": "delantero",
       "createdAt": "2026-09-28T17:35:29.299Z"
+    },
+    {
+      "id": "1790939947763502",
+      "name": "Julio",
+      "type": "F5/F7",
+      "isRegular": false,
+      "skill": "medio",
+      "stamina": "medio",
+      "position": "medio",
+      "bilbaoKirolak": true,
+      "createdAt": "2026-10-02T11:19:07.764Z"
     }
   ],
   "transactions": [],
@@ -288,6 +299,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-02T11:18:48.740Z",
+  "exportDate": "2026-10-02T11:19:08.467Z",
   "version": "2.1"
 }
