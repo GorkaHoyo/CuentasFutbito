@@ -301,27 +301,27 @@
   "teamsResult": {
     "teamRojo": [
       {
-        "id": "1790617380927257",
-        "name": "Juan g.",
-        "weight": 5,
-        "position": "defensa"
-      },
-      {
         "id": "1790617571023650",
         "name": "Gorka",
         "weight": 5,
         "position": "defensa"
       },
       {
-        "id": "1790617058257940",
-        "name": "Diego OpaOpi",
-        "weight": 5,
+        "id": "1790943886322336",
+        "name": "Asla",
+        "weight": 4,
         "position": "defensa"
       },
       {
-        "id": "1790617093188726",
-        "name": "Ego",
-        "weight": 5,
+        "id": "1790943842367934",
+        "name": "Josemi totemi",
+        "weight": 3,
+        "position": "defensa"
+      },
+      {
+        "id": "1790940529084389",
+        "name": "Tojo",
+        "weight": 7,
         "position": "medio"
       },
       {
@@ -331,51 +331,51 @@
         "position": "medio"
       },
       {
+        "id": "1790944633780966",
+        "name": "Fran Elorza",
+        "weight": 3,
+        "position": "medio"
+      }
+    ],
+    "teamBlanco": [
+      {
+        "id": "1790617058257940",
+        "name": "Diego OpaOpi",
+        "weight": 5,
+        "position": "defensa"
+      },
+      {
+        "id": "1790944494844939",
+        "name": "Iker",
+        "weight": 4,
+        "position": "defensa"
+      },
+      {
+        "id": "1790943742374453",
+        "name": "Jon kijada",
+        "weight": 6,
+        "position": "medio"
+      },
+      {
+        "id": "1790939947763502",
+        "name": "Julio",
+        "weight": 5,
+        "position": "medio"
+      },
+      {
+        "id": "1790944425120831",
+        "name": "Ibra",
+        "weight": 4,
+        "position": "medio"
+      },
+      {
         "id": "1790616908815312",
         "name": "Hoyuki Ander",
         "weight": 7,
         "position": "delantero"
       }
-    ],
-    "teamBlanco": [
-      {
-        "id": "1790616949341112",
-        "name": "Aiert",
-        "weight": 6,
-        "position": "defensa"
-      },
-      {
-        "id": "1790617607175939",
-        "name": "Pablo",
-        "weight": 5,
-        "position": "defensa"
-      },
-      {
-        "id": "1790617300232532",
-        "name": "Job Ezequiel",
-        "weight": 4,
-        "position": "defensa"
-      },
-      {
-        "id": "1790617596728380",
-        "name": "Patxo",
-        "weight": 5,
-        "position": "medio"
-      },
-      {
-        "id": "1790617184733961",
-        "name": "Jose",
-        "weight": 4,
-        "position": "medio"
-      },
-      {
-        "id": "1790616929299341",
-        "name": "Txopi Aitor",
-        "weight": 8,
-        "position": "delantero"
-      }
     ]
   },
-  "exportDate": "2026-10-02T12:38:55.644Z",
+  "exportDate": "2026-10-02T12:39:13.664Z",
   "version": "2.1"
 }
