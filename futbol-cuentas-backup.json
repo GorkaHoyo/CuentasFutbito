@@ -307,6 +307,12 @@
         "position": "defensa"
       },
       {
+        "id": "1790943842367934",
+        "name": "Josemi totemi",
+        "weight": 3,
+        "position": "defensa"
+      },
+      {
         "id": "1790943742374453",
         "name": "Jon kijada",
         "weight": 6,
@@ -315,12 +321,6 @@
       {
         "id": "1790939947763502",
         "name": "Julio",
-        "weight": 5,
-        "position": "medio"
-      },
-      {
-        "id": "1790628990483718",
-        "name": "Diego Recio",
         "weight": 5,
         "position": "medio"
       },
@@ -351,16 +351,16 @@
         "position": "defensa"
       },
       {
-        "id": "1790943842367934",
-        "name": "Josemi totemi",
-        "weight": 3,
-        "position": "defensa"
-      },
-      {
         "id": "1790943886322336",
         "name": "Asla",
         "weight": 4,
         "position": "defensa"
+      },
+      {
+        "id": "1790628990483718",
+        "name": "Diego Recio",
+        "weight": 5,
+        "position": "medio"
       },
       {
         "id": "1790940529084389",
@@ -376,6 +376,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-02T12:42:46.798Z",
+  "exportDate": "2026-10-02T12:42:52.317Z",
   "version": "2.1"
 }
