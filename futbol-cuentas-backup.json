@@ -138,6 +138,17 @@
       "position": "medio",
       "bilbaoKirolak": true,
       "createdAt": "2026-10-02T11:19:07.764Z"
+    },
+    {
+      "id": "1790940529084389",
+      "name": "Tojo",
+      "type": "F5/F7",
+      "isRegular": false,
+      "skill": "muy_alto",
+      "stamina": "medio",
+      "position": "medio",
+      "bilbaoKirolak": false,
+      "createdAt": "2026-10-02T11:28:49.084Z"
     }
   ],
   "transactions": [],
@@ -299,6 +310,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-02T11:27:44.620Z",
+  "exportDate": "2026-10-02T11:28:49.788Z",
   "version": "2.1"
 }
