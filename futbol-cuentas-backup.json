@@ -132,7 +132,7 @@
       "id": "1790939947763502",
       "name": "Julio",
       "type": "F5/F7",
-      "isRegular": false,
+      "isRegular": true,
       "skill": "medio",
       "stamina": "medio",
       "position": "medio",
@@ -343,6 +343,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-02T12:25:59.593Z",
+  "exportDate": "2026-10-02T12:26:16.054Z",
   "version": "2.1"
 }
