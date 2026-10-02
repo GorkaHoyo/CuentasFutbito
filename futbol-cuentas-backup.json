@@ -149,6 +149,17 @@
       "position": "medio",
       "bilbaoKirolak": false,
       "createdAt": "2026-10-02T11:28:49.084Z"
+    },
+    {
+      "id": "1790943742374453",
+      "name": "Jon kijada",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "alto",
+      "stamina": "medio",
+      "position": "medio",
+      "bilbaoKirolak": true,
+      "createdAt": "2026-10-02T12:22:22.374Z"
     }
   ],
   "transactions": [],
@@ -310,6 +321,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-02T11:56:50.485Z",
+  "exportDate": "2026-10-02T12:22:23.077Z",
   "version": "2.1"
 }
