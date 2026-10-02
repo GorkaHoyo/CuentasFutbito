@@ -48,7 +48,7 @@
       "type": "F5/F7",
       "isRegular": true,
       "skill": "alto",
-      "stamina": "bajo",
+      "stamina": "medio",
       "position": "defensa",
       "createdAt": "2026-09-28T17:46:11.023Z",
       "bilbaoKirolak": true
@@ -376,6 +376,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-02T12:39:51.541Z",
+  "exportDate": "2026-10-02T12:41:28.381Z",
   "version": "2.1"
 }
