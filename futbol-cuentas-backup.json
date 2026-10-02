@@ -319,9 +319,9 @@
         "position": "defensa"
       },
       {
-        "id": "1790940529084389",
-        "name": "Tojo",
-        "weight": 7,
+        "id": "1790944425120831",
+        "name": "Ibra",
+        "weight": 4,
         "position": "medio"
       },
       {
@@ -363,9 +363,9 @@
         "position": "medio"
       },
       {
-        "id": "1790944425120831",
-        "name": "Ibra",
-        "weight": 4,
+        "id": "1790940529084389",
+        "name": "Tojo",
+        "weight": 7,
         "position": "medio"
       },
       {
@@ -376,6 +376,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-02T12:39:15.837Z",
+  "exportDate": "2026-10-02T12:39:35.459Z",
   "version": "2.1"
 }
