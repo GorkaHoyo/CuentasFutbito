@@ -171,6 +171,17 @@
       "position": "defensa",
       "bilbaoKirolak": false,
       "createdAt": "2026-10-02T12:24:02.367Z"
+    },
+    {
+      "id": "1790943886322336",
+      "name": "Asla",
+      "type": "F5/F7",
+      "isRegular": false,
+      "skill": "bajo",
+      "stamina": "medio",
+      "position": "defensa",
+      "bilbaoKirolak": true,
+      "createdAt": "2026-10-02T12:24:46.322Z"
     }
   ],
   "transactions": [],
@@ -332,6 +343,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-02T12:24:03.069Z",
+  "exportDate": "2026-10-02T12:24:47.022Z",
   "version": "2.1"
 }
