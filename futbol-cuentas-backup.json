@@ -307,10 +307,10 @@
         "position": "defensa"
       },
       {
-        "id": "1790943886322336",
-        "name": "Asla",
-        "weight": 4,
-        "position": "defensa"
+        "id": "1790943742374453",
+        "name": "Jon kijada",
+        "weight": 6,
+        "position": "medio"
       },
       {
         "id": "1790939947763502",
@@ -357,10 +357,10 @@
         "position": "defensa"
       },
       {
-        "id": "1790943742374453",
-        "name": "Jon kijada",
-        "weight": 6,
-        "position": "medio"
+        "id": "1790943886322336",
+        "name": "Asla",
+        "weight": 4,
+        "position": "defensa"
       },
       {
         "id": "1790940529084389",
@@ -376,6 +376,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-02T12:42:43.832Z",
+  "exportDate": "2026-10-02T12:42:46.798Z",
   "version": "2.1"
 }
