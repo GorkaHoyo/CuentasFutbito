@@ -331,10 +331,10 @@
         "position": "medio"
       },
       {
-        "id": "1790616908815312",
-        "name": "Hoyuki Ander",
-        "weight": 7,
-        "position": "delantero"
+        "id": "1790944425120831",
+        "name": "Ibra",
+        "weight": 4,
+        "position": "medio"
       }
     ],
     "teamBlanco": [
@@ -369,13 +369,13 @@
         "position": "medio"
       },
       {
-        "id": "1790944425120831",
-        "name": "Ibra",
-        "weight": 4,
-        "position": "medio"
+        "id": "1790616908815312",
+        "name": "Hoyuki Ander",
+        "weight": 7,
+        "position": "delantero"
       }
     ]
   },
-  "exportDate": "2026-10-02T12:42:26.853Z",
+  "exportDate": "2026-10-02T12:42:41.222Z",
   "version": "2.1"
 }
