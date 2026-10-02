@@ -160,6 +160,17 @@
       "position": "medio",
       "bilbaoKirolak": true,
       "createdAt": "2026-10-02T12:22:22.374Z"
+    },
+    {
+      "id": "1790943842367934",
+      "name": "Josemi totemi",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "bajo",
+      "stamina": "bajo",
+      "position": "defensa",
+      "bilbaoKirolak": false,
+      "createdAt": "2026-10-02T12:24:02.367Z"
     }
   ],
   "transactions": [],
@@ -321,6 +332,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-02T12:22:23.077Z",
+  "exportDate": "2026-10-02T12:24:03.069Z",
   "version": "2.1"
 }
