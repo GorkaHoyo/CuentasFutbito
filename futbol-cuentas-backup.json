@@ -193,6 +193,17 @@
       "position": "medio",
       "bilbaoKirolak": false,
       "createdAt": "2026-10-02T12:33:45.120Z"
+    },
+    {
+      "id": "1790944494844939",
+      "name": "Iker",
+      "type": "F5/F7",
+      "isRegular": false,
+      "skill": "bajo",
+      "stamina": "medio",
+      "position": "defensa",
+      "bilbaoKirolak": true,
+      "createdAt": "2026-10-02T12:34:54.844Z"
     }
   ],
   "transactions": [],
@@ -354,6 +365,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-02T12:33:45.822Z",
+  "exportDate": "2026-10-02T12:34:55.545Z",
   "version": "2.1"
 }
