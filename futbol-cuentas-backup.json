@@ -279,6 +279,68 @@
         "1790617571023650": 4
       },
       "status": "completed"
+    },
+    {
+      "id": "match_1791021321398738",
+      "date": "2026-10-03T09:55:21.398Z",
+      "season": "2026/2027",
+      "matchType": "F5",
+      "teamRojo": [
+        {
+          "id": "1790617571023650",
+          "name": "Gorka"
+        },
+        {
+          "id": "1790943842367934",
+          "name": "Josemi totemi"
+        },
+        {
+          "id": "1790617058257940",
+          "name": "Diego OpaOpi"
+        },
+        {
+          "id": "1790943742374453",
+          "name": "Jon kijada"
+        },
+        {
+          "id": "1790939947763502",
+          "name": "Julio"
+        },
+        {
+          "id": "1790944425120831",
+          "name": "Ibra"
+        }
+      ],
+      "teamBlanco": [
+        {
+          "id": "1790944494844939",
+          "name": "Iker"
+        },
+        {
+          "id": "1790943886322336",
+          "name": "Asla"
+        },
+        {
+          "id": "1790944633780966",
+          "name": "Fran Elorza"
+        },
+        {
+          "id": "1790628990483718",
+          "name": "Diego Recio"
+        },
+        {
+          "id": "1790940529084389",
+          "name": "Tojo"
+        },
+        {
+          "id": "1790616908815312",
+          "name": "Hoyuki Ander"
+        }
+      ],
+      "scoreRojo": 0,
+      "scoreBlanco": 0,
+      "goals": {},
+      "status": "pending"
     }
   ],
   "currentSeason": "2026/2027",
@@ -376,6 +438,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-03T09:55:05.840Z",
+  "exportDate": "2026-10-03T09:55:22.100Z",
   "version": "2.1"
 }
