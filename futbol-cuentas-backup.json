@@ -228,8 +228,45 @@
       "createdAt": "2026-10-04T05:58:33.148Z"
     }
   ],
-  "transactions": [],
-  "generalTransactions": [],
+  "transactions": [
+    {
+      "id": "1791123572926737",
+      "playerIds": [
+        "1790628990483718",
+        "1790617571023650",
+        "1790616908815312",
+        "1790943886322336",
+        "1790944633780966",
+        "1790944494844939",
+        "1790943742374453",
+        "1790939947763502",
+        "1791093513148536"
+      ],
+      "amount": -3,
+      "matchType": "F5",
+      "reason": "Cuota partido (BK)",
+      "createdAt": "2026-10-04T14:19:32.926Z"
+    },
+    {
+      "id": "1791123572926416",
+      "playerIds": [
+        "1790617571023650"
+      ],
+      "amount": 19.55,
+      "matchType": "F5",
+      "reason": "Pago pista adelantado",
+      "createdAt": "2026-10-04T14:19:32.926Z"
+    }
+  ],
+  "generalTransactions": [
+    {
+      "id": "1791123572926665",
+      "amount": 7.449999999999999,
+      "matchType": "F5",
+      "reason": "Sobrante partido",
+      "createdAt": "2026-10-04T14:19:32.926Z"
+    }
+  ],
   "matches": [
     {
       "id": "match_1791107354350197",
@@ -389,6 +426,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-04T14:18:47.770Z",
+  "exportDate": "2026-10-04T14:19:33.628Z",
   "version": "2.1"
 }
