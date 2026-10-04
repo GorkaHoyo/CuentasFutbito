@@ -281,10 +281,10 @@
         "position": "medio"
       },
       {
-        "id": "1790616908815312",
-        "name": "Hoyuki Ander",
-        "weight": 7,
-        "position": "delantero"
+        "id": "1790939947763502",
+        "name": "Julio",
+        "weight": 5,
+        "position": "medio"
       }
     ],
     "teamBlanco": [
@@ -319,13 +319,13 @@
         "position": "medio"
       },
       {
-        "id": "1790939947763502",
-        "name": "Julio",
-        "weight": 5,
-        "position": "medio"
+        "id": "1790616908815312",
+        "name": "Hoyuki Ander",
+        "weight": 7,
+        "position": "delantero"
       }
     ]
   },
-  "exportDate": "2026-10-04T06:03:46.088Z",
+  "exportDate": "2026-10-04T06:04:08.833Z",
   "version": "2.1"
 }
