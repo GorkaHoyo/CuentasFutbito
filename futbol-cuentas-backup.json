@@ -257,9 +257,9 @@
         "position": "defensa"
       },
       {
-        "id": "1790944494844939",
-        "name": "Iker",
-        "weight": 4,
+        "id": "1790617058257940",
+        "name": "Diego OpaOpi",
+        "weight": 5,
         "position": "defensa"
       },
       {
@@ -289,9 +289,9 @@
     ],
     "teamBlanco": [
       {
-        "id": "1790617058257940",
-        "name": "Diego OpaOpi",
-        "weight": 5,
+        "id": "1790944494844939",
+        "name": "Iker",
+        "weight": 4,
         "position": "defensa"
       },
       {
@@ -326,6 +326,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-04T05:59:05.750Z",
+  "exportDate": "2026-10-04T05:59:10.349Z",
   "version": "2.1"
 }
