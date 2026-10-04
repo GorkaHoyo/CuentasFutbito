@@ -263,8 +263,8 @@
         "position": "defensa"
       },
       {
-        "id": "1790944633780966",
-        "name": "Fran Elorza",
+        "id": "1790943842367934",
+        "name": "Josemi totemi",
         "weight": 3,
         "position": "defensa"
       },
@@ -301,8 +301,8 @@
         "position": "defensa"
       },
       {
-        "id": "1790943842367934",
-        "name": "Josemi totemi",
+        "id": "1790944633780966",
+        "name": "Fran Elorza",
         "weight": 3,
         "position": "defensa"
       },
@@ -326,6 +326,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-04T06:04:12.990Z",
+  "exportDate": "2026-10-04T06:04:17.521Z",
   "version": "2.1"
 }
