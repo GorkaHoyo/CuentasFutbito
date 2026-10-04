@@ -257,41 +257,41 @@
         "position": "defensa"
       },
       {
+        "id": "1790944494844939",
+        "name": "Iker",
+        "weight": 4,
+        "position": "defensa"
+      },
+      {
         "id": "1790943842367934",
         "name": "Josemi totemi",
         "weight": 3,
         "position": "defensa"
       },
       {
-        "id": "1790617058257940",
-        "name": "Diego OpaOpi",
-        "weight": 5,
-        "position": "defensa"
-      },
-      {
-        "id": "1790943742374453",
-        "name": "Jon kijada",
-        "weight": 6,
+        "id": "1790940529084389",
+        "name": "Tojo",
+        "weight": 7,
         "position": "medio"
       },
       {
-        "id": "1790939947763502",
-        "name": "Julio",
+        "id": "1791093513148536",
+        "name": "Chicote",
         "weight": 5,
         "position": "medio"
       },
       {
-        "id": "1790944425120831",
-        "name": "Ibra",
-        "weight": 4,
+        "id": "1790944633780966",
+        "name": "Fran Elorza",
+        "weight": 3,
         "position": "medio"
       }
     ],
     "teamBlanco": [
       {
-        "id": "1790944494844939",
-        "name": "Iker",
-        "weight": 4,
+        "id": "1790617058257940",
+        "name": "Diego OpaOpi",
+        "weight": 5,
         "position": "defensa"
       },
       {
@@ -301,9 +301,9 @@
         "position": "defensa"
       },
       {
-        "id": "1790944633780966",
-        "name": "Fran Elorza",
-        "weight": 3,
+        "id": "1790943742374453",
+        "name": "Jon kijada",
+        "weight": 6,
         "position": "medio"
       },
       {
@@ -313,9 +313,9 @@
         "position": "medio"
       },
       {
-        "id": "1790940529084389",
-        "name": "Tojo",
-        "weight": 7,
+        "id": "1790939947763502",
+        "name": "Julio",
+        "weight": 5,
         "position": "medio"
       },
       {
@@ -326,6 +326,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-04T05:58:44.091Z",
+  "exportDate": "2026-10-04T05:58:50.254Z",
   "version": "2.1"
 }
