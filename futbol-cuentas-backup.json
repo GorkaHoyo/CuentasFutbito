@@ -365,10 +365,17 @@
           "name": "Hoyuki Ander"
         }
       ],
-      "scoreRojo": 0,
-      "scoreBlanco": 0,
-      "goals": {},
-      "status": "pending"
+      "scoreRojo": 3,
+      "scoreBlanco": 5,
+      "goals": {
+        "1790943742374453": 1,
+        "1790617058257940": 1,
+        "1790944494844939": 1,
+        "1790943886322336": 1,
+        "1791093513148536": 1,
+        "1790940529084389": 2
+      },
+      "status": "completed"
     }
   ],
   "currentSeason": "2026/2027",
@@ -466,6 +473,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-04T17:52:47.048Z",
+  "exportDate": "2026-10-04T17:54:38.657Z",
   "version": "2.1"
 }
