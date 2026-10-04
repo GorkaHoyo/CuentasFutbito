@@ -269,14 +269,14 @@
         "position": "defensa"
       },
       {
-        "id": "1790939947763502",
-        "name": "Julio",
-        "weight": 5,
-        "position": "medio"
+        "id": "1790944494844939",
+        "name": "Iker",
+        "weight": 4,
+        "position": "defensa"
       },
       {
-        "id": "1791093513148536",
-        "name": "Chicote",
+        "id": "1790939947763502",
+        "name": "Julio",
         "weight": 5,
         "position": "medio"
       },
@@ -289,16 +289,16 @@
     ],
     "teamBlanco": [
       {
-        "id": "1790944494844939",
-        "name": "Iker",
-        "weight": 4,
-        "position": "defensa"
-      },
-      {
         "id": "1790943886322336",
         "name": "Asla",
         "weight": 4,
         "position": "defensa"
+      },
+      {
+        "id": "1791093513148536",
+        "name": "Chicote",
+        "weight": 5,
+        "position": "medio"
       },
       {
         "id": "1790944633780966",
@@ -326,6 +326,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-04T05:59:10.349Z",
+  "exportDate": "2026-10-04T06:01:53.988Z",
   "version": "2.1"
 }
