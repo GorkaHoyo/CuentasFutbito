@@ -215,6 +215,17 @@
       "position": "medio",
       "bilbaoKirolak": true,
       "createdAt": "2026-10-02T12:37:13.780Z"
+    },
+    {
+      "id": "1791093513148536",
+      "name": "Chicote",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "bajo",
+      "stamina": "alto",
+      "position": "medio",
+      "bilbaoKirolak": true,
+      "createdAt": "2026-10-04T05:58:33.148Z"
     }
   ],
   "transactions": [],
@@ -315,6 +326,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-04T05:55:54.689Z",
+  "exportDate": "2026-10-04T05:58:33.853Z",
   "version": "2.1"
 }
