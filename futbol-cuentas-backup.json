@@ -281,9 +281,9 @@
         "position": "medio"
       },
       {
-        "id": "1790944633780966",
-        "name": "Fran Elorza",
-        "weight": 3,
+        "id": "1790943742374453",
+        "name": "Jon kijada",
+        "weight": 6,
         "position": "medio"
       }
     ],
@@ -301,9 +301,9 @@
         "position": "defensa"
       },
       {
-        "id": "1790943742374453",
-        "name": "Jon kijada",
-        "weight": 6,
+        "id": "1790944633780966",
+        "name": "Fran Elorza",
+        "weight": 3,
         "position": "medio"
       },
       {
@@ -326,6 +326,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-04T05:59:01.338Z",
+  "exportDate": "2026-10-04T05:59:05.750Z",
   "version": "2.1"
 }
