@@ -200,7 +200,7 @@
       "type": "F5/F7",
       "isRegular": false,
       "skill": "bajo",
-      "stamina": "medio",
+      "stamina": "alto",
       "position": "defensa",
       "bilbaoKirolak": true,
       "createdAt": "2026-10-02T12:34:54.844Z"
@@ -326,6 +326,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-04T06:02:44.936Z",
+  "exportDate": "2026-10-04T06:03:06.212Z",
   "version": "2.1"
 }
