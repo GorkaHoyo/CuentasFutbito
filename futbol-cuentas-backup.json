@@ -269,9 +269,9 @@
         "position": "defensa"
       },
       {
-        "id": "1790940529084389",
-        "name": "Tojo",
-        "weight": 7,
+        "id": "1790943742374453",
+        "name": "Jon kijada",
+        "weight": 6,
         "position": "medio"
       },
       {
@@ -307,9 +307,9 @@
         "position": "defensa"
       },
       {
-        "id": "1790943742374453",
-        "name": "Jon kijada",
-        "weight": 6,
+        "id": "1790940529084389",
+        "name": "Tojo",
+        "weight": 7,
         "position": "medio"
       },
       {
@@ -326,6 +326,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-04T06:04:08.833Z",
+  "exportDate": "2026-10-04T06:04:12.990Z",
   "version": "2.1"
 }
