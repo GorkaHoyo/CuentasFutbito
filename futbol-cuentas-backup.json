@@ -336,6 +336,16 @@
       "matchType": "F7",
       "reason": "",
       "createdAt": "2026-10-04T18:05:52.339Z"
+    },
+    {
+      "id": "1791137993890388",
+      "playerIds": [
+        "1790944494844939"
+      ],
+      "amount": 3,
+      "matchType": "F5",
+      "reason": "",
+      "createdAt": "2026-10-04T18:19:53.894Z"
     }
   ],
   "generalTransactions": [
@@ -513,6 +523,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-04T18:19:41.178Z",
+  "exportDate": "2026-10-04T18:19:54.594Z",
   "version": "2.1"
 }
