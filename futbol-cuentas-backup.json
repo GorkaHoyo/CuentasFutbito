@@ -269,9 +269,9 @@
         "position": "defensa"
       },
       {
-        "id": "1790940529084389",
-        "name": "Tojo",
-        "weight": 7,
+        "id": "1790939947763502",
+        "name": "Julio",
+        "weight": 5,
         "position": "medio"
       },
       {
@@ -313,9 +313,9 @@
         "position": "medio"
       },
       {
-        "id": "1790939947763502",
-        "name": "Julio",
-        "weight": 5,
+        "id": "1790940529084389",
+        "name": "Tojo",
+        "weight": 7,
         "position": "medio"
       },
       {
@@ -326,6 +326,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-04T05:58:50.254Z",
+  "exportDate": "2026-10-04T05:59:01.338Z",
   "version": "2.1"
 }
