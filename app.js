@@ -212,7 +212,7 @@ class App {
   deleteGeneralTransaction(id){ if(!confirm('¿Eliminar?')) return; this.generalTransactions = this.generalTransactions.filter(t=>t.id!==id); this.save(); this.closeModal(); this.toast('Eliminado'); }
   settleDebt(playerId, matchType, amount){ this.addTransaction([playerId], amount, matchType, 'Saldar deuda'); }
 
-  exportBackup(){ const data = { players:this.players, transactions:this.transactions, generalTransactions:this.generalTransactions, matches:this.matches, exportDate:new Date().toISOString(), version:'2.1' }; const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `futbol-backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); this.toast('Exportado'); }
+  exportBackup(){ const data = { players:this.players, transactions:this.transactions, generalTransactions:this.generalTransactions, matches:this.matches, exportDate:new Date().toISOString(), version:'2.1' }; const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); this.descargarOCompartir(blob, `futbol-backup-${new Date().toISOString().slice(0,10)}.json`); this.toast('Exportado'); }
   importBackup(file){ const reader = new FileReader(); reader.onload = (e)=>{ try{ const data = JSON.parse(e.target.result); if(!confirm('¿Reemplazar datos?')) return; this.players = data.players || []; this.transactions = data.transactions || []; this.generalTransactions = data.generalTransactions || []; this.matches = data.matches || []; this.save(); this.render(); this.toast('Importado'); }catch(err){ alert('Archivo no válido.'); } }; reader.readAsText(file); }
 
   requiredTeamSizes(matchType){ return matchType === 'F5' ? [10,12] : [14, 16]; }
@@ -298,6 +298,117 @@ class App {
   }
 
   async ensureFonts(){ try{ await Promise.all([ document.fonts.load('700 32px Oswald'), document.fonts.load('600 20px Oswald'), document.fonts.load('400 16px Oswald'), document.fonts.load('700 24px "Space Mono"'), document.fonts.load('400 16px "Space Mono"')]); }catch(e){} }
+
+  async exportSummaryImage(matchType){
+    await this.ensureFonts();
+    const bote = this.getTotalPot(matchType); const {credit, neutral, debt} = this.classify(matchType);
+    const jugadoresSum = [...credit, ...debt].reduce((s,x)=>s+x.b, 0); const balance = bote + jugadoresSum;
+    const DPR = 2, W = 675, H = 1200, PAD = 22;
+    const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
+    const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
+    ctx.fillStyle = '#F6F2E9'; ctx.fillRect(0,0,W,H); ctx.fillStyle = '#0F3D2E'; ctx.fillRect(0,0,W,84); ctx.fillStyle = '#E8A33D'; ctx.fillRect(0, 80, W, 4);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#F6F2E9'; ctx.font = '700 26px Oswald'; ctx.fillText('⚽ CUENTAS F5·F7', PAD, 42);
+    ctx.font = '600 16px Oswald'; ctx.fillStyle = '#CFE0D6'; ctx.fillText(`Resumen · ${matchType}`, PAD, 65);
+    const dateStr = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'});
+    ctx.textAlign = 'right'; ctx.font = '400 13px -apple-system, sans-serif'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(dateStr, W-PAD, 65);
+    let y = 84; ctx.textAlign = 'left'; ctx.fillStyle = '#154934'; ctx.fillRect(PAD, y+12, W-PAD*2, 80);
+    const cellW = (W-PAD*2)/3; const cls = v => v>0.001 ? '#8FE3B0' : (v<-0.001 ? '#FF9B92' : '#F6F2E9');
+    const stats = [ {label:'BOTE', txt:fmtPlain(bote), value:bote}, {label:'JUGADORES', txt:fmt(jugadoresSum), value:jugadoresSum}, {label:'BALANCE', txt:fmtPlain(balance), value:balance} ];
+    ctx.textAlign = 'center';
+    stats.forEach((s,i)=>{ const cx = PAD + cellW*i + cellW/2; ctx.font = '600 11px Oswald'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(s.label, cx, y+34); ctx.font = '700 24px "Space Mono"'; ctx.fillStyle = cls(s.value); ctx.fillText(s.txt, cx, y+66); });
+    ctx.textAlign = 'left'; y += 102 + 12;
+    const available = H - y - 62 - 24; const debtAlloc = Math.round(available * 0.56); const creditAlloc = available - debtAlloc;
+    const drawList = (title, color, items, alloc, minRowH, maxRowH, maxCols, nameFontPx, amtFontPx) => {
+      ctx.font = `700 ${Math.max(15, Math.round(nameFontPx*0.92))}px Oswald`; ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(PAD+5, y+11, 5, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#12241B'; ctx.fillText(title.toUpperCase(), PAD+18, y+16);
+      ctx.font = '400 12px Oswald'; ctx.fillStyle = '#6E7C73'; ctx.textAlign = 'right'; ctx.fillText(`${items.length}`, W-PAD, y+16);
+      ctx.textAlign = 'left'; y += 26;
+      if(items.length === 0){ ctx.font = '400 14px -apple-system, sans-serif'; ctx.fillStyle = '#9AA69E'; ctx.fillText('—', PAD, y+20); y += minRowH; return; }
+      const fitRows = Math.ceil(items.length/maxCols); const rowH = Math.max(6, Math.min(maxRowH, alloc/fitRows)); const colW = (W-PAD*2-((maxCols-1)*12))/maxCols;
+      for(let i=0;i<items.length;i++){
+        const col = Math.floor(i/fitRows); const rx = PAD + col*(colW+12); const ry = y + (i%fitRows)*rowH;
+        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(rx, ry+2, colW, rowH-8); ctx.fillStyle = color; ctx.fillRect(rx, ry+2, 4, rowH-8);
+        ctx.font = `600 ${Math.min(nameFontPx, rowH*0.42)}px -apple-system, sans-serif`; ctx.fillStyle = '#12241B'; ctx.fillText(items[i].p.name.substring(0,18), rx+12, ry+2+(rowH-8)/2+4);
+        ctx.font = `700 ${Math.min(amtFontPx, rowH*0.42)}px "Space Mono"`; ctx.textAlign = 'right'; ctx.fillStyle = items[i].b>0.001 ? '#2D8659' : (items[i].b<-0.001 ? '#C3423F' : '#6E7C73'); ctx.fillText(fmt(items[i].b), rx+colW-10, ry+2+(rowH-8)/2+4); ctx.textAlign = 'left';
+      }
+      y += fitRows*rowH;
+    };
+    drawList('Con deuda', '#C3423F', debt, debtAlloc, 30, 40, 2, 16, 16); y += 12; 
+    drawList('Con crédito', '#2D8659', credit, creditAlloc, 22, 30, 3, 13, 13); y += 12;
+    ctx.fillStyle = '#FFFFFF'; ctx.fillRect(PAD, y, W-PAD*2, 34); ctx.fillStyle = '#9AA69E'; ctx.fillRect(PAD, y, 4, 34);
+    ctx.font = '600 14px Oswald'; ctx.fillStyle = '#4B5750'; ctx.fillText(`✅  ${neutral.length} ${neutral.length === 1 ? 'jugador' : 'jugadores'} al día`, PAD+14, y+22);
+    canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `cuentas-${matchType}.png`); }, 'image/png');
+  }
+
+  async exportTeamsImage(){
+    const r = this.teamsResult; if(!r) return; await this.ensureFonts();
+    const DPR = 2, W = 800, PAD = 28, cardH = 56 + Math.max(r.teamRojo.length, r.teamBlanco.length)*42 + 24;
+    const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil((96+cardH+52)*DPR);
+    const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
+    ctx.fillStyle = '#F6F2E9'; ctx.fillRect(0,0,W,96+cardH+52);
+    ctx.textAlign = 'center'; ctx.font = '700 26px Oswald'; ctx.fillStyle = '#12241B'; ctx.fillText(`⚽ EQUIPOS GENERADOS · ${this.teamsMatchType}`, W/2, 46);
+    ctx.font = '400 14px -apple-system, sans-serif'; ctx.fillStyle = '#6E7C73'; ctx.fillText(new Date().toLocaleDateString('es-ES'), W/2, 70);
+    const colW = (W - PAD*2 - 22)/2;
+    const drawTeamCard = (label, list, x, bg, borderColor, titleColor) => {
+      ctx.fillStyle = bg; ctx.fillRect(x, 96, colW, cardH); ctx.lineWidth = 2; ctx.strokeStyle = borderColor; ctx.strokeRect(x, 96, colW, cardH);
+      ctx.font = '700 20px Oswald'; ctx.fillStyle = titleColor; ctx.fillText(label, x+colW/2, 96+12+28); ctx.textAlign = 'left';
+      let ry = 96 + 56 + 12;
+      list.forEach(p=>{
+        const bcol = POSITION_COLOR[p.position] || '#8A8A8A'; const babbr = POSITION_ABBR[p.position] || '-';
+        ctx.fillStyle = bcol; ctx.fillRect(x+12, ry+(42-26)/2, 56, 26);
+        ctx.textAlign = 'center'; ctx.font = '700 12px Oswald'; ctx.fillStyle = '#FFFFFF'; ctx.fillText(babbr, x+12+28, ry+21+4);
+        ctx.textAlign = 'left'; ctx.font = '600 16px -apple-system, sans-serif'; ctx.fillStyle = '#12241B'; ctx.fillText(p.name.substring(0,16), x+12+56+12, ry+21+5);
+        ry += 42;
+      });
+      ctx.textAlign = 'center';
+    };
+    drawTeamCard('EQUIPO ROJO', r.teamRojo, PAD, '#FCE8E7', '#C3423F', '#C3423F'); 
+    drawTeamCard('EQUIPO AZUL', r.teamBlanco, PAD+colW+22, '#E0E7FF', '#1E3A8A', '#1E3A8A');
+    canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `equipos.png`); }, 'image/png');
+  }
+
+  async exportClasificacionImage(){
+    await this.ensureFonts(); const clasificacion = this.getSortedClasificacion(this.currentSeason);
+    const DPR = 2, W = 800, PAD = 30, rowH = 40, headerH = 120;
+    const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil((headerH + (clasificacion.length * rowH) + 60)*DPR);
+    const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
+    ctx.fillStyle = '#F6F2E9'; ctx.fillRect(0,0,W, canvas.height/DPR); ctx.fillStyle = '#0F3D2E'; ctx.fillRect(0,0,W,84); ctx.fillStyle = '#E8A33D'; ctx.fillRect(0,80,W,4);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#F6F2E9'; ctx.font = '700 28px Oswald'; ctx.fillText('🏆 CLASIFICACIÓN GENERAL', PAD, 46);
+    ctx.font = '600 16px Oswald'; ctx.fillStyle = '#CFE0D6'; ctx.fillText(`Temporada ${this.currentSeason}`, PAD, 70);
+    ctx.textAlign = 'right'; ctx.font = '400 14px -apple-system, sans-serif'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(new Date().toLocaleDateString('es-ES'), W-PAD, 70);
+    let y = headerH; ctx.textAlign = 'left'; ctx.fillStyle = '#6E7C73'; ctx.font = '600 14px Oswald'; ctx.fillText('JUGADOR', PAD+30, y);
+    ctx.textAlign = 'center'; ctx.fillText('PJ', W-320, y); ctx.fillText('PG', W-260, y); ctx.fillText('PE', W-200, y); ctx.fillText('PP', W-140, y); ctx.fillText('GOLES', W-80, y); ctx.fillText('% VICTORIA', W-30, y); y += 15;
+    clasificacion.forEach((s, i) => {
+      ctx.fillStyle = i % 2 === 0 ? '#FFFFFF' : '#F6F2E9'; ctx.fillRect(PAD, y, W-(PAD*2), rowH);
+      ctx.textAlign = 'left'; ctx.fillStyle = '#12241B'; ctx.font = '700 16px "Space Mono"'; ctx.fillText(`${i+1}.`, PAD+6, y+25);
+      ctx.font = '600 16px -apple-system, sans-serif'; ctx.fillText(s.p.name, PAD+30, y+25);
+      ctx.textAlign = 'center'; ctx.font = '400 16px "Space Mono"'; ctx.fillText(s.pj, W-320, y+25);
+      ctx.fillStyle = 'var(--credit)'; ctx.fillText(s.pg, W-260, y+25); ctx.fillStyle = 'var(--muted)'; ctx.fillText(s.pe, W-200, y+25); ctx.fillStyle = 'var(--debt)'; ctx.fillText(s.pp, W-140, y+25);
+      ctx.fillStyle = '#12241B'; ctx.font = '700 16px "Space Mono"'; ctx.fillText(s.goles, W-80, y+25);
+      ctx.fillStyle = '#0F3D2E'; ctx.fillText(`${s.winrate}%`, W-30, y+25); y += rowH;
+    });
+    canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `clasificacion-${this.currentSeason.replace('/','-')}.png`); }, 'image/png');
+  }
+
+  async exportCromoImage(playerId){
+    const s = this.calcularClasificacion(this.currentSeason).find(x => x.p.id === playerId); if(!s) return; await this.ensureFonts();
+    const DPR = 2, W = 400, H = 500;
+    const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
+    const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
+    ctx.fillStyle = '#0F3D2E'; ctx.fillRect(0,0,W,H);
+    const gradient = ctx.createLinearGradient(0,0,0,H); gradient.addColorStop(0, '#154934'); gradient.addColorStop(1, '#082018');
+    ctx.fillStyle = gradient; ctx.fillRect(4,4,W-8,H-8); ctx.strokeStyle = '#E8A33D'; ctx.lineWidth = 4; ctx.strokeRect(4,4,W-8,H-8);
+    ctx.textAlign = 'center'; ctx.fillStyle = '#E8A33D'; ctx.font = '700 36px Oswald'; ctx.fillText(s.p.name.toUpperCase(), W/2, 80);
+    ctx.fillStyle = '#FFFFFF'; ctx.font = '600 18px Oswald'; const posName = POSITION_LABEL[s.p.position] || 'SIN POSICIÓN'; ctx.fillText(posName.toUpperCase(), W/2, 110);
+    ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.beginPath(); ctx.arc(W/2, 230, 80, 0, Math.PI*2); ctx.fill();
+    ctx.font = '700 80px "Space Mono"'; ctx.fillStyle = '#E8A33D'; ctx.fillText(s.winrate, W/2, 250);
+    ctx.font = '600 20px Oswald'; ctx.fillStyle = '#CFE0D6'; ctx.fillText('WINRATE %', W/2, 285);
+    const drawStatBox = (lbl, val, x, y) => { ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(x-45, y-30, 90, 60); ctx.fillStyle = '#FFFFFF'; ctx.font = '700 24px "Space Mono"'; ctx.fillText(val, x, y-2); ctx.fillStyle = '#9FC2AC'; ctx.font = '600 12px Oswald'; ctx.fillText(lbl, x, y+18); };
+    drawStatBox('PARTIDOS', s.pj, W/4, 400); drawStatBox('VICTORIAS', s.pg, W/2, 400); drawStatBox('GOLES', s.goles, (W/4)*3, 400);
+    canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `cromo-${s.p.name}.png`); }, 'image/png');
+  }
+
   shareTeams(){ const r = this.teamsResult; if(!r) return; let txt = `⚽ EQUIPOS ${this.teamsMatchType}\n\n🔴 Equipo Rojo\n${r.teamRojo.map(p=>`- ${p.name}`).join('\n')}\n\n🔵 Equipo Azul\n${r.teamBlanco.map(p=>`- ${p.name}`).join('\n')}`; if(navigator.share){ navigator.share({ text: txt }).catch(()=>{}); } else { navigator.clipboard.writeText(txt).then(()=>{ this.toast('Copiado'); }); } }
   
   openModal(type, payload){ if(type === 'settleMatch') { this._smCost = "19.55"; this._smQuotaBK = "3.00"; this._smQuotaNormal = "0.00"; this._smPayer = 'bote'; this._smSelected = new Set(); this.teamsPresent.forEach(id => { if(!String(id).startsWith('guest_')) this._smSelected.add(id); }); } this.modal = {type, payload: payload || {}}; this.render(); }
@@ -528,6 +639,22 @@ class App {
     if(this._smPayer && this._smPayer !== 'bote' && cost > 0) this.transactions.push({ id:uid(), playerIds: [this._smPayer], amount: Math.abs(cost), matchType: mt, reason: 'Pago pista adelantado', createdAt: now });
     if(surplus !== 0) this.generalTransactions.push({ id:uid(), amount: surplus, matchType: mt, reason: 'Sobrante partido', createdAt: now });
     this.save(); this.closeModal(); this.toast('Liquidado automáticamente');
+  }
+  // NUEVA FUNCIÓN: Descarga segura y menú de compartir en WhatsApp para móviles
+  descargarOCompartir(blob, filename) {
+    const file = new File([blob], filename, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ title: filename, files: [file] }).catch(()=>{});
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none'; 
+      a.href = url; 
+      a.download = filename;
+      document.body.appendChild(a); // Esto evita el bloqueo en móviles
+      a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 150);
+    }
   }
 }
 
