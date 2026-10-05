@@ -252,20 +252,12 @@ class App {
     }
   }
 
-  // --- NUEVA LÓGICA DE ORDENACIÓN DE ESTADÍSTICAS ---
   setStatSort(col) {
-    if(this.statSortBy === col) {
-      this.statSortDesc = !this.statSortDesc;
-    } else {
-      this.statSortBy = col;
-      this.statSortDesc = (col !== 'nombre'); // Los nombres por defecto de la A a la Z
-    }
+    if(this.statSortBy === col) { this.statSortDesc = !this.statSortDesc; } else { this.statSortBy = col; this.statSortDesc = (col !== 'nombre'); }
     this.render();
   }
   
-  getSortIcon(col) {
-    return this.statSortBy === col ? (this.statSortDesc ? ' ▼' : ' ▲') : '';
-  }
+  getSortIcon(col) { return this.statSortBy === col ? (this.statSortDesc ? ' ▼' : ' ▲') : ''; }
 
   getSortedClasificacion(season) {
     const stats = {}; this.players.forEach(p => { stats[p.id] = { p, pj:0, pg:0, pe:0, pp:0, goles:0 }; });
@@ -278,17 +270,10 @@ class App {
     });
 
     let data = Object.values(stats).filter(s => s.pj > 0).map(s => { s.winrate = Math.round((s.pg / s.pj) * 100); return s; });
-    
-    // Aplicamos la ordenación elegida
     data.sort((a, b) => {
       if (this.statSortBy === 'nombre') return this.statSortDesc ? b.p.name.localeCompare(a.p.name) : a.p.name.localeCompare(b.p.name);
-      
-      let vA = a[this.statSortBy] || 0; 
-      let vB = b[this.statSortBy] || 0;
-      
+      let vA = a[this.statSortBy] || 0; let vB = b[this.statSortBy] || 0;
       if (vA !== vB) return this.statSortDesc ? vB - vA : vA - vB;
-      
-      // Desempates por defecto si coinciden: Goles -> Winrate -> PJ
       if (b.goles !== a.goles) return b.goles - a.goles;
       if (b.winrate !== a.winrate) return b.winrate - a.winrate;
       return b.pj - a.pj;
@@ -298,7 +283,10 @@ class App {
   }
 
   async ensureFonts(){ try{ await Promise.all([ document.fonts.load('700 32px Oswald'), document.fonts.load('600 20px Oswald'), document.fonts.load('400 16px Oswald'), document.fonts.load('700 24px "Space Mono"'), document.fonts.load('400 16px "Space Mono"')]); }catch(e){} }
-
+  
+  shareTeams(){ const r = this.teamsResult; if(!r) return; let txt = `⚽ EQUIPOS ${this.teamsMatchType}\n\n🔴 Equipo Rojo\n${r.teamRojo.map(p=>`- ${p.name}`).join('\n')}\n\n🔵 Equipo Azul\n${r.teamBlanco.map(p=>`- ${p.name}`).join('\n')}`; if(navigator.share){ navigator.share({ text: txt }).catch(()=>{}); } else { navigator.clipboard.writeText(txt).then(()=>{ this.toast('Copiado'); }); } }
+  
+  // ----- FUNCIONES DE EXPORTAR RECUPERADAS Y ARREGLADAS -----
   async exportSummaryImage(matchType){
     await this.ensureFonts();
     const bote = this.getTotalPot(matchType); const {credit, neutral, debt} = this.classify(matchType);
@@ -408,9 +396,8 @@ class App {
     drawStatBox('PARTIDOS', s.pj, W/4, 400); drawStatBox('VICTORIAS', s.pg, W/2, 400); drawStatBox('GOLES', s.goles, (W/4)*3, 400);
     canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `cromo-${s.p.name}.png`); }, 'image/png');
   }
+  // -----------------------------------------------------------
 
-  shareTeams(){ const r = this.teamsResult; if(!r) return; let txt = `⚽ EQUIPOS ${this.teamsMatchType}\n\n🔴 Equipo Rojo\n${r.teamRojo.map(p=>`- ${p.name}`).join('\n')}\n\n🔵 Equipo Azul\n${r.teamBlanco.map(p=>`- ${p.name}`).join('\n')}`; if(navigator.share){ navigator.share({ text: txt }).catch(()=>{}); } else { navigator.clipboard.writeText(txt).then(()=>{ this.toast('Copiado'); }); } }
-  
   openModal(type, payload){ if(type === 'settleMatch') { this._smCost = "19.55"; this._smQuotaBK = "3.00"; this._smQuotaNormal = "0.00"; this._smPayer = 'bote'; this._smSelected = new Set(); this.teamsPresent.forEach(id => { if(!String(id).startsWith('guest_')) this._smSelected.add(id); }); } this.modal = {type, payload: payload || {}}; this.render(); }
   closeModal(){ this.modal = null; this.render(); }
   setPage(p){ this.page = p; this.modal = null; this.pageAnim = true; this.render(); this.pageAnim = false; }
@@ -434,7 +421,6 @@ class App {
 
       let newContent = el.querySelector('.content'); if(newContent) newContent.scrollTop = contentScroll;
       
-      // ESTO ES LO QUE RESTAURA EL FOCO DEL TECLADO
       if(activeId){ 
         let actEl = document.getElementById(activeId); 
         if(actEl){ actEl.focus(); try { if(selStart != null && actEl.setSelectionRange) actEl.setSelectionRange(selStart, selStart); } catch(e){} } 
@@ -472,7 +458,6 @@ class App {
     if(this.jugFilterRegular) list = list.filter(p=> String(p.isRegular) === this.jugFilterRegular);
     list.sort((a,b)=>a.name.localeCompare(b.name));
     const pList = list.map(p=>{ const total = this.getPlayerTotalBalance(p.id); return `<div class="ticket neutral" onclick="app.openModal('editPlayer',{id:'${p.id}'})"><div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${p.type}${p.isRegular ? ' · habitual' : ' · esporádico'}${p.bilbaoKirolak ? ' · Bilbao Kirolak' : ''}</div></div><div class="amt mono ${total>0?'pos':(total<0?'neg':'zero')}">${fmt(total)}</div></div>`; }).join('');
-    // AQUI SE RESTAURA EL ID = jugSearchInput
     return `<input type="search" id="jugSearchInput" class="search-bar" placeholder="Buscar jugador..." value="${escapeHtml(this.jugSearch)}" oninput="app.jugSearch=this.value; app.render()" /><div class="filter-bar"><button class="chip ${this.jugFilterType===''?'active':''}" onclick="app.jugFilterType='';app.render()">Todos</button><button class="chip ${this.jugFilterType==='F5'?'active':''}" onclick="app.jugFilterType='F5';app.render()">F5</button><button class="chip ${this.jugFilterType==='F7'?'active':''}" onclick="app.jugFilterType='F7';app.render()">F7</button></div><div class="section-title">Jugadores<span class="count">${list.length}</span></div>${pList || '<div class="empty-state">No hay jugadores.</div>'}`;
   }
 
@@ -500,7 +485,6 @@ class App {
     const count = this.teamsPresent.size; const required = this.requiredTeamSizes(mt); const sizeOk = required.includes(count); const missingPosition = this.presentWithoutPosition(); const ok = sizeOk && missingPosition.length === 0;
     const playersHtml = players.length > 0 ? players.map(p=>`<label><input type="checkbox" ${this.teamsPresent.has(p.id)?'checked':''} onchange="app.togglePresent('${p.id}')" />${escapeHtml(p.name)}${p.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>'} <span class="lvl-badge" style="margin-left:auto">Niv:${SKILL_LABEL[p.skill] || 'Medio'} • Fis:${STAMINA_LABEL[p.stamina] || 'Medio'}</span></label>`).join('') : '<div class="empty-state">No hay jugadores que coincidan</div>';
     const guestsHtml = this.teamsGuests.map(g=>`<label><input type="checkbox" ${this.teamsPresent.has(g.id)?'checked':''} onchange="app.togglePresent('${g.id}')" />${escapeHtml(g.name)} <span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Invitado</span>${g.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>'}<span class="lvl-badge" style="margin-left:auto">Niv:${SKILL_LABEL[g.skill] || 'Medio'} • Fis:${STAMINA_LABEL[g.stamina] || 'Medio'}</span><button class="icon-btn" onclick="event.preventDefault();app.removeGuest('${g.id}')">${ICONS.trash}</button></label>`).join('');
-    // AQUI SE RESTAURA EL ID = teamsSearchInput
     return `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app.teamsMatchType='F5';app.teamsPresent=new Set();app.teamsGuests=[];app.teamsResult=null;app.saveTeamsLocal();app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app.teamsMatchType='F7';app.teamsPresent=new Set();app.teamsGuests=[];app.teamsResult=null;app.saveTeamsLocal();app.render()">F7</button></div><label style="display:flex; justify-content:space-between; align-items:flex-end;">Jugadores presentes hoy <span class="mono" style="font-weight:700;color:${sizeOk ? 'var(--credit)' : 'var(--debt)'}">${count} / ${required.join(' o ')}</span></label><input type="search" id="teamsSearchInput" class="search-bar" placeholder="Buscar jugador para convocar..." value="${escapeHtml(this.teamsSearch || '')}" oninput="app.teamsSearch=this.value; app.render()" style="margin-bottom:8px;" /><div class="checklist" style="margin-bottom:8px">${playersHtml}${guestsHtml}</div><div class="field-row" style="margin-bottom:14px"><button class="btn btn-sm btn-outline" onclick="app.openModal('addGuest')">${ICONS.plus} Añadir invitado</button></div>${!sizeOk ? `<div class="empty-state" style="text-align:left;padding:8px 2px">Hacen falta exactamente ${required.join(' o ')} jugadores.</div>` : ''}${sizeOk && missingPosition.length > 0 ? `<div class="empty-state" style="text-align:left;padding:8px 2px;color:var(--debt)">Falta asignar posición a: ${missingPosition.map(p=>escapeHtml(p.name)).join(', ')}.</div>` : ''}<div class="field-row"><button class="btn btn-primary" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(true)">${ICONS.shuffle} Equilibrar</button><button class="btn btn-outline" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(false)">Aleatorio</button></div>${count > 0 ? `<button class="btn btn-block" style="margin-top:12px; background:var(--gold-soft); color:#8a5a12; border:1.5px solid var(--gold);" onclick="app.openModal('settleMatch')">💰 Liquidar Partido</button>` : ''}${this.teamsResult ? this.renderTeamsResult(this.teamsResult) : ''}`;
   }
 
@@ -523,7 +507,6 @@ class App {
     const data = this.getSortedClasificacion(this.currentSeason); 
     let tableHtml = `<div class="empty-state">No hay partidos jugados esta temporada.</div>`;
     if (data.length > 0) { 
-      // CABECERAS INTERACTIVAS: ahora puedes hacer clic para ordenar!
       tableHtml = `<div style="background:var(--paper); border:1px solid var(--line); border-radius:12px; overflow:hidden;">
         <table class="stat-table">
           <thead>
@@ -571,7 +554,6 @@ class App {
     if(this.histSearch){ const q = this.histSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); all = all.filter(t=>{ const names = (t.playerIds || []).map(id=> this.players.find(x=>x.id===id)?.name || '').join(' ').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); const resText = (t.reason || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); return names.includes(q) || resText.includes(q); }); }
     all.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)); const totalItems = all.length; all = all.slice(0, this.histLimit);
     const tList = all.map(t=>{ const names = t.kind==='jugador' ? (t.playerIds || []).map(id=> this.players.find(x=>x.id===id)?.name || '(borrado)').join(', ') : 'Bote general'; return `<div class="ticket ${t.amount>0 ? 'credit' : 'debt'}"><div><div class="name">${escapeHtml(names)}</div><div class="sub">${t.matchType} · ${t.reason ? escapeHtml(t.reason) : 'sin motivo'} · ${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div><div style="display:flex;align-items:center;gap:8px"><div class="amt mono ${t.amount>0 ? 'pos' : 'neg'}">${fmt(t.amount)}</div><button class="icon-btn" onclick="app.${t.kind==='jugador' ? 'deleteTransaction' : 'deleteGeneralTransaction'}('${t.id}')">${ICONS.trash}</button></div></div>`; }).join('');
-    // AQUI SE RESTAURA EL ID = histSearchInput
     return `<input type="search" id="histSearchInput" class="search-bar" placeholder="Buscar en historial..." value="${escapeHtml(this.histSearch)}" oninput="app.histSearch=this.value;app.histLimit=40;app.render()" /><div class="filter-bar"><button class="chip ${this.histMatchFilter===''?'active':''}" onclick="app.histMatchFilter='';app.histLimit=40;app.render()">Todos</button><button class="chip ${this.histMatchFilter==='F5'?'active':''}" onclick="app.histMatchFilter='F5';app.histLimit=40;app.render()">F5</button><button class="chip ${this.histMatchFilter==='F7'?'active':''}" onclick="app.histMatchFilter='F7';app.histLimit=40;app.render()">F7</button></div>${tList || '<div class="empty-state">Sin movimientos</div>'}${this.histLimit < totalItems ? `<button class="btn btn-outline btn-block" style="margin-top:16px" onclick="app.histLimit += 40; app.render()">Cargar más (${totalItems - this.histLimit})</button>` : ''}`;
   }
 
@@ -640,7 +622,7 @@ class App {
     if(surplus !== 0) this.generalTransactions.push({ id:uid(), amount: surplus, matchType: mt, reason: 'Sobrante partido', createdAt: now });
     this.save(); this.closeModal(); this.toast('Liquidado automáticamente');
   }
-  // NUEVA FUNCIÓN: Descarga segura y menú de compartir en WhatsApp para móviles
+  
   descargarOCompartir(blob, filename) {
     const file = new File([blob], filename, { type: blob.type });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -651,7 +633,7 @@ class App {
       a.style.display = 'none'; 
       a.href = url; 
       a.download = filename;
-      document.body.appendChild(a); // Esto evita el bloqueo en móviles
+      document.body.appendChild(a);
       a.click();
       setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 150);
     }
