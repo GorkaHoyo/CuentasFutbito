@@ -221,7 +221,7 @@
       "name": "Chicote",
       "type": "F5/F7",
       "isRegular": true,
-      "skill": "bajo",
+      "skill": "medio",
       "stamina": "alto",
       "position": "medio",
       "bilbaoKirolak": true,
@@ -523,6 +523,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-08T12:58:58.819Z",
+  "exportDate": "2026-10-08T12:59:15.429Z",
   "version": "2.1"
 }
