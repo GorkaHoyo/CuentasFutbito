@@ -80,7 +80,7 @@
       "type": "F5/F7",
       "isRegular": true,
       "skill": "bajo",
-      "stamina": "medio",
+      "stamina": "bajo",
       "position": "medio",
       "createdAt": "2026-09-28T17:39:44.734Z",
       "bilbaoKirolak": true
@@ -523,6 +523,6 @@
       }
     ]
   },
-  "exportDate": "2026-10-08T12:59:29.655Z",
+  "exportDate": "2026-10-08T12:59:49.939Z",
   "version": "2.1"
 }
