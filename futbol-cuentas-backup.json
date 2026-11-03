@@ -248,6 +248,17 @@
       "position": "defensa",
       "bilbaoKirolak": true,
       "createdAt": "2026-11-03T16:25:09.770Z"
+    },
+    {
+      "id": "179372415012419",
+      "name": "Pablo txopo",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "medio",
+      "stamina": "alto",
+      "position": "portero",
+      "bilbaoKirolak": false,
+      "createdAt": "2026-11-03T16:42:30.124Z"
     }
   ],
   "transactions": [
@@ -455,6 +466,6 @@
   "teamsPresent": [],
   "teamsGuests": [],
   "teamsResult": null,
-  "exportDate": "2026-11-03T16:41:19.630Z",
+  "exportDate": "2026-11-03T16:42:30.825Z",
   "version": "2.1"
 }
