@@ -259,6 +259,17 @@
       "position": "portero",
       "bilbaoKirolak": false,
       "createdAt": "2026-11-03T16:42:30.124Z"
+    },
+    {
+      "id": "1793724896245973",
+      "name": "Juanillo g.",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "medio",
+      "stamina": "medio",
+      "position": "defensa",
+      "bilbaoKirolak": true,
+      "createdAt": "2026-11-03T16:54:56.249Z"
     }
   ],
   "transactions": [
@@ -466,6 +477,6 @@
   "teamsPresent": [],
   "teamsGuests": [],
   "teamsResult": null,
-  "exportDate": "2026-11-03T16:42:30.825Z",
+  "exportDate": "2026-11-03T16:54:56.953Z",
   "version": "2.1"
 }
