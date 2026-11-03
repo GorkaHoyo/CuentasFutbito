@@ -270,6 +270,17 @@
       "position": "defensa",
       "bilbaoKirolak": true,
       "createdAt": "2026-11-03T16:54:56.249Z"
+    },
+    {
+      "id": "1793725159567774",
+      "name": "Gaizka",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "bajo",
+      "stamina": "alto",
+      "position": "defensa",
+      "bilbaoKirolak": true,
+      "createdAt": "2026-11-03T16:59:19.567Z"
     }
   ],
   "transactions": [
@@ -489,6 +500,6 @@
   ],
   "teamsGuests": [],
   "teamsResult": null,
-  "exportDate": "2026-11-03T16:58:13.449Z",
+  "exportDate": "2026-11-03T16:59:20.268Z",
   "version": "2.1"
 }
