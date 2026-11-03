@@ -237,6 +237,17 @@
       "position": "medio",
       "bilbaoKirolak": true,
       "createdAt": "2026-11-03T16:22:07.577Z"
+    },
+    {
+      "id": "1793723109770437",
+      "name": "Carlos",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "bajo",
+      "stamina": "medio",
+      "position": "defensa",
+      "bilbaoKirolak": true,
+      "createdAt": "2026-11-03T16:25:09.770Z"
     }
   ],
   "transactions": [
@@ -444,6 +455,6 @@
   "teamsPresent": [],
   "teamsGuests": [],
   "teamsResult": null,
-  "exportDate": "2026-11-03T16:22:08.281Z",
+  "exportDate": "2026-11-03T16:25:10.471Z",
   "version": "2.1"
 }
