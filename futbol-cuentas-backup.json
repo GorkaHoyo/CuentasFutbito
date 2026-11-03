@@ -509,9 +509,9 @@
         "position": "portero"
       },
       {
-        "id": "1790617571023650",
-        "name": "Gorka",
-        "weight": 6,
+        "id": "1793725159567774",
+        "name": "Gaizka",
+        "weight": 5,
         "position": "defensa"
       },
       {
@@ -547,9 +547,9 @@
         "position": "defensa"
       },
       {
-        "id": "1793725159567774",
-        "name": "Gaizka",
-        "weight": 5,
+        "id": "1790617571023650",
+        "name": "Gorka",
+        "weight": 6,
         "position": "defensa"
       },
       {
@@ -578,6 +578,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-03T17:00:01.597Z",
+  "exportDate": "2026-11-03T17:06:36.411Z",
   "version": "2.1"
 }
