@@ -429,100 +429,10 @@
     }
   ],
   "currentSeason": "2026/2027",
-  "teamsMatchType": "F5",
-  "teamsPresent": [
-    "1790628990483718",
-    "1790617571023650",
-    "1790616908815312",
-    "1790617058257940",
-    "1790943886322336",
-    "1790944633780966",
-    "1790944494844939",
-    "1790943742374453",
-    "1790940529084389",
-    "1790943842367934",
-    "1790939947763502",
-    "1791093513148536"
-  ],
+  "teamsMatchType": "F7",
+  "teamsPresent": [],
   "teamsGuests": [],
-  "teamsResult": {
-    "teamRojo": [
-      {
-        "id": "1790617571023650",
-        "name": "Gorka",
-        "weight": 6,
-        "position": "defensa"
-      },
-      {
-        "id": "1790944494844939",
-        "name": "Iker",
-        "weight": 5,
-        "position": "defensa"
-      },
-      {
-        "id": "1790943842367934",
-        "name": "Josemi totemi",
-        "weight": 3,
-        "position": "defensa"
-      },
-      {
-        "id": "1790617058257940",
-        "name": "Diego OpaOpi",
-        "weight": 5,
-        "position": "defensa"
-      },
-      {
-        "id": "1790943742374453",
-        "name": "Jon kijada",
-        "weight": 6,
-        "position": "medio"
-      },
-      {
-        "id": "1790939947763502",
-        "name": "Julio",
-        "weight": 5,
-        "position": "medio"
-      }
-    ],
-    "teamBlanco": [
-      {
-        "id": "1790943886322336",
-        "name": "Asla",
-        "weight": 4,
-        "position": "defensa"
-      },
-      {
-        "id": "1790944633780966",
-        "name": "Fran Elorza",
-        "weight": 3,
-        "position": "defensa"
-      },
-      {
-        "id": "1791093513148536",
-        "name": "Chicote",
-        "weight": 5,
-        "position": "medio"
-      },
-      {
-        "id": "1790940529084389",
-        "name": "Tojo",
-        "weight": 7,
-        "position": "medio"
-      },
-      {
-        "id": "1790628990483718",
-        "name": "Diego Recio",
-        "weight": 5,
-        "position": "medio"
-      },
-      {
-        "id": "1790616908815312",
-        "name": "Hoyuki Ander",
-        "weight": 7,
-        "position": "delantero"
-      }
-    ]
-  },
-  "exportDate": "2026-11-03T16:19:46.818Z",
+  "teamsResult": null,
+  "exportDate": "2026-11-03T16:20:43.520Z",
   "version": "2.1"
 }
