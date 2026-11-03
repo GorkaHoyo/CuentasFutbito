@@ -521,9 +521,9 @@
         "position": "defensa"
       },
       {
-        "id": "1790943842367934",
-        "name": "Josemi totemi",
-        "weight": 3,
+        "id": "1790616949341112",
+        "name": "Aiert",
+        "weight": 6,
         "position": "defensa"
       },
       {
@@ -541,9 +541,9 @@
     ],
     "teamBlanco": [
       {
-        "id": "1790616949341112",
-        "name": "Aiert",
-        "weight": 6,
+        "id": "1790943842367934",
+        "name": "Josemi totemi",
+        "weight": 3,
         "position": "defensa"
       },
       {
@@ -578,6 +578,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-03T16:59:45.212Z",
+  "exportDate": "2026-11-03T17:00:01.597Z",
   "version": "2.1"
 }
