@@ -430,9 +430,11 @@
   ],
   "currentSeason": "2026/2027",
   "teamsMatchType": "F7",
-  "teamsPresent": [],
+  "teamsPresent": [
+    "1790616949341112"
+  ],
   "teamsGuests": [],
   "teamsResult": null,
-  "exportDate": "2026-11-03T16:20:43.520Z",
+  "exportDate": "2026-11-03T16:20:46.770Z",
   "version": "2.1"
 }
