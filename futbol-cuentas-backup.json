@@ -226,6 +226,17 @@
       "position": "medio",
       "bilbaoKirolak": true,
       "createdAt": "2026-10-04T05:58:33.148Z"
+    },
+    {
+      "id": "1793722927577154",
+      "name": "Larri",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "alto",
+      "stamina": "alto",
+      "position": "medio",
+      "bilbaoKirolak": true,
+      "createdAt": "2026-11-03T16:22:07.577Z"
     }
   ],
   "transactions": [
@@ -433,6 +444,6 @@
   "teamsPresent": [],
   "teamsGuests": [],
   "teamsResult": null,
-  "exportDate": "2026-11-03T16:20:51.838Z",
+  "exportDate": "2026-11-03T16:22:08.281Z",
   "version": "2.1"
 }
