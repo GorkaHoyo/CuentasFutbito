@@ -659,10 +659,10 @@
   "teamsResult": {
     "teamRojo": [
       {
-        "id": "179372415012419",
-        "name": "Pablo txopo",
-        "weight": 6,
-        "position": "portero"
+        "id": "1790943842367934",
+        "name": "Josemi totemi",
+        "weight": 3,
+        "position": "defensa"
       },
       {
         "id": "1793725159567774",
@@ -697,10 +697,10 @@
     ],
     "teamBlanco": [
       {
-        "id": "1790943842367934",
-        "name": "Josemi totemi",
-        "weight": 3,
-        "position": "defensa"
+        "id": "179372415012419",
+        "name": "Pablo txopo",
+        "weight": 6,
+        "position": "portero"
       },
       {
         "id": "1790617571023650",
@@ -734,6 +734,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-07T13:59:22.090Z",
+  "exportDate": "2026-11-07T14:01:14.420Z",
   "version": "2.1"
 }
