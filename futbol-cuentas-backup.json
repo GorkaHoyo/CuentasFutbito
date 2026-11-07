@@ -428,6 +428,16 @@
       "matchType": "F5",
       "reason": "Pago pista adelantado",
       "createdAt": "2026-11-07T09:26:26.909Z"
+    },
+    {
+      "id": "1794043613352123",
+      "playerIds": [
+        "179372415012419"
+      ],
+      "amount": 3,
+      "matchType": "F5",
+      "reason": "Saldar deuda",
+      "createdAt": "2026-11-07T09:26:53.352Z"
     }
   ],
   "generalTransactions": [
@@ -684,6 +694,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-07T09:26:27.611Z",
+  "exportDate": "2026-11-07T09:26:54.055Z",
   "version": "2.1"
 }
