@@ -257,7 +257,7 @@
       "skill": "medio",
       "stamina": "alto",
       "position": "portero",
-      "bilbaoKirolak": false,
+      "bilbaoKirolak": true,
       "createdAt": "2026-11-03T16:42:30.124Z"
     },
     {
@@ -650,6 +650,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-07T09:22:42.941Z",
+  "exportDate": "2026-11-07T09:25:13.867Z",
   "version": "2.1"
 }
