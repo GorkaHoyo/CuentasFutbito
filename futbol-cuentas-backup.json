@@ -410,13 +410,6 @@
       "matchType": "F5",
       "reason": "Sobrante partido",
       "createdAt": "2026-10-04T14:19:32.926Z"
-    },
-    {
-      "id": "1794043539862895",
-      "amount": 4.449999999999999,
-      "matchType": "F5",
-      "reason": "Sobrante partido",
-      "createdAt": "2026-11-07T09:25:39.862Z"
     }
   ],
   "matches": [
@@ -657,6 +650,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-07T09:26:10.619Z",
+  "exportDate": "2026-11-07T09:26:12.747Z",
   "version": "2.1"
 }
