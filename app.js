@@ -59,9 +59,10 @@ class App {
     this.movTab = 'jugador';
     this.statTab = 'clasificacion';
     
-    // Variables de ordenación de estadísticas
+    // Variables de ordenación y filtro de estadísticas
     this.statSortBy = 'goles'; 
     this.statSortDesc = true;
+    this.statMatchFilter = '';
     
     let ghConfig = null; 
     try { ghConfig = JSON.parse(localStorage.getItem('githubSyncConfig')); } catch(e) {}
@@ -259,22 +260,45 @@ class App {
   
   getSortIcon(col) { return this.statSortBy === col ? (this.statSortDesc ? ' ▼' : ' ▲') : ''; }
 
-  getSortedClasificacion(season) {
-    const stats = {}; this.players.forEach(p => { stats[p.id] = { p, pj:0, pg:0, pe:0, pp:0, goles:0 }; });
-    const matchesToCount = this.matches.filter(m => m.status === 'completed' && m.season === season);
+  getSortedClasificacion(season, matchTypeFilter = this.statMatchFilter) {
+    const stats = {}; 
+    this.players.forEach(p => { stats[p.id] = { p, pj:0, pg:0, pe:0, pp:0, goles:0, pts:0, gpp:0, history:[], streak:0 }; });
+    
+    const matchesToCount = this.matches
+      .filter(m => m.status === 'completed' && m.season === season && (!matchTypeFilter || m.matchType === matchTypeFilter))
+      .sort((a,b) => new Date(a.date) - new Date(b.date));
     
     matchesToCount.forEach(m => {
       let winner = null; if(m.scoreRojo > m.scoreBlanco) winner = 'rojo'; else if(m.scoreBlanco > m.scoreRojo) winner = 'blanco';
-      const processTeam = (team, color) => { team.forEach(player => { if(!stats[player.id]) return; stats[player.id].pj++; if(winner === null) stats[player.id].pe++; else if(winner === color) stats[player.id].pg++; else stats[player.id].pp++; if(m.goals[player.id]) stats[player.id].goles += m.goals[player.id]; }); };
+      const processTeam = (team, color) => { 
+        team.forEach(player => { 
+          if(!stats[player.id]) return; 
+          stats[player.id].pj++; 
+          if(winner === null) { stats[player.id].pe++; stats[player.id].pts += 1; stats[player.id].history.push('E'); }
+          else if(winner === color) { stats[player.id].pg++; stats[player.id].pts += 3; stats[player.id].history.push('V'); }
+          else { stats[player.id].pp++; stats[player.id].history.push('D'); }
+          if(m.goals[player.id]) stats[player.id].goles += m.goals[player.id]; 
+        }); 
+      };
       processTeam(m.teamRojo, 'rojo'); processTeam(m.teamBlanco, 'blanco');
     });
 
-    let data = Object.values(stats).filter(s => s.pj > 0).map(s => { s.winrate = Math.round((s.pg / s.pj) * 100); return s; });
+    let data = Object.values(stats).filter(s => s.pj > 0).map(s => { 
+      s.winrate = Math.round((s.pg / s.pj) * 100); 
+      s.gpp = Math.round((s.goles / s.pj) * 100) / 100;
+      let cur = 0;
+      for(let i = s.history.length - 1; i >= 0; i--) { if(s.history[i] === 'V') cur++; else break; }
+      s.streak = cur;
+      s.last3 = s.history.slice(-3);
+      return s; 
+    });
+
     data.sort((a, b) => {
       if (this.statSortBy === 'nombre') return this.statSortDesc ? b.p.name.localeCompare(a.p.name) : a.p.name.localeCompare(b.p.name);
       let vA = a[this.statSortBy] || 0; let vB = b[this.statSortBy] || 0;
       if (vA !== vB) return this.statSortDesc ? vB - vA : vA - vB;
       if (b.goles !== a.goles) return b.goles - a.goles;
+      if (b.pts !== a.pts) return b.pts - a.pts;
       if (b.winrate !== a.winrate) return b.winrate - a.winrate;
       return b.pj - a.pj;
     });
@@ -298,7 +322,7 @@ class App {
     ctx.textAlign = 'left'; ctx.fillStyle = '#F6F2E9'; ctx.font = '700 26px Outfit'; ctx.fillText('⚽ CUENTAS F5·F7', PAD, 42);
     ctx.font = '600 16px Outfit'; ctx.fillStyle = '#CFE0D6'; ctx.fillText(`Resumen · ${matchType}`, PAD, 65);
     const dateStr = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'});
-    ctx.textAlign = 'right'; ctx.font = '400 13px Inter, Inter'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(dateStr, W-PAD, 65);
+    ctx.textAlign = 'right'; ctx.font = '400 13px Inter'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(dateStr, W-PAD, 65);
     let y = 84; ctx.textAlign = 'left'; ctx.fillStyle = '#154934'; ctx.fillRect(PAD, y+12, W-PAD*2, 80);
     const cellW = (W-PAD*2)/3; const cls = v => v>0.001 ? '#8FE3B0' : (v<-0.001 ? '#FF9B92' : '#F6F2E9');
     const stats = [ {label:'BOTE', txt:fmtPlain(bote), value:bote}, {label:'JUGADORES', txt:fmt(jugadoresSum), value:jugadoresSum}, {label:'BALANCE', txt:fmtPlain(balance), value:balance} ];
@@ -312,12 +336,12 @@ class App {
       ctx.fillStyle = '#12241B'; ctx.fillText(title.toUpperCase(), PAD+18, y+16);
       ctx.font = '400 12px Outfit'; ctx.fillStyle = '#6E7C73'; ctx.textAlign = 'right'; ctx.fillText(`${items.length}`, W-PAD, y+16);
       ctx.textAlign = 'left'; y += 26;
-      if(items.length === 0){ ctx.font = '400 14px Inter, Inter'; ctx.fillStyle = '#9AA69E'; ctx.fillText('—', PAD, y+20); y += minRowH; return; }
+      if(items.length === 0){ ctx.font = '400 14px Inter'; ctx.fillStyle = '#9AA69E'; ctx.fillText('—', PAD, y+20); y += minRowH; return; }
       const fitRows = Math.ceil(items.length/maxCols); const rowH = Math.max(6, Math.min(maxRowH, alloc/fitRows)); const colW = (W-PAD*2-((maxCols-1)*12))/maxCols;
       for(let i=0;i<items.length;i++){
         const col = Math.floor(i/fitRows); const rx = PAD + col*(colW+12); const ry = y + (i%fitRows)*rowH;
         ctx.fillStyle = '#FFFFFF'; ctx.fillRect(rx, ry+2, colW, rowH-8); ctx.fillStyle = color; ctx.fillRect(rx, ry+2, 4, rowH-8);
-        ctx.font = `600 ${Math.min(nameFontPx, rowH*0.42)}px Inter, Inter`; ctx.fillStyle = '#12241B'; ctx.fillText(items[i].p.name.substring(0,18), rx+12, ry+2+(rowH-8)/2+4);
+        ctx.font = `600 ${Math.min(nameFontPx, rowH*0.42)}px Inter`; ctx.fillStyle = '#12241B'; ctx.fillText(items[i].p.name.substring(0,18), rx+12, ry+2+(rowH-8)/2+4);
         ctx.font = `700 ${Math.min(amtFontPx, rowH*0.42)}px Inter`; ctx.textAlign = 'right'; ctx.fillStyle = items[i].b>0.001 ? '#2D8659' : (items[i].b<-0.001 ? '#C3423F' : '#6E7C73'); ctx.fillText(fmt(items[i].b), rx+colW-10, ry+2+(rowH-8)/2+4); ctx.textAlign = 'left';
       }
       y += fitRows*rowH;
@@ -336,7 +360,7 @@ class App {
     const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
     ctx.fillStyle = '#F6F2E9'; ctx.fillRect(0,0,W,96+cardH+52);
     ctx.textAlign = 'center'; ctx.font = '700 26px Outfit'; ctx.fillStyle = '#12241B'; ctx.fillText(`⚽ EQUIPOS GENERADOS · ${this.teamsMatchType}`, W/2, 46);
-    ctx.font = '400 14px Inter, Inter'; ctx.fillStyle = '#6E7C73'; ctx.fillText(new Date().toLocaleDateString('es-ES'), W/2, 70);
+    ctx.font = '400 14px Inter'; ctx.fillStyle = '#6E7C73'; ctx.fillText(new Date().toLocaleDateString('es-ES'), W/2, 70);
     const colW = (W - PAD*2 - 22)/2;
     const drawTeamCard = (label, list, x, bg, borderColor, titleColor) => {
       ctx.fillStyle = bg; ctx.fillRect(x, 96, colW, cardH); ctx.lineWidth = 2; ctx.strokeStyle = borderColor; ctx.strokeRect(x, 96, colW, cardH);
@@ -346,7 +370,7 @@ class App {
         const bcol = POSITION_COLOR[p.position] || '#8A8A8A'; const babbr = POSITION_ABBR[p.position] || '-';
         ctx.fillStyle = bcol; ctx.fillRect(x+12, ry+(42-26)/2, 56, 26);
         ctx.textAlign = 'center'; ctx.font = '700 12px Outfit'; ctx.fillStyle = '#FFFFFF'; ctx.fillText(babbr, x+12+28, ry+21+4);
-        ctx.textAlign = 'left'; ctx.font = '600 16px Inter, Inter'; ctx.fillStyle = '#12241B'; ctx.fillText(p.name.substring(0,16), x+12+56+12, ry+21+5);
+        ctx.textAlign = 'left'; ctx.font = '600 16px Inter'; ctx.fillStyle = '#12241B'; ctx.fillText(p.name.substring(0,16), x+12+56+12, ry+21+5);
         ry += 42;
       });
       ctx.textAlign = 'center';
@@ -358,47 +382,74 @@ class App {
 
   async exportClasificacionImage(){
     await this.ensureFonts(); const clasificacion = this.getSortedClasificacion(this.currentSeason);
-    const DPR = 2, W = 800, PAD = 30, rowH = 40, headerH = 120;
+    const DPR = 2, W = 860, PAD = 30, rowH = 40, headerH = 120;
     const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil((headerH + (clasificacion.length * rowH) + 60)*DPR);
     const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
     ctx.fillStyle = '#F6F2E9'; ctx.fillRect(0,0,W, canvas.height/DPR); ctx.fillStyle = '#0F3D2E'; ctx.fillRect(0,0,W,84); ctx.fillStyle = '#E8A33D'; ctx.fillRect(0,80,W,4);
-    ctx.textAlign = 'left'; ctx.fillStyle = '#F6F2E9'; ctx.font = '700 28px Outfit'; ctx.fillText('🏆 CLASIFICACIÓN GENERAL', PAD, 46);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#F6F2E9'; ctx.font = '700 28px Outfit'; ctx.fillText(`🏆 CLASIFICACIÓN ${this.statMatchFilter || 'GENERAL'}`, PAD, 46);
     ctx.font = '600 16px Outfit'; ctx.fillStyle = '#CFE0D6'; ctx.fillText(`Temporada ${this.currentSeason}`, PAD, 70);
-    ctx.textAlign = 'right'; ctx.font = '400 14px Inter, Inter'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(new Date().toLocaleDateString('es-ES'), W-PAD, 70);
-    let y = headerH; ctx.textAlign = 'left'; ctx.fillStyle = '#6E7C73'; ctx.font = '600 14px Outfit'; ctx.fillText('JUGADOR', PAD+30, y);
-    ctx.textAlign = 'center'; ctx.fillText('PJ', W-320, y); ctx.fillText('PG', W-260, y); ctx.fillText('PE', W-200, y); ctx.fillText('PP', W-140, y); ctx.fillText('GOLES', W-80, y); ctx.fillText('% VICTORIA', W-30, y); y += 15;
+    ctx.textAlign = 'right'; ctx.font = '400 14px Inter'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(new Date().toLocaleDateString('es-ES'), W-PAD, 70);
+    let y = headerH; ctx.textAlign = 'left'; ctx.fillStyle = '#6E7C73'; ctx.font = '600 13px Outfit'; ctx.fillText('JUGADOR', PAD+30, y);
+    ctx.textAlign = 'center';
+    ctx.fillText('PTS', W-380, y); ctx.fillText('PJ', W-325, y); ctx.fillText('PG', W-270, y); ctx.fillText('PE', W-215, y); ctx.fillText('PP', W-165, y); ctx.fillText('G', W-115, y); ctx.fillText('G/P', W-65, y); ctx.fillText('%WIN', W-18, y); y += 15;
     clasificacion.forEach((s, i) => {
       ctx.fillStyle = i % 2 === 0 ? '#FFFFFF' : '#F6F2E9'; ctx.fillRect(PAD, y, W-(PAD*2), rowH);
-      ctx.textAlign = 'left'; ctx.fillStyle = '#12241B'; ctx.font = '700 16px Inter'; ctx.fillText(`${i+1}.`, PAD+6, y+25);
-      ctx.font = '600 16px Inter, Inter'; ctx.fillText(s.p.name, PAD+30, y+25);
-      ctx.textAlign = 'center'; ctx.font = '400 16px Inter'; ctx.fillText(s.pj, W-320, y+25);
-      ctx.fillStyle = 'var(--credit)'; ctx.fillText(s.pg, W-260, y+25); ctx.fillStyle = 'var(--muted)'; ctx.fillText(s.pe, W-200, y+25); ctx.fillStyle = 'var(--debt)'; ctx.fillText(s.pp, W-140, y+25);
-      ctx.fillStyle = '#12241B'; ctx.font = '700 16px Inter'; ctx.fillText(s.goles, W-80, y+25);
-      ctx.fillStyle = '#0F3D2E'; ctx.fillText(`${s.winrate}%`, W-30, y+25); y += rowH;
+      ctx.textAlign = 'left'; ctx.fillStyle = '#12241B'; ctx.font = '700 15px Inter'; ctx.fillText(`${i+1}.`, PAD+6, y+25);
+      ctx.font = '600 15px Inter'; ctx.fillText(s.p.name.substring(0,20), PAD+32, y+25);
+      ctx.textAlign = 'center'; ctx.font = '700 15px Inter'; ctx.fillStyle = '#0F3D2E'; ctx.fillText(s.pts, W-380, y+25);
+      ctx.font = '500 15px Inter'; ctx.fillStyle = '#12241B'; ctx.fillText(s.pj, W-325, y+25);
+      ctx.fillStyle = '#2D8659'; ctx.fillText(s.pg, W-270, y+25); ctx.fillStyle = '#6E7C73'; ctx.fillText(s.pe, W-215, y+25); ctx.fillStyle = '#C3423F'; ctx.fillText(s.pp, W-165, y+25);
+      ctx.fillStyle = '#12241B'; ctx.font = '700 15px Inter'; ctx.fillText(s.goles, W-115, y+25);
+      ctx.font = '500 14px Inter'; ctx.fillStyle = '#6E7C73'; ctx.fillText(s.gpp.toFixed(2), W-65, y+25);
+      ctx.font = '700 15px Inter'; ctx.fillStyle = '#0F3D2E'; ctx.fillText(`${s.winrate}%`, W-18, y+25); y += rowH;
     });
     canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `clasificacion-${this.currentSeason.replace('/','-')}.png`); }, 'image/png');
   }
 
   async exportCromoImage(playerId){
-    const s = this.calcularClasificacion(this.currentSeason).find(x => x.p.id === playerId); if(!s) return; await this.ensureFonts();
-    const DPR = 2, W = 400, H = 500;
+    const s = this.getSortedClasificacion(this.currentSeason, '').find(x => x.p.id === playerId); if(!s) return; await this.ensureFonts();
+    const DPR = 2, W = 400, H = 540;
     const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
     const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
     ctx.fillStyle = '#0F3D2E'; ctx.fillRect(0,0,W,H);
     const gradient = ctx.createLinearGradient(0,0,0,H); gradient.addColorStop(0, '#154934'); gradient.addColorStop(1, '#082018');
     ctx.fillStyle = gradient; ctx.fillRect(4,4,W-8,H-8); ctx.strokeStyle = '#E8A33D'; ctx.lineWidth = 4; ctx.strokeRect(4,4,W-8,H-8);
-    ctx.textAlign = 'center'; ctx.fillStyle = '#E8A33D'; ctx.font = '700 36px Outfit'; ctx.fillText(s.p.name.toUpperCase(), W/2, 80);
-    ctx.fillStyle = '#FFFFFF'; ctx.font = '600 18px Outfit'; const posName = POSITION_LABEL[s.p.position] || 'SIN POSICIÓN'; ctx.fillText(posName.toUpperCase(), W/2, 110);
-    ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.beginPath(); ctx.arc(W/2, 230, 80, 0, Math.PI*2); ctx.fill();
-    ctx.font = '700 80px Inter'; ctx.fillStyle = '#E8A33D'; ctx.fillText(s.winrate, W/2, 250);
-    ctx.font = '600 20px Outfit'; ctx.fillStyle = '#CFE0D6'; ctx.fillText('WINRATE %', W/2, 285);
-    const drawStatBox = (lbl, val, x, y) => { ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(x-45, y-30, 90, 60); ctx.fillStyle = '#FFFFFF'; ctx.font = '700 24px Inter'; ctx.fillText(val, x, y-2); ctx.fillStyle = '#9FC2AC'; ctx.font = '600 12px Outfit'; ctx.fillText(lbl, x, y+18); };
-    drawStatBox('PARTIDOS', s.pj, W/4, 400); drawStatBox('VICTORIAS', s.pg, W/2, 400); drawStatBox('GOLES', s.goles, (W/4)*3, 400);
+    ctx.textAlign = 'center'; ctx.fillStyle = '#E8A33D'; ctx.font = '700 34px Outfit'; ctx.fillText(s.p.name.toUpperCase(), W/2, 70);
+    ctx.fillStyle = '#FFFFFF'; ctx.font = '600 16px Outfit'; const posName = POSITION_LABEL[s.p.position] || 'SIN POSICIÓN'; ctx.fillText(`${posName.toUpperCase()} · ${s.pts} PTS`, W/2, 100);
+    ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.beginPath(); ctx.arc(W/2, 210, 75, 0, Math.PI*2); ctx.fill();
+    ctx.font = '700 72px Inter'; ctx.fillStyle = '#E8A33D'; ctx.fillText(`${s.winrate}%`, W/2, 232);
+    ctx.font = '600 16px Outfit'; ctx.fillStyle = '#CFE0D6'; ctx.fillText('VICTORIAS', W/2, 265);
+    const drawStatBox = (lbl, val, x, y) => { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(x-52, y-30, 104, 58); ctx.fillStyle = '#FFFFFF'; ctx.font = '700 22px Inter'; ctx.fillText(val, x, y-3); ctx.fillStyle = '#9FC2AC'; ctx.font = '600 11px Outfit'; ctx.fillText(lbl, x, y+16); };
+    drawStatBox('PARTIDOS', s.pj, W/4, 365); drawStatBox('V - E - D', `${s.pg}-${s.pe}-${s.pp}`, (W/4)*2, 365); drawStatBox('GOLES', s.goles, (W/4)*3, 365);
+    drawStatBox('MEDIA G/P', s.gpp.toFixed(2), W/3, 445); drawStatBox('RACHA ACT.', s.streak > 0 ? `🔥 +${s.streak}V` : (s.last3.join('-') || '-'), (W/3)*2, 445);
     canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `cromo-${s.p.name}.png`); }, 'image/png');
   }
   // -----------------------------------------------------------
 
-  openModal(type, payload){ if(type === 'settleMatch') { this._smCost = "19.55"; this._smQuotaBK = "3.00"; this._smQuotaNormal = "0.00"; this._smPayer = 'bote'; this._smSelected = new Set(); this.teamsPresent.forEach(id => { if(!String(id).startsWith('guest_')) this._smSelected.add(id); }); } this.modal = {type, payload: payload || {}}; this.render(); }
+  openModal(type, payload){ 
+    if(type === 'settleMatch') { 
+      const mt = this.teamsMatchType;
+      this._smCost = localStorage.getItem(`sm_cost_${mt}`) || "19.55"; 
+      this._smQuotaBK = localStorage.getItem(`sm_qbk_${mt}`) || "3.00"; 
+      this._smQuotaNormal = localStorage.getItem(`sm_qnorm_${mt}`) || "3.00"; 
+      this._smPayer = 'bote'; 
+      this._smSelected = new Set(); 
+      this.teamsPresent.forEach(id => this._smSelected.add(id)); 
+    } else if(type === 'quickTx') {
+      this._qtxAmount = '';
+      this._qtxReason = '';
+      this.qtxSign = 'plus';
+    } else if(type === 'resolveMatch') {
+      const m = this.matches.find(x => x.id === payload);
+      if(m) {
+        const sumR = m.teamRojo.reduce((s, p) => s + (m.goals[p.id] || 0), 0);
+        const sumB = m.teamBlanco.reduce((s, p) => s + (m.goals[p.id] || 0), 0);
+        m._manualRojo = (m.scoreRojo > sumR);
+        m._manualBlanco = (m.scoreBlanco > sumB);
+      }
+    }
+    this.modal = {type, payload: payload || {}}; this.render(); 
+  }
   closeModal(){ this.modal = null; this.render(); }
   setPage(p){ this.page = p; this.modal = null; this.pageAnim = true; this.render(); this.pageAnim = false; }
 
@@ -408,6 +459,10 @@ class App {
 
     try {
       let prevContent = el.querySelector('.content'); let contentScroll = prevContent ? prevContent.scrollTop : 0;
+      let prevCheck = el.querySelector('.checklist'); let checkScroll = prevCheck ? prevCheck.scrollTop : 0;
+      let prevSheet = el.querySelector('.sheet'); let sheetScroll = prevSheet ? prevSheet.scrollTop : 0;
+      let wasModalOpen = !!el.querySelector('.sheet-backdrop');
+
       let activeId = null; let selStart = null;
       if(document.activeElement && document.activeElement.id){
         activeId = document.activeElement.id;
@@ -415,11 +470,13 @@ class App {
       }
       
       let inner = `${this.renderTopbar()}<div class="content ${this.pageAnim ? 'animate-fade' : ''}">${this.renderPage()}</div>${this.renderFab()}${this.renderBottomNav()}`;
-      if (this.modal) inner += this.renderModal();
+      if (this.modal) inner += this.renderModal(wasModalOpen);
       if (this.toastMsg) inner += `<div class="toast">${escapeHtml(this.toastMsg)}</div>`;
       el.innerHTML = inner;
 
       let newContent = el.querySelector('.content'); if(newContent) newContent.scrollTop = contentScroll;
+      let newCheck = el.querySelector('.checklist'); if(newCheck) newCheck.scrollTop = checkScroll;
+      let newSheet = el.querySelector('.sheet'); if(newSheet) newSheet.scrollTop = sheetScroll;
       
       if(activeId){ 
         let actEl = document.getElementById(activeId); 
@@ -462,30 +519,57 @@ class App {
   }
 
   renderMovimientos(){ return `<div class="subtabs"><button class="chip ${this.movTab==='jugador'?'active':''}" style="flex:1" onclick="app.movTab='jugador';app.render()">A jugadores</button><button class="chip ${this.movTab==='bote'?'active':''}" style="flex:1" onclick="app.movTab='bote';app.render()">Al bote</button></div>${this.movTab==='jugador' ? this.renderMovJugadorForm() : this.renderMovBoteForm()}`; }
+  
   renderMovJugadorForm(){
     const mt = this._movMatchType || this.matchFilter; const sign = this._movSign || 'plus'; const players = this.getPlayersForMatch(mt); const sel = this._movSelected || new Set();
     const pList = players.map(p=>`<label><input type="checkbox" value="${p.id}" ${sel.has(p.id)?'checked':''} onchange="app.toggleMovPlayer('${p.id}')" />${escapeHtml(p.name)}</label>`).join('');
-    return `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app._movMatchType='F5';app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app._movMatchType='F7';app.render()">F7</button></div><div class="field-row" style="align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:5px"><label style="margin:0">Jugadores</label><div style="display:flex; gap:6px;"><button class="icon-btn" style="background:var(--turf-soft); color:var(--pitch); font-size:12px; font-weight:600; padding:4px 10px; border-radius:12px;" onclick="app.selectPresentPlayers()">Del partido de hoy</button><button class="icon-btn" style="background:var(--line); font-size:12px; font-weight:600; padding:4px 10px; border-radius:12px;" onclick="app.clearMovPlayers()">Vaciar</button></div></div><div class="checklist">${pList || '<div class="empty-state">No hay jugadores</div>'}</div><label>Importe (por jugador)</label><div class="sign-toggle"><button class="${sign==='plus'?'active plus':''}" onclick="app._movSign='plus';app.render()">+ Abona</button><button class="${sign==='minus'?'active minus':''}" onclick="app._movSign='minus';app.render()">− Carga</button></div><input type="number" step="0.01" min="0" id="movAmount" placeholder="0.00" value="${this._movAmount || ''}" oninput="app._movAmount=this.value" style="margin-top:8px" /><label>Motivo (opcional)</label><input type="text" id="movReason" placeholder="Partido, balón..." value="${this._movReason || ''}" oninput="app._movReason=this.value" /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitMovJugador()">Registrar movimiento</button>`;
+    return `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app._movMatchType='F5';app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app._movMatchType='F7';app.render()">F7</button></div><div class="field-row" style="align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:5px"><label style="margin:0">Jugadores (${sel.size})</label><div style="display:flex; gap:6px;"><button class="icon-btn" style="background:var(--line); font-size:12px; font-weight:600; padding:4px 10px; border-radius:12px;" onclick="app.clearMovPlayers()">Vaciar</button></div></div><div class="checklist">${pList || '<div class="empty-state">No hay jugadores</div>'}</div><label>Importe (por jugador)</label><div class="sign-toggle"><button class="${sign==='plus'?'active plus':''}" onclick="app._movSign='plus';app.render()">+ Abona</button><button class="${sign==='minus'?'active minus':''}" onclick="app._movSign='minus';app.render()">− Carga</button></div><input type="number" step="0.01" min="0" id="movAmount" placeholder="0.00" value="${this._movAmount || ''}" oninput="app._movAmount=this.value" style="margin-top:8px" /><label>Motivo (opcional)</label><input type="text" id="movReason" placeholder="Partido, balón..." value="${this._movReason || ''}" oninput="app._movReason=this.value" /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitMovJugador()">Registrar movimiento</button>`;
   }
-  toggleMovPlayer(id){ this._movSelected = this._movSelected || new Set(); this._movSelected.has(id) ? this._movSelected.delete(id) : this._movSelected.add(id); }
+  toggleMovPlayer(id){ this._movSelected = this._movSelected || new Set(); this._movSelected.has(id) ? this._movSelected.delete(id) : this._movSelected.add(id); this.render(); }
   clearMovPlayers(){ this._movSelected = new Set(); this.render(); }
-  selectPresentPlayers(){ if(this.teamsPresent.size === 0){ this.toast('Ve a Equipos y marca quién juega hoy'); return; } this._movSelected = this._movSelected || new Set(); this.teamsPresent.forEach(id => { if(!String(id).startsWith('guest_')) this._smSelected.add(id); }); this.render(); }
   submitMovJugador(){ const mt = this._movMatchType || this.matchFilter; const sel = Array.from(this._movSelected || []); let amount = parseFloat(this._movAmount); if(isNaN(amount)){ this.toast('Introduce un importe'); return; } amount = (this._movSign || 'plus') === 'minus' ? -Math.abs(amount) : Math.abs(amount); this.addTransaction(sel, amount, mt, this._movReason); this._movSelected = new Set(); this._movAmount=''; this._movReason=''; this.render(); }
 
   renderMovBoteForm(){
     const mt = this._boteMatchType || this.matchFilter; const sign = this._boteSign || 'plus';
     const hList = this.generalTransactions.filter(t=>t.matchType===mt).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,8).map(t=>`<div class="ticket neutral"><div><div class="name">${t.reason ? escapeHtml(t.reason) : 'Movimiento del bote'}</div><div class="sub">${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div><div style="display:flex;align-items:center;gap:10px"><div class="amt mono ${t.amount>0?'pos':'neg'}">${fmt(t.amount)}</div><button class="icon-btn" onclick="event.stopPropagation();app.deleteGeneralTransaction('${t.id}')">${ICONS.trash}</button></div></div>`).join('');
-    return `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app._boteMatchType='F5';app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app._boteMatchType='F7';app.render()">F7</button></div><label>Importe</label><div class="sign-toggle"><button class="${sign==='plus'?'active plus':''}" onclick="app._boteSign='plus';app.render()">+ Ingreso</button><button class="${sign==='minus'?'active minus':''}" onclick="app._boteSign='minus';app.render()">− Gasto</button></div><input type="number" step="0.01" min="0" placeholder="0.00" value="${this._boteAmount || ''}" oninput="app._boteAmount=this.value" style="margin-top:8px" /><label>Motivo (opcional)</label><input type="text" placeholder="Balón, pista..." value="${this._boteReason || ''}" oninput="app._boteReason=this.value" /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitMovBote()">Registrar en el bote</button><div class="section-title" style="margin-top:24px">Últimos movimientos</div>${hList || '<div class="empty-state">Sin movimientos</div>'}`;
+    return `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app._boteMatchType='F5';app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app._boteMatchType='F7';app.render()">F7</button></div><label>Importe</label><div class="sign-toggle"><button class="${sign==='plus'?'active plus':''}" onclick="app._boteSign='plus';app.render()">+ Ingreso</button><button class="${sign==='minus'?'active minus':''}" onclick="app._boteSign='minus';app.render()">− Gasto</button></div><input type="number" step="0.01" min="0" id="boteAmountInput" placeholder="0.00" value="${this._boteAmount || ''}" oninput="app._boteAmount=this.value" style="margin-top:8px" /><label>Motivo (opcional)</label><input type="text" id="boteReasonInput" placeholder="Balón, pista..." value="${this._boteReason || ''}" oninput="app._boteReason=this.value" /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitMovBote()">Registrar en el bote</button><div class="section-title" style="margin-top:24px">Últimos movimientos</div>${hList || '<div class="empty-state">Sin movimientos</div>'}`;
   }
   submitMovBote(){ const mt = this._boteMatchType || this.matchFilter; let amount = parseFloat(this._boteAmount); if(isNaN(amount)){ this.toast('Introduce importe'); return; } amount = (this._boteSign || 'plus') === 'minus' ? -Math.abs(amount) : Math.abs(amount); this.addGeneralTransaction(amount, mt, this._boteReason); this._boteAmount=''; this._boteReason=''; this.render(); }
+
+  vaciarConvocatoria(){
+    if(this.teamsPresent.size === 0 && this.teamsGuests.length === 0) return;
+    if(!confirm('¿Vaciar toda la lista de convocados de hoy?')) return;
+    this.teamsPresent = new Set(); this.teamsGuests = []; this.teamsResult = null;
+    this.saveTeamsLocal(); this.render(); this.toast('Convocatoria vaciada');
+  }
 
   renderEquipos(){
     const mt = this.teamsMatchType; let players = this.getPlayersForMatch(mt);
     if(this.teamsSearch) { const q = this.teamsSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); players = players.filter(p=> p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)); }
+    
+    // Orden inteligente: 1º Convocados (marcados), 2º Habituales, 3º Alfabético
+    players.sort((a, b) => {
+      const aPres = this.teamsPresent.has(a.id) ? 1 : 0;
+      const bPres = this.teamsPresent.has(b.id) ? 1 : 0;
+      if (aPres !== bPres) return bPres - aPres;
+      const aReg = a.isRegular !== false ? 1 : 0;
+      const bReg = b.isRegular !== false ? 1 : 0;
+      if (aReg !== bReg) return bReg - aReg;
+      return a.name.localeCompare(b.name);
+    });
+
     const count = this.teamsPresent.size; const required = this.requiredTeamSizes(mt); const sizeOk = required.includes(count); const missingPosition = this.presentWithoutPosition(); const ok = sizeOk && missingPosition.length === 0;
-    const playersHtml = players.length > 0 ? players.map(p=>`<label><input type="checkbox" ${this.teamsPresent.has(p.id)?'checked':''} onchange="app.togglePresent('${p.id}')" />${escapeHtml(p.name)}${p.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>'} <span class="lvl-badge" style="margin-left:auto">Niv:${SKILL_LABEL[p.skill] || 'Medio'} • Fis:${STAMINA_LABEL[p.stamina] || 'Medio'}</span></label>`).join('') : '<div class="empty-state">No hay jugadores que coincidan</div>';
-    const guestsHtml = this.teamsGuests.map(g=>`<label><input type="checkbox" ${this.teamsPresent.has(g.id)?'checked':''} onchange="app.togglePresent('${g.id}')" />${escapeHtml(g.name)} <span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Invitado</span>${g.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>'}<span class="lvl-badge" style="margin-left:auto">Niv:${SKILL_LABEL[g.skill] || 'Medio'} • Fis:${STAMINA_LABEL[g.stamina] || 'Medio'}</span><button class="icon-btn" onclick="event.preventDefault();app.removeGuest('${g.id}')">${ICONS.trash}</button></label>`).join('');
-    return `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app.teamsMatchType='F5';app.teamsPresent=new Set();app.teamsGuests=[];app.teamsResult=null;app.saveTeamsLocal();app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app.teamsMatchType='F7';app.teamsPresent=new Set();app.teamsGuests=[];app.teamsResult=null;app.saveTeamsLocal();app.render()">F7</button></div><label style="display:flex; justify-content:space-between; align-items:flex-end;">Jugadores presentes hoy <span class="mono" style="font-weight:700;color:${sizeOk ? 'var(--credit)' : 'var(--debt)'}">${count} / ${required.join(' o ')}</span></label><input type="search" id="teamsSearchInput" class="search-bar" placeholder="Buscar jugador para convocar..." value="${escapeHtml(this.teamsSearch || '')}" oninput="app.teamsSearch=this.value; app.render()" style="margin-bottom:8px;" /><div class="checklist" style="margin-bottom:8px">${playersHtml}${guestsHtml}</div><div class="field-row" style="margin-bottom:14px"><button class="btn btn-sm btn-outline" onclick="app.openModal('addGuest')">${ICONS.plus} Añadir invitado</button></div>${!sizeOk ? `<div class="empty-state" style="text-align:left;padding:8px 2px">Hacen falta exactamente ${required.join(' o ')} jugadores.</div>` : ''}${sizeOk && missingPosition.length > 0 ? `<div class="empty-state" style="text-align:left;padding:8px 2px;color:var(--debt)">Falta asignar posición a: ${missingPosition.map(p=>escapeHtml(p.name)).join(', ')}.</div>` : ''}<div class="field-row"><button class="btn btn-primary" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(true)">${ICONS.shuffle} Equilibrar</button><button class="btn btn-outline" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(false)">Aleatorio</button></div>${count > 0 ? `<button class="btn btn-block" style="margin-top:12px; background:var(--gold-soft); color:#8a5a12; border:1.5px solid var(--gold);" onclick="app.openModal('settleMatch')">💰 Liquidar Partido</button>` : ''}${this.teamsResult ? this.renderTeamsResult(this.teamsResult) : ''}`;
+    const playersHtml = players.length > 0 ? players.map(p=>`<label style="${this.teamsPresent.has(p.id)?'background:var(--turf-soft);font-weight:600;':''}"><input type="checkbox" ${this.teamsPresent.has(p.id)?'checked':''} onchange="app.togglePresent('${p.id}')" />${escapeHtml(p.name)}${p.isRegular!==false?'':' <span style="font-size:11px;color:var(--muted)">(esp.)</span>'}${p.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>'} <span class="lvl-badge" style="margin-left:auto">Niv:${SKILL_LABEL[p.skill] || 'Medio'} • Fis:${STAMINA_LABEL[p.stamina] || 'Medio'}</span></label>`).join('') : '<div class="empty-state">No hay jugadores que coincidan</div>';
+    const guestsHtml = this.teamsGuests.map(g=>`<label style="${this.teamsPresent.has(g.id)?'background:var(--turf-soft);font-weight:600;':''}"><input type="checkbox" ${this.teamsPresent.has(g.id)?'checked':''} onchange="app.togglePresent('${g.id}')" />${escapeHtml(g.name)} <span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Invitado</span>${g.position?'':' <span class="lvl-badge" style="background:var(--debt-soft);color:var(--debt)">Sin pos.</span>'}<span class="lvl-badge" style="margin-left:auto">Niv:${SKILL_LABEL[g.skill] || 'Medio'} • Fis:${STAMINA_LABEL[g.stamina] || 'Medio'}</span><button class="icon-btn" onclick="event.preventDefault();app.removeGuest('${g.id}')">${ICONS.trash}</button></label>`).join('');
+    
+    return `<div class="field-row" style="align-items:center; justify-content:space-between;"><label style="margin:0">Tipo de partido</label>${count > 0 ? `<button class="icon-btn" style="background:var(--debt-soft); color:var(--debt); font-size:12px; padding:4px 10px; border-radius:12px;" onclick="app.vaciarConvocatoria()">🗑️ Vaciar (${count})</button>` : ''}</div>
+    <div class="chip-group" style="margin-top:6px"><button class="chip ${mt==='F5'?'active':''}" onclick="if(app.teamsMatchType!=='F5'){app.teamsMatchType='F5';app.teamsResult=null;app.saveTeamsLocal();app.render();}">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="if(app.teamsMatchType!=='F7'){app.teamsMatchType='F7';app.teamsResult=null;app.saveTeamsLocal();app.render();}">F7</button></div>
+    <label style="display:flex; justify-content:space-between; align-items:flex-end;">Jugadores presentes hoy <span class="mono" style="font-weight:700;color:${sizeOk ? 'var(--credit)' : 'var(--debt)'}">${count} / ${required.join(' o ')}</span></label>
+    <div style="position:relative; margin-bottom:8px;">
+      <input type="search" id="teamsSearchInput" class="search-bar" placeholder="Buscar jugador para convocar..." value="${escapeHtml(this.teamsSearch || '')}" oninput="app.teamsSearch=this.value; app.render()" style="margin-bottom:0; padding-right:${this.teamsSearch ? '80px' : '16px'};" />
+      ${this.teamsSearch ? `<button onclick="app.teamsSearch=''; app.render();" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); border:0; background:var(--pitch); color:#fff; border-radius:100px; padding:5px 12px; font-size:12px; font-weight:700; cursor:pointer;">✕ Limpiar</button>` : ''}
+    </div>
+    <div class="checklist" style="margin-bottom:8px">${playersHtml}${guestsHtml}</div><div class="field-row" style="margin-bottom:14px"><button class="btn btn-sm btn-outline" onclick="app.openModal('addGuest')">${ICONS.plus} Añadir invitado</button></div>${!sizeOk ? `<div class="empty-state" style="text-align:left;padding:8px 2px">Hacen falta exactamente ${required.join(' o ')} jugadores.</div>` : ''}${sizeOk && missingPosition.length > 0 ? `<div class="empty-state" style="text-align:left;padding:8px 2px;color:var(--debt)">Falta asignar posición a: ${missingPosition.map(p=>escapeHtml(p.name)).join(', ')}.</div>` : ''}<div class="field-row"><button class="btn btn-primary" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(true)">${ICONS.shuffle} Equilibrar</button><button class="btn btn-outline" ${!ok?'disabled style="opacity:.45"':''} onclick="app.generateTeams(false)">Aleatorio</button></div>${count > 0 ? `<button class="btn btn-block" style="margin-top:12px; background:var(--gold-soft); color:#8a5a12; border:1.5px solid var(--gold);" onclick="app.openModal('settleMatch')">💰 Liquidar Partido</button>` : ''}${this.teamsResult ? this.renderTeamsResult(this.teamsResult) : ''}`;
   }
 
   togglePresent(id){ this.teamsPresent.has(id) ? this.teamsPresent.delete(id) : this.teamsPresent.add(id); this.saveTeamsLocal(); this.render(); }
@@ -505,27 +589,48 @@ class App {
   
   renderClasificacion() {
     const data = this.getSortedClasificacion(this.currentSeason); 
-    let tableHtml = `<div class="empty-state">No hay partidos jugados esta temporada.</div>`;
-    if (data.length > 0) { 
-      tableHtml = `<div style="background:var(--paper); border:1px solid var(--line); border-radius:12px; overflow:hidden;">
+    let tableHtml = `<div class="empty-state">No hay partidos jugados en esta categoría.</div>`;
+    let leadersHtml = '';
+
+    if (data.length > 0) {
+      const pichichi = [...data].sort((a,b) => b.goles - a.goles || a.pj - b.pj)[0];
+      const killer = [...data].sort((a,b) => b.gpp - a.gpp || b.goles - a.goles)[0];
+      const mvp = [...data].sort((a,b) => b.pts - a.pts || b.winrate - a.winrate)[0];
+      const enRacha = [...data].sort((a,b) => b.streak - a.streak || b.winrate - a.winrate)[0];
+
+      leadersHtml = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+          <div class="ticket credit" style="margin:0; padding:10px 12px; cursor:pointer;" onclick="app.openModal('cromoPlayer', '${pichichi.p.id}')"><div><div class="sub">⚽ PICHICHI</div><div class="name">${escapeHtml(pichichi.p.name)}</div></div><div class="amt mono pos">${pichichi.goles}G</div></div>
+          <div class="ticket credit" style="margin:0; padding:10px 12px; cursor:pointer;" onclick="app.openModal('cromoPlayer', '${mvp.p.id}')"><div><div class="sub">🏆 LÍDER PUNTOS</div><div class="name">${escapeHtml(mvp.p.name)}</div></div><div class="amt mono pos">${mvp.pts}p</div></div>
+          <div class="ticket neutral" style="margin:0; padding:10px 12px; cursor:pointer;" onclick="app.openModal('cromoPlayer', '${killer.p.id}')"><div><div class="sub">🎯 MEDIA G/P</div><div class="name">${escapeHtml(killer.p.name)}</div></div><div class="amt mono">${killer.gpp.toFixed(2)}</div></div>
+          <div class="ticket neutral" style="margin:0; padding:10px 12px; cursor:pointer;" onclick="app.openModal('cromoPlayer', '${enRacha.p.id}')"><div><div class="sub">🔥 RACHA VICTORIAS</div><div class="name">${escapeHtml(enRacha.p.name)}</div></div><div class="amt mono">${enRacha.streak}V</div></div>
+        </div>`;
+
+      const badgeRacha = (last3) => last3.map(r => `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:2px;background:${r==='V'?'var(--credit)':(r==='E'?'var(--gold)':'var(--debt)')}"></span>`).join('');
+
+      tableHtml = `${leadersHtml}<div style="background:var(--paper); border:1px solid var(--line); border-radius:12px; overflow-x:auto;">
         <table class="stat-table">
           <thead>
             <tr>
               <th onclick="app.setStatSort('nombre')" style="cursor:pointer; user-select:none;">Jugador<span style="color:var(--gold)">${this.getSortIcon('nombre')}</span></th>
+              <th class="num" onclick="app.setStatSort('pts')" style="cursor:pointer; user-select:none;">PTS<span style="color:var(--gold)">${this.getSortIcon('pts')}</span></th>
               <th class="num" onclick="app.setStatSort('pj')" style="cursor:pointer; user-select:none;">PJ<span style="color:var(--gold)">${this.getSortIcon('pj')}</span></th>
-              <th class="num" onclick="app.setStatSort('pg')" style="cursor:pointer; user-select:none;">PG<span style="color:var(--gold)">${this.getSortIcon('pg')}</span></th>
               <th class="num" onclick="app.setStatSort('goles')" style="cursor:pointer; user-select:none;">G<span style="color:var(--gold)">${this.getSortIcon('goles')}</span></th>
-              <th class="num" onclick="app.setStatSort('winrate')" style="cursor:pointer; user-select:none;">% WIN<span style="color:var(--gold)">${this.getSortIcon('winrate')}</span></th>
+              <th class="num" onclick="app.setStatSort('gpp')" style="cursor:pointer; user-select:none;">G/P<span style="color:var(--gold)">${this.getSortIcon('gpp')}</span></th>
+              <th class="num" onclick="app.setStatSort('winrate')" style="cursor:pointer; user-select:none;">%WIN<span style="color:var(--gold)">${this.getSortIcon('winrate')}</span></th>
             </tr>
           </thead>
           <tbody>
-            ${data.map((row, i) => `<tr onclick="app.openModal('cromoPlayer', '${row.p.id}')" style="cursor:pointer; background:${i%2===0?'#fff':'#f9f9f9'}"><td><b>${i+1}.</b>${escapeHtml(row.p.name)}</td><td class="num">${row.pj}</td><td class="num" style="color:var(--credit)">${row.pg}</td><td class="num"><b>${row.goles}</b></td><td class="num"><b>${row.winrate}%</b></td></tr>`).join('')}
+            ${data.map((row, i) => `<tr onclick="app.openModal('cromoPlayer', '${row.p.id}')" style="cursor:pointer; background:${i%2===0?'#fff':'#f9f9f9'}"><td><b>${i+1}.</b> ${escapeHtml(row.p.name)} <div style="margin-top:2px">${badgeRacha(row.last3)} <span style="font-size:10px;color:var(--muted)">${row.pg}V-${row.pe}E-${row.pp}D</span></div></td><td class="num"><b>${row.pts}</b></td><td class="num">${row.pj}</td><td class="num" style="color:var(--pitch)"><b>${row.goles}</b></td><td class="num" style="color:var(--muted)">${row.gpp.toFixed(2)}</td><td class="num"><b>${row.winrate}%</b></td></tr>`).join('')}
           </tbody>
         </table>
       </div>
       <button class="btn btn-block btn-outline" style="margin-top:16px" onclick="app.exportClasificacionImage()">📸 Exportar Clasificación General</button>`; 
     }
-    return `<label>Temporada actual</label><input type="text" value="${this.currentSeason}" onchange="app.currentSeason = this.value; app.save(); app.render();" placeholder="Ej: 2026/2027" style="margin-bottom:16px; font-family:'Space Mono'; text-align:center" />${tableHtml}`;
+    return `<div class="field-row" style="align-items:flex-end; margin-bottom:12px;">
+      <div style="flex:1"><label style="margin-top:0">Temporada</label><input type="text" value="${this.currentSeason}" onchange="app.currentSeason = this.value; app.save(); app.render();" placeholder="Ej: 2026/2027" style="font-family:'Inter'; font-weight:700; text-align:center; padding:9px;" /></div>
+      <div><label style="margin-top:0">Modalidad</label><div class="filter-bar" style="margin-bottom:0"><button class="chip ${this.statMatchFilter===''?'active':''}" onclick="app.statMatchFilter='';app.render()">Todos</button><button class="chip ${this.statMatchFilter==='F5'?'active':''}" onclick="app.statMatchFilter='F5';app.render()">F5</button><button class="chip ${this.statMatchFilter==='F7'?'active':''}" onclick="app.statMatchFilter='F7';app.render()">F7</button></div></div>
+    </div>${tableHtml}`;
   }
 
   renderListaPartidos() {
@@ -534,7 +639,7 @@ class App {
     html += partidosTemp.map(m => {
       const isPending = m.status === 'pending'; const fecha = new Date(m.date).toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'});
       const boxStyle = isPending ? 'border-left-color:var(--gold); background:var(--gold-soft); cursor:pointer;' : 'border-left-color:var(--credit); cursor:pointer;';
-      let resHtml = isPending ? `<span style="font-weight:700; color:#8a5a12; font-size:12px; text-transform:uppercase;">Anotar resultado ➔</span>` : `<div style="font-size:24px; font-weight:700; font-family:'Space Mono'; color:var(--pitch)"><span style="color:var(--debt)">${m.scoreRojo}</span> - <span style="color:#1E3A8A">${m.scoreBlanco}</span></div>`;
+      let resHtml = isPending ? `<span style="font-weight:700; color:#8a5a12; font-size:12px; text-transform:uppercase;">Anotar resultado ➔</span>` : `<div style="font-size:24px; font-weight:700; font-family:'Inter'; color:var(--pitch)"><span style="color:var(--debt)">${m.scoreRojo}</span> - <span style="color:#1E3A8A">${m.scoreBlanco}</span></div>`;
       return `<div class="ticket" style="${boxStyle}" onclick="app.openModal('resolveMatch', '${m.id}')"><div><div class="name">${m.matchType} · ${fecha}</div><div class="sub">${m.teamRojo.length} vs ${m.teamBlanco.length} jugadores</div></div><div>${resHtml}</div></div>`;
     }).join(''); return html;
   }
@@ -560,7 +665,17 @@ class App {
   renderFab(){ return this.page==='resumen' ? `<button class="fab" onclick="app.setPage('movimientos')">${ICONS.plus}</button>` : (this.page==='jugadores' ? `<button class="fab" onclick="app.openModal('addPlayer')">${ICONS.plus}</button>` : ''); }
   renderBottomNav(){ return `<div class="bottom-nav">${[ {id:'resumen', label:'Resumen', icon:ICONS.home}, {id:'jugadores', label:'Jugadores', icon:ICONS.users}, {id:'movimientos', label:'Movim.', icon:ICONS.euro}, {id:'equipos', label:'Equipos', icon:ICONS.shirts}, {id:'estadisticas', label:'Estadísticas', icon:ICONS.chart}, {id:'ajustes', label:'Ajustes', icon:ICONS.gear} ].map(t=>`<button class="${this.page===t.id?'active':''}" onclick="app.setPage('${t.id}')">${t.icon}<span class="tab-label">${t.label}</span></button>`).join('')}</div>`; }
 
-  renderModal(){
+  renderGoalDiffStatus(m) {
+    const sumR = m.teamRojo.reduce((s, p) => s + (m.goals[p.id] || 0), 0);
+    const sumB = m.teamBlanco.reduce((s, p) => s + (m.goals[p.id] || 0), 0);
+    const diffR = (m.scoreRojo || 0) - sumR;
+    const diffB = (m.scoreBlanco || 0) - sumB;
+    const txtR = diffR > 0 ? `🔴 ${diffR} sin asignar / propia` : `🔴 Goles Rojo OK (${sumR})`;
+    const txtB = diffB > 0 ? `🔵 ${diffB} sin asignar / propia` : `🔵 Goles Azul OK (${sumB})`;
+    return `<div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600; color:var(--muted); margin:-8px 4px 12px;"><span>${txtR}</span><span>${txtB}</span></div>`;
+  }
+
+  renderModal(skipAnim = false){
     const {type, payload} = this.modal; let body = '';
     if(type==='addPlayer' || type==='editPlayer'){
       const p = type==='editPlayer' ? this.players.find(x=>x.id===payload.id) : null; if(type==='editPlayer' && !p) { this.modal = null; return ''; }
@@ -568,95 +683,4 @@ class App {
     } else if(type==='resolveMatch'){
       const m = this.matches.find(x=>x.id===payload); if(!m) return '';
       const renderTeamGoals = (team, color) => team.map(p => { const goles = m.goals[p.id] || 0; return `<div class="team-player"><span style="font-weight:600">${escapeHtml(p.name)}</span><div class="goal-counter"><button onclick="app.modGoal('${m.id}', '${p.id}', -1, '${color}')">-</button><span id="goal_val_${m.id}_${p.id}">${goles}</span><button onclick="app.modGoal('${m.id}', '${p.id}', 1, '${color}')">+</button></div></div>`; }).join('');
-      body = `<h2>${m.status === 'pending' ? 'Anotar Resultado' : 'Editar Partido'}</h2><div class="sub" style="margin-bottom:12px">El marcador se suma solo.</div><div class="score-input-group"><div style="text-align:center"><div style="color:var(--debt);font-weight:700;margin-bottom:4px">ROJO</div><input type="number" min="0" id="score_rojo_${m.id}" value="${m.scoreRojo}" onchange="app.modScore('${m.id}', 'rojo', this.value)" /></div><span>-</span><div style="text-align:center"><div style="color:#1E3A8A;font-weight:700;margin-bottom:4px">AZUL</div><input type="number" min="0" id="score_blanco_${m.id}" value="${m.scoreBlanco}" onchange="app.modScore('${m.id}', 'blanco', this.value)" /></div></div><div class="section-title">Goleadores Rojo 🔴</div><div class="team-card" style="border-left:4px solid var(--debt); padding: 4px 12px">${renderTeamGoals(m.teamRojo, 'rojo')}</div><div class="section-title">Goleadores Azul 🔵</div><div class="team-card" style="border-left:4px solid #1E3A8A; padding: 4px 12px">${renderTeamGoals(m.teamBlanco, 'blanco')}</div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.finishMatch('${m.id}')">💾 Guardar Partido</button><button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.deleteMatch('${m.id}')">🗑️ Eliminar</button>`;
-    } else if(type==='cromoPlayer'){
-      const dataStats = this.getSortedClasificacion(this.currentSeason);
-      const s = dataStats.find(x => x.p.id === payload); if(!s) return '';
-      body = `<div class="cromo-preview" id="cromoCapture"><h3>${escapeHtml(s.p.name.toUpperCase())}</h3><div class="pos-badge">${POSITION_LABEL[s.p.position] || 'SIN POSICIÓN'}</div><div class="cromo-grid"><div class="cromo-stat"><div class="val">${s.winrate}%</div><div class="lbl">Victoria</div></div><div class="cromo-stat"><div class="val">${s.goles}</div><div class="lbl">Goles</div></div><div class="cromo-stat"><div class="val">${s.pj}</div><div class="lbl">Partidos</div></div><div class="cromo-stat"><div class="val">${s.pg}</div><div class="lbl">Ganados</div></div></div></div><button class="btn btn-gold btn-block" onclick="app.exportCromoImage('${s.p.id}')">📸 Exportar Cromo</button>`;
-    } else if(type==='quickTx'){
-      const p = this.players.find(x=>x.id===payload.playerId); const bal = this.getPlayerBalance(p.id, payload.matchType);
-      body = `<h2>${escapeHtml(p.name)}</h2><div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:10px">Saldo actual ${payload.matchType}: <b class="mono">${fmt(bal)}</b></div><label>Importe</label><div class="sign-toggle"><button id="qtxPlus" class="${this.qtxSign==='minus' ? '' : 'active plus'}" onclick="app.qtxSign='plus';app.render()">+ Abona</button><button id="qtxMinus" class="${this.qtxSign==='minus' ? 'active minus' : ''}" onclick="app.qtxSign='minus';app.render()">− Carga</button></div><input type="number" step="0.01" min="0" id="qtxAmount" placeholder="0.00" style="margin-top:8px" /><label>Motivo</label><input type="text" id="qtxReason" placeholder="Partido, balón..." /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitQuickTx('${p.id}','${payload.matchType}')">Registrar</button>${bal < -0.001 ? `<button class="btn btn-outline btn-block" style="margin-top:12px; border-color:var(--credit); color:var(--credit);" onclick="app.settleDebt('${p.id}', '${payload.matchType}',${Math.abs(bal)})">✅ Saldar deuda (${fmtPlain(Math.abs(bal))})</button>` : ''}`;
-    } else if(type==='addGuest'){
-      body = `<h2>Jugador invitado</h2><div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:6px">Solo para los equipos de hoy.</div><label>Nombre</label><input type="text" id="guestName" placeholder="Nombre" /><label>Técnica</label><div class="chip-group" id="guestSkillGroup">${Object.keys(SKILL_LABEL).map(s=>`<button class="chip ${s==='medio'?'active':''}" data-val="${s}" onclick="app.pickChip(this,'guestSkillGroup')">${SKILL_LABEL[s]}</button>`).join('')}</div><label>Físico</label><div class="chip-group" id="guestStaminaGroup">${Object.keys(STAMINA_LABEL).map(s=>`<button class="chip ${s==='medio'?'active':''}" data-val="${s}" onclick="app.pickChip(this,'guestStaminaGroup')">${STAMINA_LABEL[s]}</button>`).join('')}</div><label>Posición</label><div class="chip-group" id="guestPosGroup"><button class="chip active" data-val="" onclick="app.pickChip(this,'guestPosGroup')">-</button>${POSITIONS.map(pos=>`<button class="chip" data-val="${pos}" onclick="app.pickChip(this,'guestPosGroup')">${pos}</button>`).join('')}</div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitGuest()">Añadir a la lista de hoy</button>`;
-    } else if(type==='settleMatch'){
-      const mt = this.teamsMatchType; const quotaBK = parseFloat(this._smQuotaBK) || 0; const quotaNormal = parseFloat(this._smQuotaNormal) || 0; const cost = parseFloat(this._smCost) || 0; const presentPlayers = Array.from(this.teamsPresent).map(id => this.findPresentPerson(id)).filter(Boolean);
-      let countBK = 0; let countNormal = 0; this._smSelected.forEach(id => { const p = this.findPresentPerson(id); if(p) { if(p.bilbaoKirolak) countBK++; else countNormal++; } });
-      const collectedBK = countBK * quotaBK; const collectedNormal = countNormal * quotaNormal; const collectedTotal = collectedBK + collectedNormal; const surplus = collectedTotal - cost;
-      const payerOptions = `<option value="bote" ${this._smPayer==='bote'?'selected':''}>Fondo común (Bote)</option>` + [...this.players].sort((a,b)=>a.name.localeCompare(b.name)).map(p => `<option value="${p.id}" ${this._smPayer===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
-      body = `<h2>Liquidar Partido ${mt}</h2><div class="field-row"><div><label>Cuota (BK)</label><input type="number" step="0.10" min="0" value="${this._smQuotaBK}" oninput="app._smQuotaBK=this.value; app.render()" /></div><div><label>Cuota (Normal)</label><input type="number" step="0.10" min="0" value="${this._smQuotaNormal}" oninput="app._smQuotaNormal=this.value; app.render()" /></div></div><div class="field-row" style="margin-top:10px;"><div><label>Coste Pista</label><input type="number" step="0.05" min="0" value="${this._smCost}" oninput="app._smCost=this.value; app.render()" /></div><div><label>¿Quién pagó?</label><select onchange="app._smPayer=this.value; app.render()">${payerOptions}</select></div></div><div class="field-row" style="align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:5px"><label style="margin:0">Cobrar cuota a (${this._smSelected.size})</label><div style="display:flex; gap:6px;"><button class="icon-btn" style="background:var(--turf-soft); border-radius:12px; padding:4px 10px;" onclick="app.selectAllSmPlayers()">Todos</button><button class="icon-btn" style="background:var(--line); border-radius:12px; padding:4px 10px;" onclick="app.clearSmPlayers()">Ninguno</button></div></div><div class="checklist" style="max-height:150px">${presentPlayers.map(p=>`<label><input type="checkbox" ${this._smSelected.has(p.id)?'checked':''} onchange="app.toggleSmPlayer('${p.id}')" />${escapeHtml(p.name)}${p.bilbaoKirolak?'<span class="lvl-badge">BK</span>':''}</label>`).join('')}</div><div class="ticket neutral" style="margin-top:16px; background:var(--chalk); border:1px dashed var(--muted); cursor:default"><div style="font-size:13px; color:var(--ink); width:100%">Recaudación: <b style="float:right">${fmtPlain(collectedTotal)}</b><br>Coste pista: <b style="float:right; color:var(--debt)">-${fmtPlain(cost)}</b><br><div style="border-top:1px solid var(--line); margin:6px 0 0 0; padding-top:6px; font-weight:600;">Sobrante al bote: <b style="float:right; color:${surplus>=0?'var(--credit)':'var(--debt)'}">${surplus>=0?'+':''}${fmtPlain(surplus)}</b></div></div></div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitSettleMatch()">Confirmar y Liquidar</button>`;
-    }
-    return `<div class="sheet-backdrop" onclick="if(event.target===this) app.closeModal()"><div class="sheet"><div class="sheet-handle"></div><button class="close-x" onclick="app.closeModal()">✕</button>${body}</div></div>`;
-  }
-
-  modScore(matchId, team, val) { const m = this.matches.find(x => x.id === matchId); if(m) { if(team === 'rojo') m.scoreRojo = parseInt(val) || 0; if(team === 'blanco') m.scoreBlanco = parseInt(val) || 0; } }
-  modGoal(matchId, playerId, delta, teamColor) {
-    const m = this.matches.find(x => x.id === matchId);
-    if(m) {
-      const next = (m.goals[playerId] || 0) + delta; if (next < 0) return; m.goals[playerId] = next;
-      if(teamColor === 'rojo') { m.scoreRojo = Math.max(0, (m.scoreRojo || 0) + delta); const el = document.getElementById(`score_rojo_${m.id}`); if(el) el.value = m.scoreRojo; } 
-      else if(teamColor === 'blanco') { m.scoreBlanco = Math.max(0, (m.scoreBlanco || 0) + delta); const el = document.getElementById(`score_blanco_${m.id}`); if(el) el.value = m.scoreBlanco; }
-      const elGoal = document.getElementById(`goal_val_${m.id}_${playerId}`); if(elGoal) elGoal.innerText = next;
-    }
-  }
-  finishMatch(matchId) { const m = this.matches.find(x => x.id === matchId); if(m) { m.status = 'completed'; this.save(); this.closeModal(); this.toast('Guardado con éxito'); } }
-  deleteMatch(matchId) { if(confirm('¿Eliminar partido?')) { this.matches = this.matches.filter(m => m.id !== matchId); this.save(); this.closeModal(); this.toast('Eliminado'); } }
-  pickChip(btn, groupId){ document.getElementById(groupId).querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); }
-  savePlayerForm(id){
-    const name = document.getElementById('pName').value.trim(); if(!name){ this.toast('Falta nombre'); return; }
-    const data = { name, type: document.querySelector('#pTypeGroup .chip.active').dataset.val, skill: document.querySelector('#pSkillGroup .chip.active').dataset.val, stamina: document.querySelector('#pStaminaGroup .chip.active').dataset.val, position: document.querySelector('#pPosGroup .chip.active').dataset.val, isRegular: document.querySelector('#pRegGroup .chip.active').dataset.val === 'true', bilbaoKirolak: document.querySelector('#pBKGroup .chip.active').dataset.val === 'true' };
-    id ? this.updatePlayer(id, data) : this.addPlayer(data);
-  }
-  submitQuickTx(playerId, matchType){ let amount = parseFloat(document.getElementById('qtxAmount').value); if(isNaN(amount)){ this.toast('Introduce importe'); return; } amount = (this.qtxSign || 'plus') === 'minus' ? -Math.abs(amount) : Math.abs(amount); const reason = document.getElementById('qtxReason').value; this.qtxSign = null; this.addTransaction([playerId], amount, matchType, reason); }
-  toggleSmPlayer(id){ this._smSelected.has(id) ? this._smSelected.delete(id) : this._smSelected.add(id); this.render(); }
-  selectAllSmPlayers(){ this._smSelected = new Set(); this.teamsPresent.forEach(id => this._smSelected.add(id)); this.render(); }
-  clearSmPlayers(){ this._smSelected = new Set(); this.render(); }
-  submitSettleMatch(){
-    const mt = this.teamsMatchType; const quotaBK = parseFloat(this._smQuotaBK) || 0; const quotaNormal = parseFloat(this._smQuotaNormal) || 0; const cost = parseFloat(this._smCost) || 0; const playerIds = Array.from(this._smSelected);
-    let collectedTotal = 0; const idsBK = []; const idsNormal = [];
-    playerIds.forEach(id => { const p = this.findPresentPerson(id); if(p) { if(p.bilbaoKirolak) { collectedTotal += quotaBK; if(!String(id).startsWith('guest_')) idsBK.push(id); } else { collectedTotal += quotaNormal; if(!String(id).startsWith('guest_')) idsNormal.push(id); } } });
-    const surplus = collectedTotal - cost; if(playerIds.length === 0 && surplus === 0 && cost === 0) return;
-    const now = new Date().toISOString();
-    if(idsBK.length > 0 && quotaBK > 0) this.transactions.push({ id:uid(), playerIds: idsBK, amount: -Math.abs(quotaBK), matchType: mt, reason: 'Cuota partido (BK)', createdAt: now });
-    if(idsNormal.length > 0 && quotaNormal > 0) this.transactions.push({ id:uid(), playerIds: idsNormal, amount: -Math.abs(quotaNormal), matchType: mt, reason: 'Cuota partido (Normal)', createdAt: now });
-    if(this._smPayer && this._smPayer !== 'bote' && cost > 0) this.transactions.push({ id:uid(), playerIds: [this._smPayer], amount: Math.abs(cost), matchType: mt, reason: 'Pago pista adelantado', createdAt: now });
-    if(surplus !== 0) this.generalTransactions.push({ id:uid(), amount: surplus, matchType: mt, reason: 'Sobrante partido', createdAt: now });
-    this.save(); this.closeModal(); this.toast('Liquidado automáticamente');
-  }
-  
-  descargarOCompartir(blob, filename) {
-    const file = new File([blob], filename, { type: blob.type });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ title: filename, files: [file] }).catch(()=>{});
-    } else {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none'; 
-      a.href = url; 
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 150);
-    }
-  }
-}
-
-let appInstanciada = false;
-function iniciarApp() {
-  if (appInstanciada) return;
-  appInstanciada = true;
-  try {
-    const el = document.getElementById('app');
-    if(!el) return;
-    window.app = new App(); 
-    document.body.addEventListener('click', (e)=>{ if(e.target.closest('.fab') || e.target.closest('.bottom-nav')) return; });
-  } catch(err) {
-    document.body.innerHTML = `<div style="padding:20px;color:red;"><h3>🚨 Error Fatal</h3><pre>${err.message}</pre></div>`;
-  }
-}
-
-if(document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', iniciarApp); } else { iniciarApp(); }
-window.addEventListener('load', iniciarApp); setTimeout(iniciarApp, 500);
-
-document.addEventListener('click', function(e){ const t = e.target.closest('[data-open-add-player]'); if(t) app.openModal('addPlayer'); });
-if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
-window.addEventListener('online', ()=>{ if(window.app && window.app.githubSync && window.app.githubSyncStatus && !window.app.githubSyncStatus.ok){ window.app.pushToGithub(); } });
+      body = `<h2>${m.status === 'pending' ? 'Anotar Resultado' : 'Editar Partido'}</h2><div class="sub" style="margin-bottom:12px">Puedes poner el marcador arriba o sumar directamente los goles de cada jugador.</div><div class="score-input-group"><div style="text-align:center"><div style="color:var(--debt);font-weight:700;margin-bottom:4px">ROJO</div><input type="number" min="0
