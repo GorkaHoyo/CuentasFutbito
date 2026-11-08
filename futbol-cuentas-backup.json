@@ -675,8 +675,8 @@
         "position": "defensa"
       },
       {
-        "id": "1793725159567774",
-        "name": "Gaizka",
+        "id": "1790617380927257",
+        "name": "Juan g.",
         "weight": 5,
         "position": "defensa"
       },
@@ -719,8 +719,8 @@
         "position": "defensa"
       },
       {
-        "id": "1790617380927257",
-        "name": "Juan g.",
+        "id": "1793725159567774",
+        "name": "Gaizka",
         "weight": 5,
         "position": "defensa"
       },
@@ -744,6 +744,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-08T10:48:05.603Z",
+  "exportDate": "2026-11-08T10:48:08.165Z",
   "version": "2.1"
 }
