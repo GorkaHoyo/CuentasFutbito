@@ -675,8 +675,8 @@
         "position": "portero"
       },
       {
-        "id": "1790617571023650",
-        "name": "Gorka",
+        "id": "1790616949341112",
+        "name": "Aiert",
         "weight": 6,
         "position": "defensa"
       },
@@ -713,8 +713,8 @@
         "position": "defensa"
       },
       {
-        "id": "1790616949341112",
-        "name": "Aiert",
+        "id": "1790617571023650",
+        "name": "Gorka",
         "weight": 6,
         "position": "defensa"
       },
@@ -744,6 +744,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-08T10:48:16.548Z",
+  "exportDate": "2026-11-08T10:48:41.044Z",
   "version": "2.1"
 }
