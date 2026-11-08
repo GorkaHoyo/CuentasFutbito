@@ -478,6 +478,16 @@
       "matchType": "F5",
       "reason": "Saldar deuda",
       "createdAt": "2026-11-07T10:24:18.053Z"
+    },
+    {
+      "id": "1794134285845575",
+      "playerIds": [
+        "1793722927577154"
+      ],
+      "amount": 2.5,
+      "matchType": "F5",
+      "reason": "partido",
+      "createdAt": "2026-11-08T10:38:05.845Z"
     }
   ],
   "generalTransactions": [
@@ -734,6 +744,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-08T10:32:18.217Z",
+  "exportDate": "2026-11-08T10:38:06.549Z",
   "version": "2.1"
 }
