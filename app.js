@@ -6,7 +6,7 @@ const ICONS = {
   users: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.5 2.9-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.2 14.2c2.7.3 4.8 2.4 4.8 5.8"/></svg>`,
   euro: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M17 5.5c-1.3-1-2.7-1.5-4.3-1.5-4 0-7.2 3.6-7.2 8s3.2 8 7.2 8c1.6 0 3-.5 4.3-1.5"/><path d="M3.5 10.5h9M3.5 13.5h8"/></svg>`,
   shirts: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3L3 6.5 5.5 10 8 8.5V21h8V8.5l2.5 1.5L21 6.5 16 3c-.8 1.3-2.3 2-4 2s-3.2-.7-4-2z"/></svg>`,
-  gear: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.7 7.7 0 000-3l2-1.6-2-3.4-2.4.7a7.8 7.8 0 00-2.6-1.5L14 2h-4l-.4 2.7a7.8 7.8 0 00-2.6 1.5l-2.4-.7-2 3.4 2 1.6a7.7 7.7 0 000 3l-2 1.6 2 3.4 2.4-.7c.75.65 1.63 1.15 2.6 1.5L10 22h4l.4-2.7a7.8 7.8 0 002.6-1.5l2.4.7 2-3.4z"/></svg>`,
+  gear: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.7 7.7 0 000-3l2-1.6-2-3.4-2.4.7a7.8 7.8 0 00-2.6-1.5L14 2h-4l-.4 2.7a7.8 7.8 0 00-2.6-1.5l-2.4-.7-2 3.4 2 1.6a7.7 7.7 0 000 3l-2 1.6 2 3.4 2.4-.7c.75.65 1.63 1.15 2.6 1.5L10 22h4l.4-2.7a7.8 7.8 0 002.6-1.5l2.4.7 2-3.4z"/></svg>`,
   plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`,
   edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>`,
   trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>`,
@@ -58,8 +58,6 @@ class App {
     this.histLimit = 40;
     this.movTab = 'jugador';
     this.statTab = 'clasificacion';
-    
-    // Variables de ordenación y filtro de estadísticas
     this.statSortBy = 'goles'; 
     this.statSortDesc = true;
     this.statMatchFilter = '';
@@ -81,27 +79,15 @@ class App {
       try { const val = JSON.parse(localStorage.getItem(key)); return Array.isArray(val) ? val : []; } 
       catch(e) { return []; }
     };
-
     this.players = safeArray('football-players');
     this.transactions = safeArray('football-transactions');
     this.generalTransactions = safeArray('football-general-transactions');
     this.matches = safeArray('football-matches');
-    
     this.currentSeason = localStorage.getItem('football-season') || '2026/2027';
     this.teamsMatchType = localStorage.getItem('football-teams-match') || 'F5';
-    
-    try { 
-      const parsed = JSON.parse(localStorage.getItem('football-teams-present'));
-      this.teamsPresent = new Set(Array.isArray(parsed) ? parsed : []);
-    } catch(e) { this.teamsPresent = new Set(); }
-    
-    try { 
-      const parsed = JSON.parse(localStorage.getItem('football-teams-guests'));
-      this.teamsGuests = Array.isArray(parsed) ? parsed : [];
-    } catch(e) { this.teamsGuests = []; }
-    
+    try { const parsed = JSON.parse(localStorage.getItem('football-teams-present')); this.teamsPresent = new Set(Array.isArray(parsed) ? parsed : []); } catch(e) { this.teamsPresent = new Set(); }
+    try { const parsed = JSON.parse(localStorage.getItem('football-teams-guests')); this.teamsGuests = Array.isArray(parsed) ? parsed : []; } catch(e) { this.teamsGuests = []; }
     try { this.teamsResult = JSON.parse(localStorage.getItem('football-teams-result')); } catch(e) { this.teamsResult = null; }
-    
     this.teamsSwapSel = null;
   }
 
@@ -121,11 +107,7 @@ class App {
     localStorage.setItem('football-season', this.currentSeason);
   }
 
-  save() { 
-    this.saveLocalOnly();
-    this.scheduleGithubPush(); 
-  }
-
+  save() { this.saveLocalOnly(); this.scheduleGithubPush(); }
   saveGithubConfig(cfg){ this.githubSync = cfg; localStorage.setItem('githubSyncConfig', JSON.stringify(cfg)); }
   
   clearGithubConfig(){ 
@@ -146,8 +128,8 @@ class App {
 
   hardResetApp() {
     if(confirm('¿Forzar actualización de la app?')) {
-        if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(r => { for(let sw of r) sw.unregister(); window.location.reload(true); });
-        else window.location.reload(true);
+      if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(r => { for(let sw of r) sw.unregister(); window.location.reload(true); });
+      else window.location.reload(true);
     }
   }
   
@@ -224,10 +206,8 @@ class App {
     const ids = Array.from(this.teamsPresent); const required = this.requiredTeamSizes(this.teamsMatchType);
     if(!required.includes(ids.length)){ this.toast(`Hacen falta ${required.join(' o ')} jugadores`); return; }
     const missingPosition = this.presentWithoutPosition(); if(missingPosition.length > 0){ alert(`Asigna posición a:\n${missingPosition.map(p=>'· '+p.name).join('\n')}`); return; }
-    
     let pool = ids.map(id=>{ const p = this.findPresentPerson(id); if(!p) return null; return { id:p.id, name:p.name, weight: (SKILL_WEIGHT[p.skill] || 3) + (STAMINA_WEIGHT[p.stamina] || 2), position: p.position || 'sin posición' }; }).filter(Boolean);
     const teamRojo=[], teamBlanco=[]; let sumRojo=0, sumBlanco=0;
-    
     if(balanced){
       const byPos = {}; pool.forEach(p=>{ if(!byPos[p.position]) byPos[p.position] = []; byPos[p.position].push(p); });
       Object.values(byPos).forEach(group=>{ group.sort(()=>Math.random()-0.5); group.sort((a,b)=>b.weight-a.weight); group.forEach(pl=>{ if(sumRojo <= sumBlanco){ teamRojo.push(pl); sumRojo += pl.weight; } else { teamBlanco.push(pl); sumBlanco += pl.weight; } }); });
@@ -263,7 +243,6 @@ class App {
   getSortedClasificacion(season, matchTypeFilter = this.statMatchFilter) {
     const stats = {}; 
     this.players.forEach(p => { stats[p.id] = { p, pj:0, pg:0, pe:0, pp:0, goles:0, pts:0, gpp:0, history:[], streak:0 }; });
-    
     const matchesToCount = this.matches
       .filter(m => m.status === 'completed' && m.season === season && (!matchTypeFilter || m.matchType === matchTypeFilter))
       .sort((a,b) => new Date(a.date) - new Date(b.date));
@@ -302,15 +281,13 @@ class App {
       if (b.winrate !== a.winrate) return b.winrate - a.winrate;
       return b.pj - a.pj;
     });
-
     return data;
   }
 
-  async ensureFonts(){ try{ await Promise.all([ document.fonts.load('800 32px Outfit'), document.fonts.load('600 20px Outfit'), document.fonts.load('400 16px Outfit'), document.fonts.load('700 24px Inter'), document.fonts.load('400 16px Inter')]); }catch(e){} }  
+  async ensureFonts(){ try{ await Promise.all([ document.fonts.load('700 32px Oswald'), document.fonts.load('600 20px Oswald'), document.fonts.load('400 16px Oswald'), document.fonts.load('700 24px "Space Mono"'), document.fonts.load('400 16px "Space Mono"')]); }catch(e){} }  
   
   shareTeams(){ const r = this.teamsResult; if(!r) return; let txt = `⚽ EQUIPOS ${this.teamsMatchType}\n\n🔴 Equipo Rojo\n${r.teamRojo.map(p=>`- ${p.name}`).join('\n')}\n\n🔵 Equipo Azul\n${r.teamBlanco.map(p=>`- ${p.name}`).join('\n')}`; if(navigator.share){ navigator.share({ text: txt }).catch(()=>{}); } else { navigator.clipboard.writeText(txt).then(()=>{ this.toast('Copiado'); }); } }
   
-  // ----- FUNCIONES DE EXPORTAR RECUPERADAS Y ARREGLADAS -----
   async exportSummaryImage(matchType){
     await this.ensureFonts();
     const bote = this.getTotalPot(matchType); const {credit, neutral, debt} = this.classify(matchType);
@@ -319,37 +296,37 @@ class App {
     const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
     const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
     ctx.fillStyle = '#F6F2E9'; ctx.fillRect(0,0,W,H); ctx.fillStyle = '#0F3D2E'; ctx.fillRect(0,0,W,84); ctx.fillStyle = '#E8A33D'; ctx.fillRect(0, 80, W, 4);
-    ctx.textAlign = 'left'; ctx.fillStyle = '#F6F2E9'; ctx.font = '700 26px Outfit'; ctx.fillText('⚽ CUENTAS F5·F7', PAD, 42);
-    ctx.font = '600 16px Outfit'; ctx.fillStyle = '#CFE0D6'; ctx.fillText(`Resumen · ${matchType}`, PAD, 65);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#F6F2E9'; ctx.font = '700 26px Oswald'; ctx.fillText('⚽ CUENTAS F5·F7', PAD, 42);
+    ctx.font = '600 16px Oswald'; ctx.fillStyle = '#CFE0D6'; ctx.fillText(`Resumen · ${matchType}`, PAD, 65);
     const dateStr = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'});
-    ctx.textAlign = 'right'; ctx.font = '400 13px Inter'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(dateStr, W-PAD, 65);
+    ctx.textAlign = 'right'; ctx.font = '400 13px sans-serif'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(dateStr, W-PAD, 65);
     let y = 84; ctx.textAlign = 'left'; ctx.fillStyle = '#154934'; ctx.fillRect(PAD, y+12, W-PAD*2, 80);
     const cellW = (W-PAD*2)/3; const cls = v => v>0.001 ? '#8FE3B0' : (v<-0.001 ? '#FF9B92' : '#F6F2E9');
     const stats = [ {label:'BOTE', txt:fmtPlain(bote), value:bote}, {label:'JUGADORES', txt:fmt(jugadoresSum), value:jugadoresSum}, {label:'BALANCE', txt:fmtPlain(balance), value:balance} ];
     ctx.textAlign = 'center';
-    stats.forEach((s,i)=>{ const cx = PAD + cellW*i + cellW/2; ctx.font = '600 11px Outfit'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(s.label, cx, y+34); ctx.font = '700 24px Inter'; ctx.fillStyle = cls(s.value); ctx.fillText(s.txt, cx, y+66); });
+    stats.forEach((s,i)=>{ const cx = PAD + cellW*i + cellW/2; ctx.font = '600 11px Oswald'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(s.label, cx, y+34); ctx.font = '700 24px "Space Mono"'; ctx.fillStyle = cls(s.value); ctx.fillText(s.txt, cx, y+66); });
     ctx.textAlign = 'left'; y += 102 + 12;
     const available = H - y - 62 - 24; const debtAlloc = Math.round(available * 0.56); const creditAlloc = available - debtAlloc;
     const drawList = (title, color, items, alloc, minRowH, maxRowH, maxCols, nameFontPx, amtFontPx) => {
-      ctx.font = `700 ${Math.max(15, Math.round(nameFontPx*0.92))}px Outfit`; ctx.fillStyle = color;
+      ctx.font = `700 ${Math.max(15, Math.round(nameFontPx*0.92))}px Oswald`; ctx.fillStyle = color;
       ctx.beginPath(); ctx.arc(PAD+5, y+11, 5, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#12241B'; ctx.fillText(title.toUpperCase(), PAD+18, y+16);
-      ctx.font = '400 12px Outfit'; ctx.fillStyle = '#6E7C73'; ctx.textAlign = 'right'; ctx.fillText(`${items.length}`, W-PAD, y+16);
+      ctx.font = '400 12px Oswald'; ctx.fillStyle = '#6E7C73'; ctx.textAlign = 'right'; ctx.fillText(`${items.length}`, W-PAD, y+16);
       ctx.textAlign = 'left'; y += 26;
-      if(items.length === 0){ ctx.font = '400 14px Inter'; ctx.fillStyle = '#9AA69E'; ctx.fillText('—', PAD, y+20); y += minRowH; return; }
+      if(items.length === 0){ ctx.font = '400 14px sans-serif'; ctx.fillStyle = '#9AA69E'; ctx.fillText('—', PAD, y+20); y += minRowH; return; }
       const fitRows = Math.ceil(items.length/maxCols); const rowH = Math.max(6, Math.min(maxRowH, alloc/fitRows)); const colW = (W-PAD*2-((maxCols-1)*12))/maxCols;
       for(let i=0;i<items.length;i++){
         const col = Math.floor(i/fitRows); const rx = PAD + col*(colW+12); const ry = y + (i%fitRows)*rowH;
         ctx.fillStyle = '#FFFFFF'; ctx.fillRect(rx, ry+2, colW, rowH-8); ctx.fillStyle = color; ctx.fillRect(rx, ry+2, 4, rowH-8);
-        ctx.font = `600 ${Math.min(nameFontPx, rowH*0.42)}px Inter`; ctx.fillStyle = '#12241B'; ctx.fillText(items[i].p.name.substring(0,18), rx+12, ry+2+(rowH-8)/2+4);
-        ctx.font = `700 ${Math.min(amtFontPx, rowH*0.42)}px Inter`; ctx.textAlign = 'right'; ctx.fillStyle = items[i].b>0.001 ? '#2D8659' : (items[i].b<-0.001 ? '#C3423F' : '#6E7C73'); ctx.fillText(fmt(items[i].b), rx+colW-10, ry+2+(rowH-8)/2+4); ctx.textAlign = 'left';
+        ctx.font = `600 ${Math.min(nameFontPx, rowH*0.42)}px sans-serif`; ctx.fillStyle = '#12241B'; ctx.fillText(items[i].p.name.substring(0,18), rx+12, ry+2+(rowH-8)/2+4);
+        ctx.font = `700 ${Math.min(amtFontPx, rowH*0.42)}px "Space Mono"`; ctx.textAlign = 'right'; ctx.fillStyle = items[i].b>0.001 ? '#2D8659' : (items[i].b<-0.001 ? '#C3423F' : '#6E7C73'); ctx.fillText(fmt(items[i].b), rx+colW-10, ry+2+(rowH-8)/2+4); ctx.textAlign = 'left';
       }
       y += fitRows*rowH;
     };
     drawList('Con deuda', '#C3423F', debt, debtAlloc, 30, 40, 2, 16, 16); y += 12; 
     drawList('Con crédito', '#2D8659', credit, creditAlloc, 22, 30, 3, 13, 13); y += 12;
     ctx.fillStyle = '#FFFFFF'; ctx.fillRect(PAD, y, W-PAD*2, 34); ctx.fillStyle = '#9AA69E'; ctx.fillRect(PAD, y, 4, 34);
-    ctx.font = '600 14px Outfit'; ctx.fillStyle = '#4B5750'; ctx.fillText(`✅  ${neutral.length} ${neutral.length === 1 ? 'jugador' : 'jugadores'} al día`, PAD+14, y+22);
+    ctx.font = '600 14px Oswald'; ctx.fillStyle = '#4B5750'; ctx.fillText(`✅  ${neutral.length} ${neutral.length === 1 ? 'jugador' : 'jugadores'} al día`, PAD+14, y+22);
     canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `cuentas-${matchType}.png`); }, 'image/png');
   }
 
@@ -359,18 +336,18 @@ class App {
     const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil((96+cardH+52)*DPR);
     const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
     ctx.fillStyle = '#F6F2E9'; ctx.fillRect(0,0,W,96+cardH+52);
-    ctx.textAlign = 'center'; ctx.font = '700 26px Outfit'; ctx.fillStyle = '#12241B'; ctx.fillText(`⚽ EQUIPOS GENERADOS · ${this.teamsMatchType}`, W/2, 46);
-    ctx.font = '400 14px Inter'; ctx.fillStyle = '#6E7C73'; ctx.fillText(new Date().toLocaleDateString('es-ES'), W/2, 70);
+    ctx.textAlign = 'center'; ctx.font = '700 26px Oswald'; ctx.fillStyle = '#12241B'; ctx.fillText(`⚽ EQUIPOS GENERADOS · ${this.teamsMatchType}`, W/2, 46);
+    ctx.font = '400 14px sans-serif'; ctx.fillStyle = '#6E7C73'; ctx.fillText(new Date().toLocaleDateString('es-ES'), W/2, 70);
     const colW = (W - PAD*2 - 22)/2;
     const drawTeamCard = (label, list, x, bg, borderColor, titleColor) => {
       ctx.fillStyle = bg; ctx.fillRect(x, 96, colW, cardH); ctx.lineWidth = 2; ctx.strokeStyle = borderColor; ctx.strokeRect(x, 96, colW, cardH);
-      ctx.font = '700 20px Outfit'; ctx.fillStyle = titleColor; ctx.fillText(label, x+colW/2, 96+12+28); ctx.textAlign = 'left';
+      ctx.font = '700 20px Oswald'; ctx.fillStyle = titleColor; ctx.fillText(label, x+colW/2, 96+12+28); ctx.textAlign = 'left';
       let ry = 96 + 56 + 12;
       list.forEach(p=>{
         const bcol = POSITION_COLOR[p.position] || '#8A8A8A'; const babbr = POSITION_ABBR[p.position] || '-';
         ctx.fillStyle = bcol; ctx.fillRect(x+12, ry+(42-26)/2, 56, 26);
-        ctx.textAlign = 'center'; ctx.font = '700 12px Outfit'; ctx.fillStyle = '#FFFFFF'; ctx.fillText(babbr, x+12+28, ry+21+4);
-        ctx.textAlign = 'left'; ctx.font = '600 16px Inter'; ctx.fillStyle = '#12241B'; ctx.fillText(p.name.substring(0,16), x+12+56+12, ry+21+5);
+        ctx.textAlign = 'center'; ctx.font = '700 12px Oswald'; ctx.fillStyle = '#FFFFFF'; ctx.fillText(babbr, x+12+28, ry+21+4);
+        ctx.textAlign = 'left'; ctx.font = '600 16px sans-serif'; ctx.fillStyle = '#12241B'; ctx.fillText(p.name.substring(0,16), x+12+56+12, ry+21+5);
         ry += 42;
       });
       ctx.textAlign = 'center';
@@ -386,22 +363,22 @@ class App {
     const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil((headerH + (clasificacion.length * rowH) + 60)*DPR);
     const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
     ctx.fillStyle = '#F6F2E9'; ctx.fillRect(0,0,W, canvas.height/DPR); ctx.fillStyle = '#0F3D2E'; ctx.fillRect(0,0,W,84); ctx.fillStyle = '#E8A33D'; ctx.fillRect(0,80,W,4);
-    ctx.textAlign = 'left'; ctx.fillStyle = '#F6F2E9'; ctx.font = '700 28px Outfit'; ctx.fillText(`🏆 CLASIFICACIÓN ${this.statMatchFilter || 'GENERAL'}`, PAD, 46);
-    ctx.font = '600 16px Outfit'; ctx.fillStyle = '#CFE0D6'; ctx.fillText(`Temporada ${this.currentSeason}`, PAD, 70);
-    ctx.textAlign = 'right'; ctx.font = '400 14px Inter'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(new Date().toLocaleDateString('es-ES'), W-PAD, 70);
-    let y = headerH; ctx.textAlign = 'left'; ctx.fillStyle = '#6E7C73'; ctx.font = '600 13px Outfit'; ctx.fillText('JUGADOR', PAD+30, y);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#F6F2E9'; ctx.font = '700 28px Oswald'; ctx.fillText(`🏆 CLASIFICACIÓN ${this.statMatchFilter || 'GENERAL'}`, PAD, 46);
+    ctx.font = '600 16px Oswald'; ctx.fillStyle = '#CFE0D6'; ctx.fillText(`Temporada ${this.currentSeason}`, PAD, 70);
+    ctx.textAlign = 'right'; ctx.font = '400 14px sans-serif'; ctx.fillStyle = '#9FC2AC'; ctx.fillText(new Date().toLocaleDateString('es-ES'), W-PAD, 70);
+    let y = headerH; ctx.textAlign = 'left'; ctx.fillStyle = '#6E7C73'; ctx.font = '600 13px Oswald'; ctx.fillText('JUGADOR', PAD+30, y);
     ctx.textAlign = 'center';
     ctx.fillText('PTS', W-380, y); ctx.fillText('PJ', W-325, y); ctx.fillText('PG', W-270, y); ctx.fillText('PE', W-215, y); ctx.fillText('PP', W-165, y); ctx.fillText('G', W-115, y); ctx.fillText('G/P', W-65, y); ctx.fillText('%WIN', W-18, y); y += 15;
     clasificacion.forEach((s, i) => {
       ctx.fillStyle = i % 2 === 0 ? '#FFFFFF' : '#F6F2E9'; ctx.fillRect(PAD, y, W-(PAD*2), rowH);
-      ctx.textAlign = 'left'; ctx.fillStyle = '#12241B'; ctx.font = '700 15px Inter'; ctx.fillText(`${i+1}.`, PAD+6, y+25);
-      ctx.font = '600 15px Inter'; ctx.fillText(s.p.name.substring(0,20), PAD+32, y+25);
-      ctx.textAlign = 'center'; ctx.font = '700 15px Inter'; ctx.fillStyle = '#0F3D2E'; ctx.fillText(s.pts, W-380, y+25);
-      ctx.font = '500 15px Inter'; ctx.fillStyle = '#12241B'; ctx.fillText(s.pj, W-325, y+25);
+      ctx.textAlign = 'left'; ctx.fillStyle = '#12241B'; ctx.font = '700 15px "Space Mono"'; ctx.fillText(`${i+1}.`, PAD+6, y+25);
+      ctx.font = '600 15px sans-serif'; ctx.fillText(s.p.name.substring(0,20), PAD+32, y+25);
+      ctx.textAlign = 'center'; ctx.font = '700 15px "Space Mono"'; ctx.fillStyle = '#0F3D2E'; ctx.fillText(s.pts, W-380, y+25);
+      ctx.font = '500 15px "Space Mono"'; ctx.fillStyle = '#12241B'; ctx.fillText(s.pj, W-325, y+25);
       ctx.fillStyle = '#2D8659'; ctx.fillText(s.pg, W-270, y+25); ctx.fillStyle = '#6E7C73'; ctx.fillText(s.pe, W-215, y+25); ctx.fillStyle = '#C3423F'; ctx.fillText(s.pp, W-165, y+25);
-      ctx.fillStyle = '#12241B'; ctx.font = '700 15px Inter'; ctx.fillText(s.goles, W-115, y+25);
-      ctx.font = '500 14px Inter'; ctx.fillStyle = '#6E7C73'; ctx.fillText(s.gpp.toFixed(2), W-65, y+25);
-      ctx.font = '700 15px Inter'; ctx.fillStyle = '#0F3D2E'; ctx.fillText(`${s.winrate}%`, W-18, y+25); y += rowH;
+      ctx.fillStyle = '#12241B'; ctx.font = '700 15px "Space Mono"'; ctx.fillText(s.goles, W-115, y+25);
+      ctx.font = '500 14px "Space Mono"'; ctx.fillStyle = '#6E7C73'; ctx.fillText(s.gpp.toFixed(2), W-65, y+25);
+      ctx.font = '700 15px "Space Mono"'; ctx.fillStyle = '#0F3D2E'; ctx.fillText(`${s.winrate}%`, W-18, y+25); y += rowH;
     });
     canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `clasificacion-${this.currentSeason.replace('/','-')}.png`); }, 'image/png');
   }
@@ -414,17 +391,16 @@ class App {
     ctx.fillStyle = '#0F3D2E'; ctx.fillRect(0,0,W,H);
     const gradient = ctx.createLinearGradient(0,0,0,H); gradient.addColorStop(0, '#154934'); gradient.addColorStop(1, '#082018');
     ctx.fillStyle = gradient; ctx.fillRect(4,4,W-8,H-8); ctx.strokeStyle = '#E8A33D'; ctx.lineWidth = 4; ctx.strokeRect(4,4,W-8,H-8);
-    ctx.textAlign = 'center'; ctx.fillStyle = '#E8A33D'; ctx.font = '700 34px Outfit'; ctx.fillText(s.p.name.toUpperCase(), W/2, 70);
-    ctx.fillStyle = '#FFFFFF'; ctx.font = '600 16px Outfit'; const posName = POSITION_LABEL[s.p.position] || 'SIN POSICIÓN'; ctx.fillText(`${posName.toUpperCase()} · ${s.pts} PTS`, W/2, 100);
+    ctx.textAlign = 'center'; ctx.fillStyle = '#E8A33D'; ctx.font = '700 34px Oswald'; ctx.fillText(s.p.name.toUpperCase(), W/2, 70);
+    ctx.fillStyle = '#FFFFFF'; ctx.font = '600 16px Oswald'; const posName = POSITION_LABEL[s.p.position] || 'SIN POSICIÓN'; ctx.fillText(`${posName.toUpperCase()} · ${s.pts} PTS`, W/2, 100);
     ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.beginPath(); ctx.arc(W/2, 210, 75, 0, Math.PI*2); ctx.fill();
-    ctx.font = '700 72px Inter'; ctx.fillStyle = '#E8A33D'; ctx.fillText(`${s.winrate}%`, W/2, 232);
-    ctx.font = '600 16px Outfit'; ctx.fillStyle = '#CFE0D6'; ctx.fillText('VICTORIAS', W/2, 265);
-    const drawStatBox = (lbl, val, x, y) => { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(x-52, y-30, 104, 58); ctx.fillStyle = '#FFFFFF'; ctx.font = '700 22px Inter'; ctx.fillText(val, x, y-3); ctx.fillStyle = '#9FC2AC'; ctx.font = '600 11px Outfit'; ctx.fillText(lbl, x, y+16); };
+    ctx.font = '700 72px "Space Mono"'; ctx.fillStyle = '#E8A33D'; ctx.fillText(`${s.winrate}%`, W/2, 232);
+    ctx.font = '600 16px Oswald'; ctx.fillStyle = '#CFE0D6'; ctx.fillText('VICTORIAS', W/2, 265);
+    const drawStatBox = (lbl, val, x, y) => { ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(x-52, y-30, 104, 58); ctx.fillStyle = '#FFFFFF'; ctx.font = '700 22px "Space Mono"'; ctx.fillText(val, x, y-3); ctx.fillStyle = '#9FC2AC'; ctx.font = '600 11px Oswald'; ctx.fillText(lbl, x, y+16); };
     drawStatBox('PARTIDOS', s.pj, W/4, 365); drawStatBox('V - E - D', `${s.pg}-${s.pe}-${s.pp}`, (W/4)*2, 365); drawStatBox('GOLES', s.goles, (W/4)*3, 365);
     drawStatBox('MEDIA G/P', s.gpp.toFixed(2), W/3, 445); drawStatBox('RACHA ACT.', s.streak > 0 ? `🔥 +${s.streak}V` : (s.last3.join('-') || '-'), (W/3)*2, 445);
     canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `cromo-${s.p.name}.png`); }, 'image/png');
   }
-  // -----------------------------------------------------------
 
   openModal(type, payload){ 
     if(type === 'settleMatch') { 
@@ -547,7 +523,6 @@ class App {
     const mt = this.teamsMatchType; let players = this.getPlayersForMatch(mt);
     if(this.teamsSearch) { const q = this.teamsSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); players = players.filter(p=> p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)); }
     
-    // Orden inteligente: 1º Convocados (marcados), 2º Habituales, 3º Alfabético
     players.sort((a, b) => {
       const aPres = this.teamsPresent.has(a.id) ? 1 : 0;
       const bPres = this.teamsPresent.has(b.id) ? 1 : 0;
@@ -628,7 +603,7 @@ class App {
       <button class="btn btn-block btn-outline" style="margin-top:16px" onclick="app.exportClasificacionImage()">📸 Exportar Clasificación General</button>`; 
     }
     return `<div class="field-row" style="align-items:flex-end; margin-bottom:12px;">
-      <div style="flex:1"><label style="margin-top:0">Temporada</label><input type="text" value="${this.currentSeason}" onchange="app.currentSeason = this.value; app.save(); app.render();" placeholder="Ej: 2026/2027" style="font-family:'Inter'; font-weight:700; text-align:center; padding:9px;" /></div>
+      <div style="flex:1"><label style="margin-top:0">Temporada</label><input type="text" value="${this.currentSeason}" onchange="app.currentSeason = this.value; app.save(); app.render();" placeholder="Ej: 2026/2027" style="font-family:'Space Mono'; font-weight:700; text-align:center; padding:9px;" /></div>
       <div><label style="margin-top:0">Modalidad</label><div class="filter-bar" style="margin-bottom:0"><button class="chip ${this.statMatchFilter===''?'active':''}" onclick="app.statMatchFilter='';app.render()">Todos</button><button class="chip ${this.statMatchFilter==='F5'?'active':''}" onclick="app.statMatchFilter='F5';app.render()">F5</button><button class="chip ${this.statMatchFilter==='F7'?'active':''}" onclick="app.statMatchFilter='F7';app.render()">F7</button></div></div>
     </div>${tableHtml}`;
   }
@@ -639,7 +614,7 @@ class App {
     html += partidosTemp.map(m => {
       const isPending = m.status === 'pending'; const fecha = new Date(m.date).toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'});
       const boxStyle = isPending ? 'border-left-color:var(--gold); background:var(--gold-soft); cursor:pointer;' : 'border-left-color:var(--credit); cursor:pointer;';
-      let resHtml = isPending ? `<span style="font-weight:700; color:#8a5a12; font-size:12px; text-transform:uppercase;">Anotar resultado ➔</span>` : `<div style="font-size:24px; font-weight:700; font-family:'Inter'; color:var(--pitch)"><span style="color:var(--debt)">${m.scoreRojo}</span> - <span style="color:#1E3A8A">${m.scoreBlanco}</span></div>`;
+      let resHtml = isPending ? `<span style="font-weight:700; color:#8a5a12; font-size:12px; text-transform:uppercase;">Anotar resultado ➔</span>` : `<div style="font-size:24px; font-weight:700; font-family:'Space Mono'; color:var(--pitch)"><span style="color:var(--debt)">${m.scoreRojo}</span> - <span style="color:#1E3A8A">${m.scoreBlanco}</span></div>`;
       return `<div class="ticket" style="${boxStyle}" onclick="app.openModal('resolveMatch', '${m.id}')"><div><div class="name">${m.matchType} · ${fecha}</div><div class="sub">${m.teamRojo.length} vs ${m.teamBlanco.length} jugadores</div></div><div>${resHtml}</div></div>`;
     }).join(''); return html;
   }
@@ -683,4 +658,140 @@ class App {
     } else if(type==='resolveMatch'){
       const m = this.matches.find(x=>x.id===payload); if(!m) return '';
       const renderTeamGoals = (team, color) => team.map(p => { const goles = m.goals[p.id] || 0; return `<div class="team-player"><span style="font-weight:600">${escapeHtml(p.name)}</span><div class="goal-counter"><button onclick="app.modGoal('${m.id}', '${p.id}', -1, '${color}')">-</button><span id="goal_val_${m.id}_${p.id}">${goles}</span><button onclick="app.modGoal('${m.id}', '${p.id}', 1, '${color}')">+</button></div></div>`; }).join('');
-      body = `<h2>${m.status === 'pending' ? 'Anotar Resultado' : 'Editar Partido'}</h2><div class="sub" style="margin-bottom:12px">Puedes poner el marcador arriba o sumar directamente los goles de cada jugador.</div><div class="score-input-group"><div style="text-align:center"><div style="color:var(--debt);font-weight:700;margin-bottom:4px">ROJO</div><input type="number" min="0
+      body = `<h2>${m.status === 'pending' ? 'Anotar Resultado' : 'Editar Partido'}</h2><div class="sub" style="margin-bottom:12px">Puedes poner el marcador arriba o sumar directamente los goles de cada jugador.</div><div class="score-input-group"><div style="text-align:center"><div style="color:var(--debt);font-weight:700;margin-bottom:4px">ROJO</div><input type="number" min="0" id="score_rojo_${m.id}" value="${m.scoreRojo}" oninput="app.modScore('${m.id}', 'rojo', this.value)" /></div><span>-</span><div style="text-align:center"><div style="color:#1E3A8A;font-weight:700;margin-bottom:4px">AZUL</div><input type="number" min="0" id="score_blanco_${m.id}" value="${m.scoreBlanco}" oninput="app.modScore('${m.id}', 'blanco', this.value)" /></div></div><div id="goal_diff_status_${m.id}">${this.renderGoalDiffStatus(m)}</div><div class="section-title">Goleadores Rojo 🔴</div><div class="team-card" style="border-left:4px solid var(--debt); padding: 4px 12px">${renderTeamGoals(m.teamRojo, 'rojo')}</div><div class="section-title">Goleadores Azul 🔵</div><div class="team-card" style="border-left:4px solid #1E3A8A; padding: 4px 12px">${renderTeamGoals(m.teamBlanco, 'blanco')}</div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.finishMatch('${m.id}')">💾 Guardar Partido</button><button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.deleteMatch('${m.id}')">🗑️ Eliminar</button>`;
+    } else if(type==='cromoPlayer'){
+      const dataStats = this.getSortedClasificacion(this.currentSeason, '');
+      const s = dataStats.find(x => x.p.id === payload); if(!s) return '';
+      body = `<div class="cromo-preview" id="cromoCapture"><h3>${escapeHtml(s.p.name.toUpperCase())}</h3><div class="pos-badge">${POSITION_LABEL[s.p.position] || 'SIN POSICIÓN'} · ${s.pts} PTS</div><div class="cromo-grid"><div class="cromo-stat"><div class="val">${s.winrate}%</div><div class="lbl">Victoria (${s.pg}V-${s.pe}E-${s.pp}D)</div></div><div class="cromo-stat"><div class="val">${s.goles}</div><div class="lbl">Goles (${s.gpp.toFixed(2)} G/P)</div></div><div class="cromo-stat"><div class="val">${s.pj}</div><div class="lbl">Partidos</div></div><div class="cromo-stat"><div class="val">${s.streak > 0 ? `🔥 +${s.streak}V` : (s.last3.join('-') || '-')}</div><div class="lbl">Racha Actual</div></div></div></div><button class="btn btn-gold btn-block" onclick="app.exportCromoImage('${s.p.id}')">📸 Exportar Cromo</button>`;
+    } else if(type==='quickTx'){
+      const p = this.players.find(x=>x.id===payload.playerId); const bal = this.getPlayerBalance(p.id, payload.matchType);
+      const lastTxs = this.transactions.filter(t => t.playerIds.includes(p.id)).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 4);
+      const txHistHtml = lastTxs.length ? `<div class="section-title" style="margin-top:18px">Últimos movimientos de ${escapeHtml(p.name)}</div>` + lastTxs.map(t => `<div class="ticket ${t.amount>0?'credit':'debt'}" style="padding:8px 12px; margin-bottom:6px; cursor:default"><div><div class="name" style="font-size:13px">${t.reason ? escapeHtml(t.reason) : 'Sin motivo'}</div><div class="sub">${t.matchType} · ${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div><div class="amt mono ${t.amount>0?'pos':'neg'}" style="font-size:14px">${fmt(t.amount)}</div></div>`).join('') : '';
+      body = `<h2>${escapeHtml(p.name)}</h2><div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:10px">Saldo actual ${payload.matchType}: <b class="mono">${fmt(bal)}</b></div><label>Importe</label><div class="sign-toggle"><button id="qtxPlus" class="${this.qtxSign==='minus' ? '' : 'active plus'}" onclick="app.qtxSign='plus';app.render()">+ Abona</button><button id="qtxMinus" class="${this.qtxSign==='minus' ? 'active minus' : ''}" onclick="app.qtxSign='minus';app.render()">− Carga</button></div><input type="number" step="0.01" min="0" id="qtxAmount" placeholder="0.00" value="${this._qtxAmount || ''}" oninput="app._qtxAmount=this.value" style="margin-top:8px" /><label>Motivo</label><input type="text" id="qtxReason" placeholder="Partido, balón..." value="${this._qtxReason || ''}" oninput="app._qtxReason=this.value" /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitQuickTx('${p.id}','${payload.matchType}')">Registrar</button>${bal < -0.001 ? `<button class="btn btn-outline btn-block" style="margin-top:10px; border-color:var(--credit); color:var(--credit);" onclick="app.settleDebt('${p.id}', '${payload.matchType}',${Math.abs(bal)})">✅ Saldar deuda (${fmtPlain(Math.abs(bal))})</button>` : ''}${txHistHtml}`;
+    } else if(type==='addGuest'){
+      body = `<h2>Jugador invitado</h2><div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:6px">Solo para los equipos de hoy.</div><label>Nombre</label><input type="text" id="guestName" placeholder="Nombre" /><label>Técnica</label><div class="chip-group" id="guestSkillGroup">${Object.keys(SKILL_LABEL).map(s=>`<button class="chip ${s==='medio'?'active':''}" data-val="${s}" onclick="app.pickChip(this,'guestSkillGroup')">${SKILL_LABEL[s]}</button>`).join('')}</div><label>Físico</label><div class="chip-group" id="guestStaminaGroup">${Object.keys(STAMINA_LABEL).map(s=>`<button class="chip ${s==='medio'?'active':''}" data-val="${s}" onclick="app.pickChip(this,'guestStaminaGroup')">${STAMINA_LABEL[s]}</button>`).join('')}</div><label>Posición</label><div class="chip-group" id="guestPosGroup"><button class="chip active" data-val="" onclick="app.pickChip(this,'guestPosGroup')">-</button>${POSITIONS.map(pos=>`<button class="chip" data-val="${pos}" onclick="app.pickChip(this,'guestPosGroup')">${pos}</button>`).join('')}</div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitGuest()">Añadir a la lista de hoy</button>`;
+    } else if(type==='settleMatch'){
+      const mt = this.teamsMatchType; const quotaBK = parseFloat(this._smQuotaBK) || 0; const quotaNormal = parseFloat(this._smQuotaNormal) || 0; const cost = parseFloat(this._smCost) || 0; const presentPlayers = Array.from(this.teamsPresent).map(id => this.findPresentPerson(id)).filter(Boolean);
+      let countBK = 0; let countNormal = 0; this._smSelected.forEach(id => { const p = this.findPresentPerson(id); if(p) { if(p.bilbaoKirolak) countBK++; else countNormal++; } });
+      const collectedTotal = (countBK * quotaBK) + (countNormal * quotaNormal); const surplus = collectedTotal - cost;
+      const payerOptions = `<option value="bote" ${this._smPayer==='bote'?'selected':''}>Fondo común (Bote)</option>` + [...this.players].sort((a,b)=>a.name.localeCompare(b.name)).map(p => `<option value="${p.id}" ${this._smPayer===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+      body = `<h2>Liquidar Partido ${mt}</h2><div class="field-row"><div><label>Cuota (BK)</label><input type="number" id="smInputQuotaBK" step="0.10" min="0" value="${this._smQuotaBK}" oninput="app._smQuotaBK=this.value; app.updateSettleMatchUI()" /></div><div><label>Cuota (Normal)</label><input type="number" id="smInputQuotaNormal" step="0.10" min="0" value="${this._smQuotaNormal}" oninput="app._smQuotaNormal=this.value; app.updateSettleMatchUI()" /></div></div><div class="field-row" style="margin-top:10px;"><div><label>Coste Pista</label><input type="number" id="smInputCost" step="0.05" min="0" value="${this._smCost}" oninput="app._smCost=this.value; app.updateSettleMatchUI()" /></div><div><label>¿Quién pagó?</label><select id="smSelectPayer" onchange="app._smPayer=this.value">${payerOptions}</select></div></div><div class="field-row" style="align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:5px"><label id="smCountLabel" style="margin:0">Cobrar cuota a (${this._smSelected.size})</label><div style="display:flex; gap:6px;"><button class="icon-btn" style="background:var(--turf-soft); border-radius:12px; padding:4px 10px;" onclick="app.selectAllSmPlayers()">Todos</button><button class="icon-btn" style="background:var(--line); border-radius:12px; padding:4px 10px;" onclick="app.clearSmPlayers()">Ninguno</button></div></div><div class="checklist" style="max-height:170px">${presentPlayers.map(p=>`<label><input type="checkbox" data-sm-id="${p.id}" ${this._smSelected.has(p.id)?'checked':''} onchange="app.toggleSmPlayer('${p.id}')" />${escapeHtml(p.name)} ${p.bilbaoKirolak?'<span class="lvl-badge">BK</span>':''} ${String(p.id).startsWith('guest_')?'<span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Inv.</span>':''}<span class="mono sm-price-tag" data-is-bk="${p.bilbaoKirolak?'1':'0'}" style="margin-left:auto;font-size:12px;color:var(--muted)">${this._smSelected.has(p.id)?fmtPlain(p.bilbaoKirolak?quotaBK:quotaNormal):'0.00€'}</span></label>`).join('')}</div><div id="smSummaryBox" class="ticket neutral" style="margin-top:16px; background:var(--chalk); border:1px dashed var(--muted); cursor:default"><div style="font-size:13px; color:var(--ink); width:100%">Recaudación (${countBK} BK + ${countNormal} Norm.): <b style="float:right">${fmtPlain(collectedTotal)}</b><br>Coste pista: <b style="float:right; color:var(--debt)">-${fmtPlain(cost)}</b><br><div style="border-top:1px solid var(--line); margin:6px 0 0 0; padding-top:6px; font-weight:600;">Sobrante al bote: <b style="float:right; color:${surplus>=0?'var(--credit)':'var(--debt)'}">${surplus>=0?'+':''}${fmtPlain(surplus)}</b></div></div></div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitSettleMatch()">Confirmar y Liquidar</button>`;
+    }
+    return `<div class="sheet-backdrop" onclick="if(event.target===this) app.closeModal()"><div class="sheet" style="${skipAnim?'animation:none':''}"><div class="sheet-handle"></div><button class="close-x" onclick="app.closeModal()">✕</button>${body}</div></div>`;
+  }
+
+  updateSettleMatchUI() {
+    const quotaBK = parseFloat(this._smQuotaBK) || 0; const quotaNormal = parseFloat(this._smQuotaNormal) || 0; const cost = parseFloat(this._smCost) || 0;
+    let countBK = 0; let countNormal = 0;
+    this._smSelected.forEach(id => { const p = this.findPresentPerson(id); if(p) { if(p.bilbaoKirolak) countBK++; else countNormal++; } });
+    const collectedTotal = (countBK * quotaBK) + (countNormal * quotaNormal); const surplus = collectedTotal - cost;
+    const lbl = document.getElementById('smCountLabel'); if(lbl) lbl.innerText = `Cobrar cuota a (${this._smSelected.size})`;
+    document.querySelectorAll('[data-sm-id]').forEach(cb => {
+      const id = cb.getAttribute('data-sm-id'); const checked = this._smSelected.has(id); cb.checked = checked;
+      const tag = cb.parentElement.querySelector('.sm-price-tag');
+      if(tag) { const isBk = tag.getAttribute('data-is-bk') === '1'; tag.innerText = checked ? fmtPlain(isBk ? quotaBK : quotaNormal) : '0.00€'; }
+    });
+    const box = document.getElementById('smSummaryBox');
+    if(box) box.innerHTML = `<div style="font-size:13px; color:var(--ink); width:100%">Recaudación (${countBK} BK + ${countNormal} Norm.): <b style="float:right">${fmtPlain(collectedTotal)}</b><br>Coste pista: <b style="float:right; color:var(--debt)">-${fmtPlain(cost)}</b><br><div style="border-top:1px solid var(--line); margin:6px 0 0 0; padding-top:6px; font-weight:600;">Sobrante al bote: <b style="float:right; color:${surplus>=0?'var(--credit)':'var(--debt)'}">${surplus>=0?'+':''}${fmtPlain(surplus)}</b></div></div>`;
+  }
+
+  modScore(matchId, team, val) { 
+    const m = this.matches.find(x => x.id === matchId); 
+    if(m) { 
+      const num = parseInt(val) || 0;
+      if(team === 'rojo') { m.scoreRojo = num; m._manualRojo = (num > 0); }
+      if(team === 'blanco') { m.scoreBlanco = num; m._manualBlanco = (num > 0); }
+      const diffEl = document.getElementById(`goal_diff_status_${m.id}`);
+      if(diffEl) diffEl.innerHTML = this.renderGoalDiffStatus(m);
+    } 
+  }
+
+  modGoal(matchId, playerId, delta, teamColor) {
+    const m = this.matches.find(x => x.id === matchId);
+    if(m) {
+      const prevSum = (teamColor === 'rojo' ? m.teamRojo : m.teamBlanco).reduce((s, p) => s + (m.goals[p.id] || 0), 0);
+      const next = (m.goals[playerId] || 0) + delta; if (next < 0) return; m.goals[playerId] = next;
+      const newSum = prevSum + delta;
+
+      if(teamColor === 'rojo') { 
+        if(!m._manualRojo || m.scoreRojo === prevSum || newSum > m.scoreRojo) {
+          m.scoreRojo = Math.max(0, newSum);
+          if(newSum === 0) m._manualRojo = false;
+        }
+        const el = document.getElementById(`score_rojo_${m.id}`); if(el) el.value = m.scoreRojo; 
+      } else if(teamColor === 'blanco') { 
+        if(!m._manualBlanco || m.scoreBlanco === prevSum || newSum > m.scoreBlanco) {
+          m.scoreBlanco = Math.max(0, newSum);
+          if(newSum === 0) m._manualBlanco = false;
+        }
+        const el = document.getElementById(`score_blanco_${m.id}`); if(el) el.value = m.scoreBlanco; 
+      }
+      const elGoal = document.getElementById(`goal_val_${m.id}_${playerId}`); if(elGoal) elGoal.innerText = next;
+      const diffEl = document.getElementById(`goal_diff_status_${m.id}`); if(diffEl) diffEl.innerHTML = this.renderGoalDiffStatus(m);
+    }
+  }
+
+  finishMatch(matchId) { const m = this.matches.find(x => x.id === matchId); if(m) { delete m._manualRojo; delete m._manualBlanco; m.status = 'completed'; this.save(); this.closeModal(); this.toast('Guardado con éxito'); } }
+  deleteMatch(matchId) { if(confirm('¿Eliminar partido?')) { this.matches = this.matches.filter(m => m.id !== matchId); this.save(); this.closeModal(); this.toast('Eliminado'); } }
+  pickChip(btn, groupId){ document.getElementById(groupId).querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); }
+  savePlayerForm(id){
+    const name = document.getElementById('pName').value.trim(); if(!name){ this.toast('Falta nombre'); return; }
+    const data = { name, type: document.querySelector('#pTypeGroup .chip.active').dataset.val, skill: document.querySelector('#pSkillGroup .chip.active').dataset.val, stamina: document.querySelector('#pStaminaGroup .chip.active').dataset.val, position: document.querySelector('#pPosGroup .chip.active').dataset.val, isRegular: document.querySelector('#pRegGroup .chip.active').dataset.val === 'true', bilbaoKirolak: document.querySelector('#pBKGroup .chip.active').dataset.val === 'true' };
+    id ? this.updatePlayer(id, data) : this.addPlayer(data);
+  }
+  submitQuickTx(playerId, matchType){ let amount = parseFloat(document.getElementById('qtxAmount').value); if(isNaN(amount)){ this.toast('Introduce importe'); return; } amount = (this.qtxSign || 'plus') === 'minus' ? -Math.abs(amount) : Math.abs(amount); const reason = document.getElementById('qtxReason').value; this.qtxSign = null; this._qtxAmount = ''; this._qtxReason = ''; this.addTransaction([playerId], amount, matchType, reason); }
+  toggleSmPlayer(id){ this._smSelected.has(id) ? this._smSelected.delete(id) : this._smSelected.add(id); this.updateSettleMatchUI(); }
+  selectAllSmPlayers(){ this._smSelected = new Set(); this.teamsPresent.forEach(id => this._smSelected.add(id)); this.updateSettleMatchUI(); }
+  clearSmPlayers(){ this._smSelected = new Set(); this.updateSettleMatchUI(); }
+  submitSettleMatch(){
+    const mt = this.teamsMatchType; const quotaBK = parseFloat(this._smQuotaBK) || 0; const quotaNormal = parseFloat(this._smQuotaNormal) || 0; const cost = parseFloat(this._smCost) || 0; const playerIds = Array.from(this._smSelected);
+    localStorage.setItem(`sm_cost_${mt}`, this._smCost); localStorage.setItem(`sm_qbk_${mt}`, this._smQuotaBK); localStorage.setItem(`sm_qnorm_${mt}`, this._smQuotaNormal);
+    let collectedTotal = 0; const idsBK = []; const idsNormal = [];
+    playerIds.forEach(id => { const p = this.findPresentPerson(id); if(p) { if(p.bilbaoKirolak) { collectedTotal += quotaBK; if(!String(id).startsWith('guest_')) idsBK.push(id); } else { collectedTotal += quotaNormal; if(!String(id).startsWith('guest_')) idsNormal.push(id); } } });
+    const surplus = collectedTotal - cost; if(playerIds.length === 0 && surplus === 0 && cost === 0) return;
+    const now = new Date().toISOString();
+    if(idsBK.length > 0 && quotaBK > 0) this.transactions.push({ id:uid(), playerIds: idsBK, amount: -Math.abs(quotaBK), matchType: mt, reason: 'Cuota partido (BK)', createdAt: now });
+    if(idsNormal.length > 0 && quotaNormal > 0) this.transactions.push({ id:uid(), playerIds: idsNormal, amount: -Math.abs(quotaNormal), matchType: mt, reason: 'Cuota partido (Normal)', createdAt: now });
+    if(this._smPayer && this._smPayer !== 'bote' && cost > 0) this.transactions.push({ id:uid(), playerIds: [this._smPayer], amount: Math.abs(cost), matchType: mt, reason: 'Pago pista adelantado', createdAt: now });
+    if(surplus !== 0) this.generalTransactions.push({ id:uid(), amount: surplus, matchType: mt, reason: 'Sobrante partido', createdAt: now });
+    this.save(); this.closeModal(); this.toast('Liquidado automáticamente');
+  }
+  
+  descargarOCompartir(blob, filename) {
+    const file = new File([blob], filename, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ title: filename, files: [file] }).catch(()=>{});
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none'; 
+      a.href = url; 
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 150);
+    }
+  }
+}
+
+let appInstanciada = false;
+function iniciarApp() {
+  if (appInstanciada) return;
+  appInstanciada = true;
+  try {
+    const el = document.getElementById('app');
+    if(!el) return;
+    window.app = new App(); 
+    document.body.addEventListener('click', (e)=>{ if(e.target.closest('.fab') || e.target.closest('.bottom-nav')) return; });
+  } catch(err) {
+    document.body.innerHTML = `<div style="padding:20px;color:red;"><h3>🚨 Error Fatal</h3><pre>${err.message}</pre></div>`;
+  }
+}
+
+if(document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', iniciarApp); } else { iniciarApp(); }
+window.addEventListener('load', iniciarApp); setTimeout(iniciarApp, 500);
+
+document.addEventListener('click', function(e){ const t = e.target.closest('[data-open-add-player]'); if(t) app.openModal('addPlayer'); });
+if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
+window.addEventListener('online', ()=>{ if(window.app && window.app.githubSync && window.app.githubSyncStatus && !window.app.githubSyncStatus.ok){ window.app.pushToGithub(); } });
+// FIN DEL ARCHIVO APP.JS
