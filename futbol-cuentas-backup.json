@@ -669,10 +669,10 @@
   "teamsResult": {
     "teamRojo": [
       {
-        "id": "179372415012419",
-        "name": "Pablo txopo",
+        "id": "1790617571023650",
+        "name": "Gorka",
         "weight": 6,
-        "position": "portero"
+        "position": "defensa"
       },
       {
         "id": "1793725159567774",
@@ -681,16 +681,16 @@
         "position": "defensa"
       },
       {
-        "id": "1790617380927257",
-        "name": "Juan g.",
-        "weight": 5,
+        "id": "1790943842367934",
+        "name": "Josemi totemi",
+        "weight": 3,
         "position": "defensa"
       },
       {
-        "id": "1790616949341112",
-        "name": "Aiert",
-        "weight": 6,
-        "position": "defensa"
+        "id": "1790940529084389",
+        "name": "Tojo",
+        "weight": 7,
+        "position": "medio"
       },
       {
         "id": "1790939947763502",
@@ -707,15 +707,21 @@
     ],
     "teamBlanco": [
       {
-        "id": "1790943842367934",
-        "name": "Josemi totemi",
-        "weight": 3,
+        "id": "179372415012419",
+        "name": "Pablo txopo",
+        "weight": 6,
+        "position": "portero"
+      },
+      {
+        "id": "1790616949341112",
+        "name": "Aiert",
+        "weight": 6,
         "position": "defensa"
       },
       {
-        "id": "1790617571023650",
-        "name": "Gorka",
-        "weight": 6,
+        "id": "1790617380927257",
+        "name": "Juan g.",
+        "weight": 5,
         "position": "defensa"
       },
       {
@@ -731,12 +737,6 @@
         "position": "medio"
       },
       {
-        "id": "1790940529084389",
-        "name": "Tojo",
-        "weight": 7,
-        "position": "medio"
-      },
-      {
         "id": "1790616908815312",
         "name": "Hoyuki Ander",
         "weight": 7,
@@ -744,6 +744,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-08T10:46:20.370Z",
+  "exportDate": "2026-11-08T10:48:05.603Z",
   "version": "2.1"
 }
