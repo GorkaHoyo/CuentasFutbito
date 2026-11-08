@@ -651,7 +651,7 @@
       "_manualBlanco": false
     }
   ],
-  "currentSeason": "",
+  "currentSeason": "2026/2017",
   "teamsMatchType": "F5",
   "teamsPresent": [
     "1790616929299341",
@@ -746,6 +746,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-08T18:38:17.678Z",
+  "exportDate": "2026-11-08T18:38:34.533Z",
   "version": "2.1"
 }
