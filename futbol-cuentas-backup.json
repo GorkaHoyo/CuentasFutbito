@@ -649,68 +649,6 @@
       "status": "completed",
       "_manualRojo": false,
       "_manualBlanco": false
-    },
-    {
-      "id": "match_1794217859375984",
-      "date": "2026-11-09T09:50:59.375Z",
-      "season": "2026/2027",
-      "matchType": "F5",
-      "teamRojo": [
-        {
-          "id": "179372415012419",
-          "name": "Pablo txopo"
-        },
-        {
-          "id": "1790616949341112",
-          "name": "Aiert"
-        },
-        {
-          "id": "1793725159567774",
-          "name": "Gaizka"
-        },
-        {
-          "id": "1790617380927257",
-          "name": "Juan g."
-        },
-        {
-          "id": "1790939947763502",
-          "name": "Julio"
-        },
-        {
-          "id": "1790616929299341",
-          "name": "Txopi Aitor"
-        }
-      ],
-      "teamBlanco": [
-        {
-          "id": "1790943842367934",
-          "name": "Josemi totemi"
-        },
-        {
-          "id": "1790617571023650",
-          "name": "Gorka"
-        },
-        {
-          "id": "1793723109770437",
-          "name": "Carlos"
-        },
-        {
-          "id": "1793722927577154",
-          "name": "Larri"
-        },
-        {
-          "id": "1790940529084389",
-          "name": "Tojo"
-        },
-        {
-          "id": "1790616908815312",
-          "name": "Hoyuki Ander"
-        }
-      ],
-      "scoreRojo": 0,
-      "scoreBlanco": 0,
-      "goals": {},
-      "status": "pending"
     }
   ],
   "currentSeason": "2026/2027",
@@ -809,6 +747,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-09T09:51:00.080Z",
+  "exportDate": "2026-11-09T09:51:08.817Z",
   "version": "2.3"
 }
