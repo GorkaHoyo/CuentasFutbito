@@ -98,9 +98,9 @@ class App {
 
   getAvailableSeasons() {
     const set = new Set(this.customSeasons || []);
-    set.add('2026/2027');
     if(this.currentSeason) set.add(this.currentSeason);
     this.matches.forEach(m => { if(m.season) set.add(m.season); });
+    if(set.size === 0) set.add('2026/2027');
     return Array.from(set).sort().reverse();
   }
 
@@ -128,6 +128,49 @@ class App {
         this._sealSeason = clean;
         this.save();
         this.toast(`Temporada ${clean} activada`);
+      }
+      this.render();
+      return;
+    }
+    if(val === '__RENAME__') {
+      const oldName = this.statSeasonFilter;
+      if(!oldName || oldName === 'ALL') { this.render(); return; }
+      const newName = prompt(`Nuevo nombre para la temporada "${oldName}":`, oldName);
+      if(newName && newName.trim() && newName.trim() !== oldName) {
+        const clean = newName.trim();
+        this.customSeasons = this.customSeasons.filter(s => s !== oldName);
+        if(!this.customSeasons.includes(clean)) this.customSeasons.push(clean);
+        this.matches.forEach(m => { if(m.season === oldName) m.season = clean; });
+        if(this.currentSeason === oldName) this.currentSeason = clean;
+        if(this._sealSeason === oldName) this._sealSeason = clean;
+        this.statSeasonFilter = clean;
+        this.save();
+        this.toast(`Renombrada a ${clean}`);
+      }
+      this.render();
+      return;
+    }
+    if(val === '__DELETE__') {
+      const target = this.statSeasonFilter;
+      if(!target || target === 'ALL') { this.render(); return; }
+      const count = this.matches.filter(m => m.season === target).length;
+      const msg = count > 0
+        ? `⚠️ La temporada "${target}" tiene ${count} ${count===1?'partido registrado':'partidos registrados'}.\n\n¿Seguro que quieres eliminar esta temporada y borrar sus ${count} partidos?`
+        : `¿Seguro que quieres eliminar la temporada "${target}"?`;
+      if(confirm(msg)) {
+        this.customSeasons = this.customSeasons.filter(s => s !== target);
+        if(count > 0) this.matches = this.matches.filter(m => m.season !== target);
+        if(this.currentSeason === target) this.currentSeason = '';
+        const remaining = this.getAvailableSeasons().filter(s => s !== target);
+        const fallback = remaining[0] || '2026/2027';
+        if(!this.customSeasons.includes(fallback) && !this.matches.some(m => m.season === fallback)) {
+          this.customSeasons.push(fallback);
+        }
+        this.currentSeason = fallback;
+        this.statSeasonFilter = fallback;
+        this._sealSeason = fallback;
+        this.save();
+        this.toast(`Temporada ${target} eliminada`);
       }
       this.render();
       return;
@@ -756,9 +799,13 @@ class App {
   renderSeasonFilterBar() {
     const seasons = this.getAvailableSeasons();
     const cur = this.statSeasonFilter || this.currentSeason;
+    const manageOpts = cur !== 'ALL'
+      ? `<option value="__RENAME__">✏️ Renombrar "${escapeHtml(cur)}"...</option><option value="__DELETE__">🗑️ Eliminar "${escapeHtml(cur)}"...</option>`
+      : '';
     const opts = `<option value="ALL" ${cur==='ALL'?'selected':''}>🌟 Histórico (Todas)</option>` +
       seasons.map(s => `<option value="${escapeHtml(s)}" ${cur===s?'selected':''}>${escapeHtml(s)}${s===this.currentSeason?' ⭐':''}</option>`).join('') +
-      `<option value="__NEW__">➕ Nueva temporada...</option>`;
+      `<option value="__NEW__">➕ Nueva temporada...</option>` +
+      manageOpts;
     return `<div class="field-row" style="align-items:flex-end; margin-bottom:14px;">
       <div style="flex:1"><label style="margin-top:0">Temporada</label><select onchange="app.handleSeasonSelect(this.value)" style="font-family:'Inter', sans-serif; font-weight:700; padding:10px 12px;">${opts}</select></div>
       <div><label style="margin-top:0">Modalidad</label><div class="filter-bar" style="margin-bottom:0"><button class="chip ${this.statMatchFilter===''?'active':''}" onclick="app.statMatchFilter='';app.render()">Todos</button><button class="chip ${this.statMatchFilter==='F5'?'active':''}" onclick="app.statMatchFilter='F5';app.render()">F5</button><button class="chip ${this.statMatchFilter==='F7'?'active':''}" onclick="app.statMatchFilter='F7';app.render()">F7</button></div></div>
