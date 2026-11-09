@@ -1,5 +1,5 @@
 // === INICIO DEL ARCHIVO ===
-console.log("🚀 app.js descargado correctamente en el navegador");
+console.log("🚀 app.js v2.5 descargado correctamente en el navegador");
 
 const ICONS = {
   ball: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9.5"/><path d="M12 6.5l4 3-1.5 4.7h-5L8 9.5z"/><path d="M12 2.5v4M2.7 9l3.7 1M4 17l3.5-2.5M20 17l-3.5-2.5M21.3 9l-3.7 1M9 21l1-4M15 21l-1-4"/></svg>`,
@@ -33,6 +33,7 @@ function fmt(n){ const v = Math.round((n + Number.EPSILON) * 100) / 100; return 
 function fmtPlain(n){ return (Math.round((n+Number.EPSILON)*100)/100).toFixed(2) + '€'; }
 function fmtDG(n){ return (n > 0 ? '+' : '') + n; }
 function todayStr(){ return new Date().toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); }
+function localDayKey(isoOrDate){ const d = isoOrDate ? new Date(isoOrDate) : new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function escapeHtml(s){ return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function b64EncodeUnicode(str){ return btoa(unescape(encodeURIComponent(str))); }
 function b64DecodeUnicode(str){ return decodeURIComponent(escape(atob(str.replace(/\n/g,'')))); }
@@ -185,11 +186,15 @@ class App {
     this.render();
   }
 
-  saveTeamsLocal() { 
+  saveTeamsLocalOnly() {
     localStorage.setItem('football-teams-match', this.teamsMatchType); 
     localStorage.setItem('football-teams-present', JSON.stringify(Array.from(this.teamsPresent))); 
     localStorage.setItem('football-teams-guests', JSON.stringify(this.teamsGuests)); 
     localStorage.setItem('football-teams-result', JSON.stringify(this.teamsResult)); 
+  }
+
+  saveTeamsLocal() { 
+    this.saveTeamsLocalOnly();
     this.scheduleGithubPush(); 
   }
 
@@ -221,11 +226,19 @@ class App {
     this._pushTimer = setTimeout(()=>this.pushToGithub(), 700); 
   }
 
-  hardResetApp() {
-    if(confirm('¿Forzar actualización de la app?')) {
-      if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(r => { for(let sw of r) sw.unregister(); window.location.reload(true); });
-      else window.location.reload(true);
-    }
+  async hardResetApp() {
+    if(!confirm('¿Forzar actualización de la app? (Tus datos no se borrarán)')) return;
+    try {
+      if ('caches' in window) {
+        const names = await caches.keys();
+        await Promise.all(names.map(n => caches.delete(n)));
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (let sw of regs) await sw.unregister();
+      }
+    } catch(e) {}
+    window.location.href = window.location.pathname + '?reset=' + Date.now();
   }
   
   async pullFromGithub(silent){
@@ -244,7 +257,7 @@ class App {
       if (json.teamsPresent) this.teamsPresent = new Set(json.teamsPresent);
       if (json.teamsGuests) this.teamsGuests = json.teamsGuests;
       if (json.teamsResult !== undefined) this.teamsResult = json.teamsResult;
-      this.saveLocalOnly(); this.saveTeamsLocal(); this.githubSyncStatus = {ok:true, at:new Date()}; if(!silent) this.toast('Sincronizado con GitHub');
+      this.saveLocalOnly(); this.saveTeamsLocalOnly(); this.githubSyncStatus = {ok:true, at:new Date()}; if(!silent) this.toast('Sincronizado con GitHub');
     } catch(err){ this.githubSyncStatus = {ok:false, error: err.message, at:new Date()}; if(!silent) this.toast(`No se pudo sincronizar: ${err.message}`); } finally { this._isSyncing = false; this.render(); }
   }
 
@@ -253,7 +266,7 @@ class App {
     if(this._isSyncing) { clearTimeout(this._pushTimer); this._pushTimer = setTimeout(()=>this.pushToGithub(), 1000); return; }
     this._isSyncing = true; const branch = this.githubSync.branch ?? 'main'; 
     try {
-      const payload = { players: this.players, transactions: this.transactions, generalTransactions: this.generalTransactions, matches: this.matches, currentSeason: this.currentSeason, customSeasons: this.customSeasons, teamsMatchType: this.teamsMatchType, teamsPresent: Array.from(this.teamsPresent), teamsGuests: this.teamsGuests, teamsResult: this.teamsResult, exportDate: new Date().toISOString(), version: '2.3' };
+      const payload = { players: this.players, transactions: this.transactions, generalTransactions: this.generalTransactions, matches: this.matches, currentSeason: this.currentSeason, customSeasons: this.customSeasons, teamsMatchType: this.teamsMatchType, teamsPresent: Array.from(this.teamsPresent), teamsGuests: this.teamsGuests, teamsResult: this.teamsResult, exportDate: new Date().toISOString(), version: '2.5' };
       const body = { message: 'Actualización app', content: b64EncodeUnicode(JSON.stringify(payload, null, 2)), branch };
       if(this.githubSync.sha) body.sha = this.githubSync.sha;
       const headers = { Authorization: `Bearer ${this.githubSync.token}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' };
@@ -280,6 +293,19 @@ class App {
     credit.sort((a,b)=>a.p.name.localeCompare(b.p.name)); neutral.sort((a,b)=>a.p.name.localeCompare(b.p.name)); debt.sort((a,b)=>a.p.name.localeCompare(b.p.name)); return {credit, neutral, debt};
   }
 
+  copyMorososToClipboard(matchType){
+    const { debt } = this.classify(matchType);
+    if(debt.length === 0){ this.toast(`¡Nadie debe nada en ${matchType}! 🎉`); return; }
+    const totalDebt = debt.reduce((s, x) => s + Math.abs(x.b), 0);
+    const lines = debt.map(x => `• ${x.p.name}: ${fmt(x.b)}`).join('\n');
+    const txt = `💸 *DEUDAS PENDIENTES ${matchType}*\n${lines}\n\n📌 *Total pendiente:* ${fmtPlain(totalDebt)}`;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(()=> this.toast('📋 Lista de deudas copiada'));
+    } else {
+      alert(txt);
+    }
+  }
+
   addPlayer(data){ this.players.push({ id: uid(), name: data.name.trim(), type: data.type, isRegular: data.isRegular, skill: data.skill || 'medio', stamina: data.stamina || 'medio', position: data.position || '', bilbaoKirolak: data.bilbaoKirolak || false, createdAt: new Date().toISOString() }); this.save(); this.closeModal(); this.toast('Añadido'); }
   updatePlayer(id, data){ const p = this.players.find(x=>x.id===id); if(!p) return; Object.assign(p, data); this.save(); this.closeModal(); this.toast('Actualizado'); }
   deletePlayer(id){ if(!confirm('¿Eliminar jugador?')) return; this.players = this.players.filter(p=>p.id!==id); this.transactions = this.transactions.map(t => { if(t.playerIds.includes(id)) { return { ...t, playerIds: t.playerIds.filter(pid=>pid!==id) }; } return t; }).filter(t => t.playerIds.length > 0); this.teamsPresent.delete(id); this.save(); this.closeModal(); this.toast('Eliminado'); }
@@ -291,7 +317,7 @@ class App {
   deleteGeneralTransaction(id){ if(!confirm('¿Eliminar?')) return; this.generalTransactions = this.generalTransactions.filter(t=>t.id!==id); this.save(); this.closeModal(); this.toast('Eliminado'); }
   settleDebt(playerId, matchType, amount){ this.addTransaction([playerId], amount, matchType, 'Saldar deuda'); }
 
-  exportBackup(){ const data = { players:this.players, transactions:this.transactions, generalTransactions:this.generalTransactions, matches:this.matches, currentSeason:this.currentSeason, customSeasons:this.customSeasons, exportDate:new Date().toISOString(), version:'2.3' }; const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); this.descargarOCompartir(blob, `futbol-backup-${new Date().toISOString().slice(0,10)}.json`); this.toast('Exportado'); }
+  exportBackup(){ const data = { players:this.players, transactions:this.transactions, generalTransactions:this.generalTransactions, matches:this.matches, currentSeason:this.currentSeason, customSeasons:this.customSeasons, exportDate:new Date().toISOString(), version:'2.5' }; const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); this.descargarOCompartir(blob, `futbol-backup-${new Date().toISOString().slice(0,10)}.json`); this.toast('Exportado'); }
   importBackup(file){ const reader = new FileReader(); reader.onload = (e)=>{ try{ const data = JSON.parse(e.target.result); if(!confirm('¿Reemplazar datos?')) return; this.players = data.players || []; this.transactions = data.transactions || []; this.generalTransactions = data.generalTransactions || []; this.matches = data.matches || []; if(data.currentSeason) this.currentSeason = data.currentSeason; if(Array.isArray(data.customSeasons)) this.customSeasons = data.customSeasons; this.save(); this.render(); this.toast('Importado'); }catch(err){ alert('Archivo no válido.'); } }; reader.readAsText(file); }
 
   requiredTeamSizes(matchType){ return matchType === 'F5' ? [10,12] : [14, 16]; }
@@ -304,10 +330,26 @@ class App {
     const missingPosition = this.presentWithoutPosition(); if(missingPosition.length > 0){ alert(`Asigna posición a:\n${missingPosition.map(p=>'· '+p.name).join('\n')}`); return; }
     let pool = ids.map(id=>{ const p = this.findPresentPerson(id); if(!p) return null; return { id:p.id, name:p.name, weight: (SKILL_WEIGHT[p.skill] || 3) + (STAMINA_WEIGHT[p.stamina] || 2), position: p.position || 'sin posición' }; }).filter(Boolean);
     const teamRojo=[], teamBlanco=[]; let sumRojo=0, sumBlanco=0;
+    const maxPerTeam = ids.length / 2;
     if(balanced){
       const byPos = {}; pool.forEach(p=>{ if(!byPos[p.position]) byPos[p.position] = []; byPos[p.position].push(p); });
-      Object.values(byPos).forEach(group=>{ group.sort(()=>Math.random()-0.5); group.sort((a,b)=>b.weight-a.weight); group.forEach(pl=>{ if(sumRojo <= sumBlanco){ teamRojo.push(pl); sumRojo += pl.weight; } else { teamBlanco.push(pl); sumBlanco += pl.weight; } }); });
-    } else { pool.sort(()=>Math.random()-0.5); pool.forEach(pl=>{ if(teamRojo.length <= teamBlanco.length){ teamRojo.push(pl); } else { teamBlanco.push(pl); } }); }
+      const posKeys = Object.keys(byPos).sort(()=>Math.random()-0.5);
+      posKeys.forEach(pos=>{
+        const group = byPos[pos];
+        group.sort((a,b) => (b.weight + (Math.random()*0.8 - 0.4)) - (a.weight + (Math.random()*0.8 - 0.4)));
+        group.forEach(pl=>{
+          if(teamRojo.length >= maxPerTeam){ teamBlanco.push(pl); sumBlanco += pl.weight; }
+          else if(teamBlanco.length >= maxPerTeam){ teamRojo.push(pl); sumRojo += pl.weight; }
+          else if(sumRojo < sumBlanco){ teamRojo.push(pl); sumRojo += pl.weight; }
+          else if(sumBlanco < sumRojo){ teamBlanco.push(pl); sumBlanco += pl.weight; }
+          else if(Math.random() < 0.5){ teamRojo.push(pl); sumRojo += pl.weight; }
+          else { teamBlanco.push(pl); sumBlanco += pl.weight; }
+        });
+      });
+    } else {
+      pool.sort(()=>Math.random()-0.5);
+      pool.forEach(pl=>{ if(teamRojo.length < maxPerTeam){ teamRojo.push(pl); } else { teamBlanco.push(pl); } });
+    }
     this.sortByPosition(teamRojo); this.sortByPosition(teamBlanco); this.teamsResult = { teamRojo, teamBlanco }; this.teamsSwapSel = null; this._sealSeason = this.currentSeason; this.saveTeamsLocal(); this.render();
   }
   
@@ -388,6 +430,53 @@ class App {
       return b.pj - a.pj;
     });
     return data;
+  }
+
+  getPlayerRelationships(playerId, season = this.statSeasonFilter, matchTypeFilter = this.statMatchFilter) {
+    const teammates = {};
+    const rivals = {};
+    const matchesToCount = this.matches.filter(m =>
+      m.status === 'completed' &&
+      (season === 'ALL' || m.season === season) &&
+      (!matchTypeFilter || m.matchType === matchTypeFilter) &&
+      (m.teamRojo.some(p => p.id === playerId) || m.teamBlanco.some(p => p.id === playerId))
+    );
+
+    matchesToCount.forEach(m => {
+      const isRojo = m.teamRojo.some(p => p.id === playerId);
+      const myTeam = isRojo ? m.teamRojo : m.teamBlanco;
+      const oppTeam = isRojo ? m.teamBlanco : m.teamRojo;
+      const sR = parseInt(m.scoreRojo) || 0;
+      const sB = parseInt(m.scoreBlanco) || 0;
+      const won = (isRojo && sR > sB) || (!isRojo && sB > sR);
+      const lost = (isRojo && sR < sB) || (!isRojo && sB < sR);
+
+      myTeam.forEach(co => {
+        if (co.id === playerId) return;
+        if (!teammates[co.id]) teammates[co.id] = { name: co.name, pj: 0, wins: 0 };
+        teammates[co.id].pj++;
+        if (won) teammates[co.id].wins++;
+      });
+
+      oppTeam.forEach(op => {
+        if (!rivals[op.id]) rivals[op.id] = { name: op.name, pj: 0, losses: 0 };
+        rivals[op.id].pj++;
+        if (lost) rivals[op.id].losses++;
+      });
+    });
+
+    const bestPartnerObj = Object.values(teammates)
+      .filter(x => x.wins > 0)
+      .sort((a, b) => b.wins - a.wins || (b.wins / b.pj) - (a.wins / a.pj) || b.pj - a.pj)[0];
+
+    const worstRivalObj = Object.values(rivals)
+      .filter(x => x.losses > 0)
+      .sort((a, b) => b.losses - a.losses || (b.losses / b.pj) - (a.losses / a.pj) || b.pj - a.pj)[0];
+
+    return {
+      bestPartner: bestPartnerObj ? `${bestPartnerObj.name} (${bestPartnerObj.wins}V)` : 'Sin victorias aún',
+      worstRival: worstRivalObj ? `${worstRivalObj.name} (${worstRivalObj.losses}D)` : 'Imbatido 🛡️'
+    };
   }
 
   async ensureFonts(){ 
@@ -501,6 +590,83 @@ class App {
     canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `equipos-${this.teamsMatchType}.png`); }, 'image/png');
   }
 
+  async exportMatchResultImage(matchId){
+    const m = this.matches.find(x => x.id === matchId);
+    if(!m) return;
+    await this.ensureFonts();
+    const rows = Math.max(m.teamRojo.length, m.teamBlanco.length);
+    const DPR = 2, W = 820, PAD = 28, cardH = 62 + rows * 44 + 18, H = 226 + cardH + 34;
+    const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
+    const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
+    const rRect = (x,y,w,h,r) => { ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h); };
+
+    ctx.fillStyle = '#F4F7F6'; ctx.fillRect(0,0,W,H);
+    const hdrG = ctx.createLinearGradient(0,0,W,88); hdrG.addColorStop(0,'#071A14'); hdrG.addColorStop(1,'#11422E');
+    ctx.fillStyle = hdrG; ctx.fillRect(0,0,W,88);
+    ctx.fillStyle = '#FFC82C'; ctx.fillRect(0,84,W,4);
+
+    const fechaStr = new Date(m.date).toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    ctx.textAlign = 'left'; ctx.fillStyle = '#FFFFFF'; ctx.font = '800 28px Outfit';
+    ctx.fillText(`⚽ ACTA OFICIAL · ${m.matchType}`, PAD, 44);
+    ctx.font = '600 14px Outfit'; ctx.fillStyle = '#FFC82C';
+    ctx.fillText(`TEMPORADA ${m.season || this.currentSeason}  ·  ${fechaStr.toUpperCase()}`, PAD, 68);
+
+    // Marcador central gigante
+    rRect(PAD, 104, W-PAD*2, 102, 18); ctx.fillStyle = '#0B291E'; ctx.fill();
+    const sR = parseInt(m.scoreRojo) || 0;
+    const sB = parseInt(m.scoreBlanco) || 0;
+    const winTxt = sR > sB ? '🏆 VICTORIA EQUIPO ROJO' : (sB > sR ? '🏆 VICTORIA EQUIPO AZUL' : '🤝 EMPATE');
+
+    ctx.textAlign = 'center';
+    ctx.font = '800 20px Outfit'; ctx.fillStyle = '#FF6B6B'; ctx.fillText('🔴 EQUIPO ROJO', PAD + 160, 152);
+    ctx.font = '800 20px Outfit'; ctx.fillStyle = '#60A5FA'; ctx.fillText('🔵 EQUIPO AZUL', W - PAD - 160, 152);
+
+    rRect(W/2 - 115, 116, 230, 56, 14); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fill();
+    ctx.font = '800 44px Inter'; ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(`${sR}  -  ${sB}`, W/2, 160);
+
+    ctx.font = '700 12px Outfit'; ctx.fillStyle = '#FFC82C';
+    ctx.fillText(winTxt, W/2, 194);
+
+    // Tarjetas de equipos y goleadores
+    const colW = (W - PAD*2 - 24)/2;
+    const drawRoster = (label, list, totalScore, x, headerBg, borderColor) => {
+      rRect(x, 224, colW, cardH, 16); ctx.fillStyle = '#FFFFFF'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = borderColor; ctx.stroke();
+      rRect(x, 224, colW, 50, [16,16,0,0]); ctx.fillStyle = headerBg; ctx.fill();
+      ctx.textAlign = 'left'; ctx.font = '800 18px Outfit'; ctx.fillStyle = '#FFFFFF'; ctx.fillText(label, x+18, 256);
+
+      const sumAssigned = list.reduce((s, p) => s + (m.goals[p.id] || 0), 0);
+      const unassigned = Math.max(0, totalScore - sumAssigned);
+      if(unassigned > 0){
+        ctx.textAlign = 'right'; ctx.font = '700 12px Inter'; ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.fillText(`+${unassigned} p.p./s.a.`, x+colW-14, 255);
+      }
+
+      let ry = 286;
+      list.forEach((p, idx) => {
+        if(idx > 0){ ctx.fillStyle = '#E2EAE6'; ctx.fillRect(x+14, ry-6, colW-28, 1); }
+        const g = m.goals[p.id] || 0;
+        ctx.textAlign = 'left';
+        ctx.font = g > 0 ? '800 16px Outfit' : '600 16px Outfit';
+        ctx.fillStyle = g > 0 ? '#071A14' : '#4B5750';
+        ctx.fillText(p.name.substring(0, 20), x+18, ry+20);
+
+        if(g > 0){
+          rRect(x+colW-86, ry+2, 70, 26, 13); ctx.fillStyle = '#E8F7EE'; ctx.fill();
+          ctx.textAlign = 'center'; ctx.font = '800 13px Inter'; ctx.fillStyle = '#1EA861';
+          ctx.fillText(g === 1 ? '⚽ 1' : `⚽ x${g}`, x+colW-51, ry+20);
+        }
+        ry += 44;
+      });
+    };
+
+    drawRoster('PLANTILLA ROJO', m.teamRojo, sR, PAD, '#D63031', '#D63031');
+    drawRoster('PLANTILLA AZUL', m.teamBlanco, sB, PAD+colW+24, '#1E3A8A', '#1E3A8A');
+
+    canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `resultado-${m.matchType}-${m.date.slice(0,10)}.png`); }, 'image/png');
+  }
+
   async exportClasificacionImage(){
     await this.ensureFonts(); 
     const seasonView = this.statSeasonFilter || this.currentSeason;
@@ -590,8 +756,9 @@ class App {
 
   async exportCromoImage(playerId){
     const seasonView = this.statSeasonFilter || this.currentSeason;
-    const s = this.getSortedClasificacion(seasonView, '').find(x => x.p.id === playerId); if(!s) return; await this.ensureFonts();
-    const DPR = 2, W = 420, H = 560;
+    const s = this.getSortedClasificacion(seasonView, this.statMatchFilter).find(x => x.p.id === playerId); if(!s) return; await this.ensureFonts();
+    const rel = this.getPlayerRelationships(playerId, seasonView, this.statMatchFilter);
+    const DPR = 2, W = 420, H = 625;
     const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
     const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
     const rRect = (x,y,w,h,r) => { ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h); };
@@ -600,29 +767,39 @@ class App {
     ctx.fillStyle = gradient; ctx.fillRect(0,0,W,H);
     rRect(10,10,W-20,H-20,18); ctx.strokeStyle = '#FFC82C'; ctx.lineWidth = 3; ctx.stroke();
 
-    ctx.textAlign = 'center'; ctx.fillStyle = '#FFC82C'; ctx.font = '800 34px Outfit'; ctx.fillText(s.p.name.toUpperCase(), W/2, 64);
+    ctx.textAlign = 'center'; ctx.fillStyle = '#FFC82C'; ctx.font = '800 34px Outfit'; ctx.fillText(s.p.name.toUpperCase(), W/2, 62);
     const posName = POSITION_LABEL[s.p.position] || 'SIN POSICIÓN';
-    const seasonLbl = seasonView === 'ALL' ? 'HISTÓRICO' : seasonView;
-    rRect(W/2 - 130, 78, 260, 30, 15); ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fill();
-    ctx.fillStyle = '#FFFFFF'; ctx.font = '700 13px Outfit'; ctx.fillText(`${posName.toUpperCase()} · ${s.pts} PTS (${seasonLbl})`, W/2, 98);
+    const seasonLbl = (seasonView === 'ALL' ? 'HISTÓRICO' : seasonView) + (this.statMatchFilter ? ` · ${this.statMatchFilter}` : '');
+    rRect(W/2 - 140, 76, 280, 30, 15); ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fill();
+    ctx.fillStyle = '#FFFFFF'; ctx.font = '700 13px Outfit'; ctx.fillText(`${posName.toUpperCase()} · ${s.pts} PTS (${seasonLbl})`, W/2, 96);
 
-    ctx.fillStyle = 'rgba(255,200,44,0.08)'; ctx.beginPath(); ctx.arc(W/2, 215, 80, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,200,44,0.08)'; ctx.beginPath(); ctx.arc(W/2, 208, 78, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = 'rgba(255,200,44,0.35)'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.font = '800 62px Inter'; ctx.fillStyle = '#FFC82C'; ctx.fillText(`${s.winrate}%`, W/2, 232);
-    ctx.font = '700 13px Outfit'; ctx.fillStyle = '#94B8A9'; ctx.fillText(`VICTORIAS (${s.pg}V-${s.pe}E-${s.pp}D)`, W/2, 260);
+    ctx.font = '800 60px Inter'; ctx.fillStyle = '#FFC82C'; ctx.fillText(`${s.winrate}%`, W/2, 224);
+    ctx.font = '700 13px Outfit'; ctx.fillStyle = '#94B8A9'; ctx.fillText(`VICTORIAS (${s.pg}V-${s.pe}E-${s.pp}D)`, W/2, 252);
 
     const drawStatBox = (lbl, val, x, y, w=112, valCol='#FFFFFF') => { 
-      rRect(x-w/2, y-32, w, 64, 12); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fill();
-      ctx.fillStyle = valCol; ctx.font = '800 21px Inter'; ctx.fillText(val, x, y-2); 
+      rRect(x-w/2, y-30, w, 60, 12); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fill();
+      ctx.fillStyle = valCol; ctx.font = '800 20px Inter'; ctx.fillText(val, x, y-2); 
       ctx.fillStyle = '#94B8A9'; ctx.font = '700 11px Outfit'; ctx.fillText(lbl, x, y+18); 
     };
     const rachaStr = s.streak > 0 ? ('🔥 +' + s.streak + 'V') : (s.last3.join('-') || '-');
     const dgCol = s.dg > 0 ? '#2ED573' : (s.dg < 0 ? '#FF6B6B' : '#FFFFFF');
-    drawStatBox('PARTIDOS', s.pj, W/4 - 4, 376, 106); 
-    drawStatBox('GOLES (G/P)', `${s.goles} (${s.gpp.toFixed(1)})`, W/2, 376, 118); 
-    drawStatBox('BALANCE +/-', fmtDG(s.dg), (W/4)*3 + 4, 376, 106, dgCol);
-    drawStatBox('GOLES EQ. (GF-GC)', `${s.gf} - ${s.gc}`, W/3 - 6, 464, 146); 
-    drawStatBox('RACHA ACT.', rachaStr, (W/3)*2 + 6, 464, 146);
+    drawStatBox('PARTIDOS', s.pj, W/4 - 4, 360, 106); 
+    drawStatBox('GOLES (G/P)', `${s.goles} (${s.gpp.toFixed(1)})`, W/2, 360, 118); 
+    drawStatBox('BALANCE +/-', fmtDG(s.dg), (W/4)*3 + 4, 360, 106, dgCol);
+    drawStatBox('GOLES EQ. (GF-GC)', `${s.gf} - ${s.gc}`, W/3 - 6, 440, 146); 
+    drawStatBox('RACHA ACT.', rachaStr, (W/3)*2 + 6, 440, 146);
+
+    // Mejor Socio y Bestia Negra en el Cromo PNG
+    rRect(32, 490, 172, 66, 12); ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fill();
+    ctx.textAlign = 'left'; ctx.font = '700 11px Outfit'; ctx.fillStyle = '#94B8A9'; ctx.fillText('🤝 MEJOR SOCIO', 46, 512);
+    ctx.font = '800 15px Outfit'; ctx.fillStyle = '#2ED573'; ctx.fillText(rel.bestPartner.substring(0, 18), 46, 538);
+
+    rRect(216, 490, 172, 66, 12); ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fill();
+    ctx.textAlign = 'left'; ctx.font = '700 11px Outfit'; ctx.fillStyle = '#94B8A9'; ctx.fillText('😈 BESTIA NEGRA', 230, 512);
+    ctx.font = '800 15px Outfit'; ctx.fillStyle = '#FF6B6B'; ctx.fillText(rel.worstRival.substring(0, 18), 230, 538);
+
     canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `cromo-${s.p.name}.png`); }, 'image/png');
   }
 
@@ -639,6 +816,16 @@ class App {
       this._qtxAmount = '';
       this._qtxReason = '';
       this.qtxSign = 'plus';
+    } else if(type === 'editTx') {
+      const isGen = payload.kind === 'bote';
+      const t = isGen ? this.generalTransactions.find(x => x.id === payload.id) : this.transactions.find(x => x.id === payload.id);
+      if(!t) return;
+      this._editTxKind = payload.kind;
+      this._editTxId = t.id;
+      this._editTxSign = t.amount < 0 ? 'minus' : 'plus';
+      this._editTxAmount = String(Math.abs(t.amount));
+      this._editTxReason = t.reason || '';
+      this._editTxMatchType = t.matchType || 'F5';
     } else if(type === 'resolveMatch') {
       const m = this.matches.find(x => x.id === payload);
       if(m) {
@@ -705,17 +892,28 @@ class App {
   renderResumen(){
     const mt = this.matchFilter; const {credit, neutral, debt} = this.classify(mt);
     const row = (item, kind) => `<div class="ticket ${kind}" onclick="app.openModal('quickTx', {playerId:'${item.p.id}', matchType:'${mt}'})"><div><div class="name">${escapeHtml(item.p.name)}</div><div class="sub">${item.p.type}${item.p.isRegular ? ' · habitual' : ''}</div></div><div class="amt mono ${item.b>0?'pos':(item.b<0?'neg':'zero')}">${fmt(item.b)}</div></div>`;
-    return `${this.renderScoreboard(mt)}<button class="btn btn-sm btn-outline" onclick="app.exportSummaryImage('${mt}')">${ICONS.download} Exportar imagen</button><div class="section-title"><span class="dot" style="background:var(--credit)"></span>Con crédito<span class="count">${credit.length}</span></div>${credit.length ? credit.map(i=>row(i,'credit')).join('') : '<div class="empty-state">Nadie tiene crédito todavía</div>'}<div class="section-title"><span class="dot" style="background:var(--line)"></span>Al día<span class="count">${neutral.length}</span></div>${neutral.length ? neutral.map(i=>row(i,'neutral')).join('') : '<div class="empty-state">—</div>'}<div class="section-title"><span class="dot" style="background:var(--debt)"></span>Con deuda<span class="count">${debt.length}</span></div>${debt.length ? debt.map(i=>row(i,'debt')).join('') : '<div class="empty-state">Nadie tiene deudas 🎉</div>'}`;
+    return `${this.renderScoreboard(mt)}<div class="field-row" style="margin-bottom:4px"><button class="btn btn-sm btn-outline" onclick="app.exportSummaryImage('${mt}')">${ICONS.download} Exportar imagen</button><button class="btn btn-sm btn-outline" onclick="app.copyMorososToClipboard('${mt}')">${ICONS.copy} Copiar deudas (${debt.length})</button></div><div class="section-title"><span class="dot" style="background:var(--credit)"></span>Con crédito<span class="count">${credit.length}</span></div>${credit.length ? credit.map(i=>row(i,'credit')).join('') : '<div class="empty-state">Nadie tiene crédito todavía</div>'}<div class="section-title"><span class="dot" style="background:var(--line)"></span>Al día<span class="count">${neutral.length}</span></div>${neutral.length ? neutral.map(i=>row(i,'neutral')).join('') : '<div class="empty-state">—</div>'}<div class="section-title"><span class="dot" style="background:var(--debt)"></span>Con deuda<span class="count">${debt.length}</span></div>${debt.length ? debt.map(i=>row(i,'debt')).join('') : '<div class="empty-state">Nadie tiene deudas 🎉</div>'}`;
   }
 
   renderJugadores(){
     let list = [...this.players];
     if(this.jugSearch) { const q = this.jugSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); list = list.filter(p=> p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)); }
     if(this.jugFilterType) list = list.filter(p => p.type === this.jugFilterType || p.type === 'F5/F7');
-    if(this.jugFilterRegular) list = list.filter(p=> String(p.isRegular) === this.jugFilterRegular);
+    if(this.jugFilterRegular !== '') list = list.filter(p=> String(p.isRegular !== false) === this.jugFilterRegular);
     list.sort((a,b)=>a.name.localeCompare(b.name));
-    const pList = list.map(p=>{ const total = this.getPlayerTotalBalance(p.id); return `<div class="ticket neutral" onclick="app.openModal('editPlayer',{id:'${p.id}'})"><div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${p.type}${p.isRegular ? ' · habitual' : ' · esporádico'}${p.bilbaoKirolak ? ' · Bilbao Kirolak' : ''}</div></div><div class="amt mono ${total>0?'pos':(total<0?'neg':'zero')}">${fmt(total)}</div></div>`; }).join('');
-    return `<input type="search" id="jugSearchInput" class="search-bar" placeholder="Buscar jugador..." value="${escapeHtml(this.jugSearch)}" oninput="app.jugSearch=this.value; app.render()" /><div class="filter-bar"><button class="chip ${this.jugFilterType===''?'active':''}" onclick="app.jugFilterType='';app.render()">Todos</button><button class="chip ${this.jugFilterType==='F5'?'active':''}" onclick="app.jugFilterType='F5';app.render()">F5</button><button class="chip ${this.jugFilterType==='F7'?'active':''}" onclick="app.jugFilterType='F7';app.render()">F7</button></div><div class="section-title">Jugadores<span class="count">${list.length}</span></div>${pList || '<div class="empty-state">No hay jugadores.</div>'}`;
+    const pList = list.map(p=>{
+      const total = this.getPlayerTotalBalance(p.id);
+      let splitHtml = '';
+      if(p.type === 'F5/F7'){
+        const b5 = this.getPlayerBalance(p.id, 'F5');
+        const b7 = this.getPlayerBalance(p.id, 'F7');
+        const c5 = b5 > 0.001 ? 'var(--credit)' : (b5 < -0.001 ? 'var(--debt)' : 'var(--muted)');
+        const c7 = b7 > 0.001 ? 'var(--credit)' : (b7 < -0.001 ? 'var(--debt)' : 'var(--muted)');
+        splitHtml = `<div class="sub mono" style="margin-top:3px;font-size:11px;">F5: <b style="color:${c5}">${fmt(b5)}</b> · F7: <b style="color:${c7}">${fmt(b7)}</b></div>`;
+      }
+      return `<div class="ticket neutral" onclick="app.openModal('editPlayer',{id:'${p.id}'})"><div><div class="name">${escapeHtml(p.name)}</div><div class="sub">${p.type}${p.isRegular !== false ? ' · habitual' : ' · esporádico'}${p.bilbaoKirolak ? ' · Bilbao Kirolak' : ''}</div>${splitHtml}</div><div class="amt mono ${total>0.001?'pos':(total<-0.001?'neg':'zero')}">${fmt(total)}</div></div>`;
+    }).join('');
+    return `<input type="search" id="jugSearchInput" class="search-bar" placeholder="Buscar jugador..." value="${escapeHtml(this.jugSearch)}" oninput="app.jugSearch=this.value; app.render()" /><div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:10px;"><div class="filter-bar" style="margin-bottom:0"><button class="chip ${this.jugFilterType===''?'active':''}" onclick="app.jugFilterType='';app.render()">Todos</button><button class="chip ${this.jugFilterType==='F5'?'active':''}" onclick="app.jugFilterType='F5';app.render()">F5</button><button class="chip ${this.jugFilterType==='F7'?'active':''}" onclick="app.jugFilterType='F7';app.render()">F7</button></div><div class="filter-bar" style="margin-bottom:0"><button class="chip ${this.jugFilterRegular===''?'active':''}" onclick="app.jugFilterRegular='';app.render()">Todos</button><button class="chip ${this.jugFilterRegular==='true'?'active':''}" onclick="app.jugFilterRegular='true';app.render()">Habituales</button><button class="chip ${this.jugFilterRegular==='false'?'active':''}" onclick="app.jugFilterRegular='false';app.render()">Esporádicos</button></div></div><div class="section-title">Jugadores<span class="count">${list.length}</span></div>${pList || '<div class="empty-state">No hay jugadores.</div>'}`;
   }
 
   renderMovimientos(){ return `<div class="subtabs"><button class="chip ${this.movTab==='jugador'?'active':''}" style="flex:1" onclick="app.movTab='jugador';app.render()">A jugadores</button><button class="chip ${this.movTab==='bote'?'active':''}" style="flex:1" onclick="app.movTab='bote';app.render()">Al bote</button></div>${this.movTab==='jugador' ? this.renderMovJugadorForm() : this.renderMovBoteForm()}`; }
@@ -731,7 +929,7 @@ class App {
 
   renderMovBoteForm(){
     const mt = this._boteMatchType || this.matchFilter; const sign = this._boteSign || 'plus';
-    const hList = this.generalTransactions.filter(t=>t.matchType===mt).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,8).map(t=>`<div class="ticket neutral"><div><div class="name">${t.reason ? escapeHtml(t.reason) : 'Movimiento del bote'}</div><div class="sub">${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div><div style="display:flex;align-items:center;gap:10px"><div class="amt mono ${t.amount>0?'pos':'neg'}">${fmt(t.amount)}</div><button class="icon-btn" onclick="event.stopPropagation();app.deleteGeneralTransaction('${t.id}')">${ICONS.trash}</button></div></div>`).join('');
+    const hList = this.generalTransactions.filter(t=>t.matchType===mt).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,8).map(t=>`<div class="ticket neutral"><div><div class="name">${t.reason ? escapeHtml(t.reason) : 'Movimiento del bote'}</div><div class="sub">${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div><div style="display:flex;align-items:center;gap:8px"><div class="amt mono ${t.amount>0?'pos':'neg'}">${fmt(t.amount)}</div><button class="icon-btn" onclick="event.stopPropagation();app.openModal('editTx',{id:'${t.id}',kind:'bote'})">${ICONS.edit}</button><button class="icon-btn" onclick="event.stopPropagation();app.deleteGeneralTransaction('${t.id}')">${ICONS.trash}</button></div></div>`).join('');
     return `<label>Tipo de partido</label><div class="chip-group"><button class="chip ${mt==='F5'?'active':''}" onclick="app._boteMatchType='F5';app.render()">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="app._boteMatchType='F7';app.render()">F7</button></div><label>Importe</label><div class="sign-toggle"><button class="${sign==='plus'?'active plus':''}" onclick="app._boteSign='plus';app.render()">+ Ingreso</button><button class="${sign==='minus'?'active minus':''}" onclick="app._boteSign='minus';app.render()">− Gasto</button></div><input type="number" step="0.01" min="0" id="boteAmountInput" placeholder="0.00" value="${this._boteAmount || ''}" oninput="app._boteAmount=this.value" style="margin-top:8px" /><label>Motivo (opcional)</label><input type="text" id="boteReasonInput" placeholder="Balón, pista..." value="${this._boteReason || ''}" oninput="app._boteReason=this.value" /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitMovBote()">Registrar en el bote</button><div class="section-title" style="margin-top:24px">Últimos movimientos</div>${hList || '<div class="empty-state">Sin movimientos</div>'}`;
   }
   submitMovBote(){ const mt = this._boteMatchType || this.matchFilter; let amount = parseFloat(this._boteAmount); if(isNaN(amount)){ this.toast('Introduce importe'); return; } amount = (this._boteSign || 'plus') === 'minus' ? -Math.abs(amount) : Math.abs(amount); this.addGeneralTransaction(amount, mt, this._boteReason); this._boteAmount=''; this._boteReason=''; this.render(); }
@@ -741,6 +939,19 @@ class App {
     if(!confirm('¿Vaciar toda la lista de convocados de hoy?')) return;
     this.teamsPresent = new Set(); this.teamsGuests = []; this.teamsResult = null;
     this.saveTeamsLocal(); this.render(); this.toast('Convocatoria vaciada');
+  }
+
+  isSettledToday(matchType){
+    const todayKey = localDayKey();
+    return this.transactions.some(t => t.matchType === matchType && localDayKey(t.createdAt) === todayKey && (t.reason || '').startsWith('Cuota partido'));
+  }
+
+  handleSettleMatchClick(){
+    const mt = this.teamsMatchType;
+    if(this.isSettledToday(mt)){
+      if(!confirm(`⚠️ Ya habéis liquidado un partido de ${mt} en el día de hoy.\n\n¿Seguro que quieres abrir la liquidación y volver a cobrar las cuotas?`)) return;
+    }
+    this.openModal('settleMatch');
   }
 
   renderEquipos(){
@@ -765,7 +976,11 @@ class App {
     const limpiarSearchBtn = this.teamsSearch ? `<button onclick="app.teamsSearch=''; app.render();" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); border:0; background:var(--pitch); color:#fff; border-radius:100px; padding:5px 12px; font-size:12px; font-weight:700; cursor:pointer;">✕ Limpiar</button>` : '';
     const warnSize = !sizeOk ? `<div class="empty-state" style="text-align:left;padding:8px 2px">Hacen falta exactamente ${required.join(' o ')} jugadores.</div>` : '';
     const warnPos = (sizeOk && missingPosition.length > 0) ? `<div class="empty-state" style="text-align:left;padding:8px 2px;color:var(--debt)">Falta asignar posición a: ${missingPosition.map(p=>escapeHtml(p.name)).join(', ')}.</div>` : '';
-    const settleBtn = count > 0 ? `<button class="btn btn-block" style="margin-top:12px; background:var(--gold-soft); color:#8a5a12; border:1.5px solid var(--gold);" onclick="app.openModal('settleMatch')">💰 Liquidar Partido</button>` : '';
+    const settledToday = this.isSettledToday(mt);
+    const settleBtn = count > 0 ? (settledToday
+      ? `<button class="btn btn-block" style="margin-top:12px; background:var(--turf-soft); color:var(--credit); border:1.5px solid var(--credit);" onclick="app.handleSettleMatchClick()">✅ Partido ya liquidado hoy (Re-liquidar)</button>`
+      : `<button class="btn btn-block" style="margin-top:12px; background:var(--gold-soft); color:#8a5a12; border:1.5px solid var(--gold);" onclick="app.handleSettleMatchClick()">💰 Liquidar Partido</button>`
+    ) : '';
 
     return `<div class="field-row" style="align-items:center; justify-content:space-between;"><label style="margin:0">Tipo de partido</label>${vaciarBtn}</div>
     <div class="chip-group" style="margin-top:6px"><button class="chip ${mt==='F5'?'active':''}" onclick="if(app.teamsMatchType!=='F5'){app.teamsMatchType='F5';app.teamsResult=null;app.saveTeamsLocal();app.render();}">F5</button><button class="chip ${mt==='F7'?'active':''}" onclick="if(app.teamsMatchType!=='F7'){app.teamsMatchType='F7';app.teamsResult=null;app.saveTeamsLocal();app.render();}">F7</button></div>
@@ -892,7 +1107,7 @@ class App {
     if(this.histMatchFilter) all = all.filter(t=>t.matchType===this.histMatchFilter);
     if(this.histSearch){ const q = this.histSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); all = all.filter(t=>{ const names = (t.playerIds || []).map(id=> this.players.find(x=>x.id===id)?.name || '').join(' ').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); const resText = (t.reason || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); return names.includes(q) || resText.includes(q); }); }
     all.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)); const totalItems = all.length; all = all.slice(0, this.histLimit);
-    const tList = all.map(t=>{ const names = t.kind==='jugador' ? (t.playerIds || []).map(id=> this.players.find(x=>x.id===id)?.name || '(borrado)').join(', ') : 'Bote general'; return `<div class="ticket ${t.amount>0 ? 'credit' : 'debt'}"><div><div class="name">${escapeHtml(names)}</div><div class="sub">${t.matchType} · ${t.reason ? escapeHtml(t.reason) : 'sin motivo'} · ${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div><div style="display:flex;align-items:center;gap:8px"><div class="amt mono ${t.amount>0 ? 'pos' : 'neg'}">${fmt(t.amount)}</div><button class="icon-btn" onclick="app.${t.kind==='jugador' ? 'deleteTransaction' : 'deleteGeneralTransaction'}('${t.id}')">${ICONS.trash}</button></div></div>`; }).join('');
+    const tList = all.map(t=>{ const names = t.kind==='jugador' ? (t.playerIds || []).map(id=> this.players.find(x=>x.id===id)?.name || '(borrado)').join(', ') : 'Bote general'; return `<div class="ticket ${t.amount>0 ? 'credit' : 'debt'}" style="cursor:default"><div><div class="name">${escapeHtml(names)}</div><div class="sub">${t.matchType} · ${t.reason ? escapeHtml(t.reason) : 'sin motivo'} · ${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div><div style="display:flex;align-items:center;gap:6px"><div class="amt mono ${t.amount>0 ? 'pos' : 'neg'}">${fmt(t.amount)}</div><button class="icon-btn" title="Editar" onclick="app.openModal('editTx',{id:'${t.id}',kind:'${t.kind}'})">${ICONS.edit}</button><button class="icon-btn" title="Eliminar" onclick="app.${t.kind==='jugador' ? 'deleteTransaction' : 'deleteGeneralTransaction'}('${t.id}')">${ICONS.trash}</button></div></div>`; }).join('');
     return `<input type="search" id="histSearchInput" class="search-bar" placeholder="Buscar en historial..." value="${escapeHtml(this.histSearch)}" oninput="app.histSearch=this.value;app.histLimit=40;app.render()" /><div class="filter-bar"><button class="chip ${this.histMatchFilter===''?'active':''}" onclick="app.histMatchFilter='';app.histLimit=40;app.render()">Todos</button><button class="chip ${this.histMatchFilter==='F5'?'active':''}" onclick="app.histMatchFilter='F5';app.histLimit=40;app.render()">F5</button><button class="chip ${this.histMatchFilter==='F7'?'active':''}" onclick="app.histMatchFilter='F7';app.histLimit=40;app.render()">F7</button></div>${tList || '<div class="empty-state">Sin movimientos</div>'}${this.histLimit < totalItems ? `<button class="btn btn-outline btn-block" style="margin-top:16px" onclick="app.histLimit += 40; app.render()">Cargar más (${totalItems - this.histLimit})</button>` : ''}`;
   }
 
@@ -921,21 +1136,28 @@ class App {
       const seasons = this.getAvailableSeasons();
       const sOpts = seasons.map(s => `<option value="${escapeHtml(s)}" ${m.season===s?'selected':''}>Temporada ${escapeHtml(s)}</option>`).join('');
       const renderTeamGoals = (team, color) => team.map(p => { const goles = m.goals[p.id] || 0; return `<div class="team-player"><span style="font-weight:600">${escapeHtml(p.name)}</span><div class="goal-counter"><button onclick="app.modGoal('${m.id}', '${p.id}', -1, '${color}')">-</button><span id="goal_val_${m.id}_${p.id}">${goles}</span><button onclick="app.modGoal('${m.id}', '${p.id}', 1, '${color}')">+</button></div></div>`; }).join('');
-      body = `<h2>${m.status === 'pending' ? 'Anotar Resultado' : 'Editar Partido'}</h2><div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin:8px 0 12px;"><span class="sub" style="margin:0;">Temporada del partido:</span><select onchange="app.modMatchSeason('${m.id}', this.value)" style="width:auto; padding:6px 12px; font-weight:700; font-size:13px;">${sOpts}</select></div><div class="score-input-group"><div style="text-align:center"><div style="color:var(--debt);font-weight:700;margin-bottom:4px">ROJO</div><input type="number" min="0" id="score_rojo_${m.id}" value="${m.scoreRojo}" oninput="app.modScore('${m.id}', 'rojo', this.value)" /></div><span>-</span><div style="text-align:center"><div style="color:#1E3A8A;font-weight:700;margin-bottom:4px">AZUL</div><input type="number" min="0" id="score_blanco_${m.id}" value="${m.scoreBlanco}" oninput="app.modScore('${m.id}', 'blanco', this.value)" /></div></div><div id="goal_diff_status_${m.id}">${this.renderGoalDiffStatus(m)}</div><div class="section-title">Goleadores Rojo 🔴</div><div class="team-card" style="border-left:4px solid var(--debt); padding: 4px 12px">${renderTeamGoals(m.teamRojo, 'rojo')}</div><div class="section-title">Goleadores Azul 🔵</div><div class="team-card" style="border-left:4px solid #1E3A8A; padding: 4px 12px">${renderTeamGoals(m.teamBlanco, 'blanco')}</div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.finishMatch('${m.id}')">💾 Guardar Partido</button><button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.deleteMatch('${m.id}')">🗑️ Eliminar</button>`;
+      body = `<h2>${m.status === 'pending' ? 'Anotar Resultado' : 'Editar Partido'}</h2><div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin:8px 0 12px;"><span class="sub" style="margin:0;">Temporada del partido:</span><select onchange="app.modMatchSeason('${m.id}', this.value)" style="width:auto; padding:6px 12px; font-weight:700; font-size:13px;">${sOpts}</select></div><div class="score-input-group"><div style="text-align:center"><div style="color:var(--debt);font-weight:700;margin-bottom:4px">ROJO</div><input type="number" min="0" id="score_rojo_${m.id}" value="${m.scoreRojo}" oninput="app.modScore('${m.id}', 'rojo', this.value)" /></div><span>-</span><div style="text-align:center"><div style="color:#1E3A8A;font-weight:700;margin-bottom:4px">AZUL</div><input type="number" min="0" id="score_blanco_${m.id}" value="${m.scoreBlanco}" oninput="app.modScore('${m.id}', 'blanco', this.value)" /></div></div><div id="goal_diff_status_${m.id}">${this.renderGoalDiffStatus(m)}</div><div class="section-title">Goleadores Rojo 🔴</div><div class="team-card" style="border-left:4px solid var(--debt); padding: 4px 12px">${renderTeamGoals(m.teamRojo, 'rojo')}</div><div class="section-title">Goleadores Azul 🔵</div><div class="team-card" style="border-left:4px solid #1E3A8A; padding: 4px 12px">${renderTeamGoals(m.teamBlanco, 'blanco')}</div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.finishMatch('${m.id}')">💾 Guardar Partido</button><button class="btn btn-gold btn-block" style="margin-top:8px" onclick="app.exportMatchResultImage('${m.id}')">📸 Exportar Resultado del Partido</button><button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.deleteMatch('${m.id}')">🗑️ Eliminar</button>`;
     } else if(type==='cromoPlayer'){
       const seasonView = this.statSeasonFilter || this.currentSeason;
-      const dataStats = this.getSortedClasificacion(seasonView, '');
+      const dataStats = this.getSortedClasificacion(seasonView, this.statMatchFilter);
       const s = dataStats.find(x => x.p.id === payload); if(!s) return '';
+      const rel = this.getPlayerRelationships(payload, seasonView, this.statMatchFilter);
       const rachaTxt = s.streak > 0 ? ('🔥 +' + s.streak + 'V') : (s.last3.join('-') || '-');
       const dgCol = s.dg > 0 ? '#2ED573' : (s.dg < 0 ? '#FF6B6B' : 'var(--chalk)');
-      const seasonBadge = seasonView === 'ALL' ? 'HISTÓRICO' : seasonView;
-      body = `<div class="cromo-preview" id="cromoCapture"><h3>${escapeHtml(s.p.name.toUpperCase())}</h3><div class="pos-badge">${POSITION_LABEL[s.p.position] || 'SIN POSICIÓN'} · ${s.pts} PTS (${seasonBadge})</div><div class="cromo-grid"><div class="cromo-stat"><div class="val">${s.winrate}%</div><div class="lbl">Victoria (${s.pg}V-${s.pe}E-${s.pp}D)</div></div><div class="cromo-stat"><div class="val">${s.goles}</div><div class="lbl">Goles (${s.gpp.toFixed(2)} G/P)</div></div><div class="cromo-stat"><div class="val" style="color:${dgCol}">${fmtDG(s.dg)}</div><div class="lbl">Balance (${s.gf}GF-${s.gc}GC)</div></div><div class="cromo-stat"><div class="val">${rachaTxt}</div><div class="lbl">Racha (${s.pj} PJ)</div></div></div></div><button class="btn btn-gold btn-block" onclick="app.exportCromoImage('${s.p.id}')">📸 Exportar Cromo</button>`;
+      const seasonBadge = (seasonView === 'ALL' ? 'HISTÓRICO' : seasonView) + (this.statMatchFilter ? ` · ${this.statMatchFilter}` : '');
+      body = `<div class="cromo-preview" id="cromoCapture"><h3>${escapeHtml(s.p.name.toUpperCase())}</h3><div class="pos-badge">${POSITION_LABEL[s.p.position] || 'SIN POSICIÓN'} · ${s.pts} PTS (${seasonBadge})</div><div class="cromo-grid"><div class="cromo-stat"><div class="val">${s.winrate}%</div><div class="lbl">Victoria (${s.pg}V-${s.pe}E-${s.pp}D)</div></div><div class="cromo-stat"><div class="val">${s.goles}</div><div class="lbl">Goles (${s.gpp.toFixed(2)} G/P)</div></div><div class="cromo-stat"><div class="val" style="color:${dgCol}">${fmtDG(s.dg)}</div><div class="lbl">Balance (${s.gf}GF-${s.gc}GC)</div></div><div class="cromo-stat"><div class="val">${rachaTxt}</div><div class="lbl">Racha (${s.pj} PJ)</div></div><div class="cromo-stat"><div class="val" style="font-size:15px;color:#2ED573">${escapeHtml(rel.bestPartner)}</div><div class="lbl">🤝 Mejor Socio</div></div><div class="cromo-stat"><div class="val" style="font-size:15px;color:#FF6B6B">${escapeHtml(rel.worstRival)}</div><div class="lbl">😈 Bestia Negra</div></div></div></div><button class="btn btn-gold btn-block" onclick="app.exportCromoImage('${s.p.id}')">📸 Exportar Cromo</button>`;
     } else if(type==='quickTx'){
       const p = this.players.find(x=>x.id===payload.playerId); const bal = this.getPlayerBalance(p.id, payload.matchType);
       const lastTxs = this.transactions.filter(t => t.playerIds.includes(p.id)).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 4);
       const txHistHtml = lastTxs.length ? `<div class="section-title" style="margin-top:18px">Últimos movimientos de ${escapeHtml(p.name)}</div>` + lastTxs.map(t => `<div class="ticket ${t.amount>0?'credit':'debt'}" style="padding:8px 12px; margin-bottom:6px; cursor:default"><div><div class="name" style="font-size:13px">${t.reason ? escapeHtml(t.reason) : 'Sin motivo'}</div><div class="sub">${t.matchType} · ${new Date(t.createdAt).toLocaleDateString('es-ES')}</div></div><div class="amt mono ${t.amount>0?'pos':'neg'}" style="font-size:14px">${fmt(t.amount)}</div></div>`).join('') : '';
       const settleBtn = bal < -0.001 ? `<button class="btn btn-outline btn-block" style="margin-top:10px; border-color:var(--credit); color:var(--credit);" onclick="app.settleDebt('${p.id}', '${payload.matchType}',${Math.abs(bal)})">✅ Saldar deuda (${fmtPlain(Math.abs(bal))})</button>` : '';
       body = `<h2>${escapeHtml(p.name)}</h2><div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:10px">Saldo actual ${payload.matchType}: <b class="mono">${fmt(bal)}</b></div><label>Importe</label><div class="sign-toggle"><button id="qtxPlus" class="${this.qtxSign==='minus' ? '' : 'active plus'}" onclick="app.qtxSign='plus';app.render()">+ Abona</button><button id="qtxMinus" class="${this.qtxSign==='minus' ? 'active minus' : ''}" onclick="app.qtxSign='minus';app.render()">− Carga</button></div><input type="number" step="0.01" min="0" id="qtxAmount" placeholder="0.00" value="${this._qtxAmount || ''}" oninput="app._qtxAmount=this.value" style="margin-top:8px" /><label>Motivo</label><input type="text" id="qtxReason" placeholder="Partido, balón..." value="${this._qtxReason || ''}" oninput="app._qtxReason=this.value" /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitQuickTx('${p.id}','${payload.matchType}')">Registrar</button>${settleBtn}${txHistHtml}`;
+    } else if(type==='editTx'){
+      const isGen = this._editTxKind === 'bote';
+      const t = isGen ? this.generalTransactions.find(x => x.id === this._editTxId) : this.transactions.find(x => x.id === this._editTxId);
+      if(!t) { this.modal = null; return ''; }
+      const who = isGen ? 'Bote general' : (t.playerIds || []).map(id => this.players.find(x=>x.id===id)?.name || '(borrado)').join(', ');
+      body = `<h2>Editar movimiento</h2><div class="sub" style="margin-bottom:10px">${escapeHtml(who)}</div><label>Modalidad</label><div class="chip-group"><button class="chip ${this._editTxMatchType==='F5'?'active':''}" onclick="app._editTxMatchType='F5';app.render()">F5</button><button class="chip ${this._editTxMatchType==='F7'?'active':''}" onclick="app._editTxMatchType='F7';app.render()">F7</button></div><label>Importe</label><div class="sign-toggle"><button class="${this._editTxSign==='plus'?'active plus':''}" onclick="app._editTxSign='plus';app.render()">+ ${isGen?'Ingreso':'Abona'}</button><button class="${this._editTxSign==='minus'?'active minus':''}" onclick="app._editTxSign='minus';app.render()">− ${isGen?'Gasto':'Carga'}</button></div><input type="number" step="0.01" min="0" id="editTxAmount" value="${escapeHtml(this._editTxAmount)}" oninput="app._editTxAmount=this.value" style="margin-top:8px" /><label>Motivo</label><input type="text" id="editTxReason" value="${escapeHtml(this._editTxReason)}" oninput="app._editTxReason=this.value" placeholder="Motivo..." /><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitEditTx()">💾 Guardar cambios</button>`;
     } else if(type==='addGuest'){
       body = `<h2>Jugador invitado</h2><div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:6px">Solo para los equipos de hoy.</div><label>Nombre</label><input type="text" id="guestName" placeholder="Nombre" /><label>Técnica</label><div class="chip-group" id="guestSkillGroup">${Object.keys(SKILL_LABEL).map(s=>`<button class="chip ${s==='medio'?'active':''}" data-val="${s}" onclick="app.pickChip(this,'guestSkillGroup')">${SKILL_LABEL[s]}</button>`).join('')}</div><label>Físico</label><div class="chip-group" id="guestStaminaGroup">${Object.keys(STAMINA_LABEL).map(s=>`<button class="chip ${s==='medio'?'active':''}" data-val="${s}" onclick="app.pickChip(this,'guestStaminaGroup')">${STAMINA_LABEL[s]}</button>`).join('')}</div><label>Posición</label><div class="chip-group" id="guestPosGroup"><button class="chip active" data-val="" onclick="app.pickChip(this,'guestPosGroup')">-</button>${POSITIONS.map(pos=>`<button class="chip" data-val="${pos}" onclick="app.pickChip(this,'guestPosGroup')">${pos}</button>`).join('')}</div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitGuest()">Añadir a la lista de hoy</button>`;
     } else if(type==='settleMatch'){
@@ -946,6 +1168,21 @@ class App {
       body = `<h2>Liquidar Partido ${mt}</h2><div class="field-row"><div><label>Cuota (BK)</label><input type="number" id="smInputQuotaBK" step="0.10" min="0" value="${this._smQuotaBK}" oninput="app._smQuotaBK=this.value; app.updateSettleMatchUI()" /></div><div><label>Cuota (Normal)</label><input type="number" id="smInputQuotaNormal" step="0.10" min="0" value="${this._smQuotaNormal}" oninput="app._smQuotaNormal=this.value; app.updateSettleMatchUI()" /></div></div><div class="field-row" style="margin-top:10px;"><div><label>Coste Pista</label><input type="number" id="smInputCost" step="0.05" min="0" value="${this._smCost}" oninput="app._smCost=this.value; app.updateSettleMatchUI()" /></div><div><label>¿Quién pagó?</label><select id="smSelectPayer" onchange="app._smPayer=this.value">${payerOptions}</select></div></div><div class="field-row" style="align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:5px"><label id="smCountLabel" style="margin:0">Cobrar cuota a (${this._smSelected.size})</label><div style="display:flex; gap:6px;"><button class="icon-btn" style="background:var(--turf-soft); border-radius:12px; padding:4px 10px;" onclick="app.selectAllSmPlayers()">Todos</button><button class="icon-btn" style="background:var(--line); border-radius:12px; padding:4px 10px;" onclick="app.clearSmPlayers()">Ninguno</button></div></div><div class="checklist" style="max-height:170px">${presentPlayers.map(p=>`<label><input type="checkbox" data-sm-id="${p.id}" ${this._smSelected.has(p.id)?'checked':''} onchange="app.toggleSmPlayer('${p.id}')" />${escapeHtml(p.name)} ${p.bilbaoKirolak?'<span class="lvl-badge">BK</span>':''} ${String(p.id).startsWith('guest_')?'<span class="lvl-badge" style="background:var(--gold-soft);color:#8a5a12">Inv.</span>':''}<span class="mono sm-price-tag" data-is-bk="${p.bilbaoKirolak?'1':'0'}" style="margin-left:auto;font-size:12px;color:var(--muted)">${this._smSelected.has(p.id)?fmtPlain(p.bilbaoKirolak?quotaBK:quotaNormal):'0.00€'}</span></label>`).join('')}</div><div id="smSummaryBox" class="ticket neutral" style="margin-top:16px; background:var(--chalk); border:1px dashed var(--muted); cursor:default"><div style="font-size:13px; color:var(--ink); width:100%">Recaudación (${countBK} BK + ${countNormal} Norm.): <b style="float:right">${fmtPlain(collectedTotal)}</b><br>Coste pista: <b style="float:right; color:var(--debt)">-${fmtPlain(cost)}</b><br><div style="border-top:1px solid var(--line); margin:6px 0 0 0; padding-top:6px; font-weight:600;">Sobrante al bote: <b style="float:right; color:${surplus>=0?'var(--credit)':'var(--debt)'}">${surplus>=0?'+':''}${fmtPlain(surplus)}</b></div></div></div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.submitSettleMatch()">Confirmar y Liquidar</button>`;
     }
     return `<div class="sheet-backdrop" onclick="if(event.target===this) app.closeModal()"><div class="sheet" style="${skipAnim?'animation:none':''}"><div class="sheet-handle"></div><button class="close-x" onclick="app.closeModal()">✕</button><div id="modalBodyContent">${body}</div></div></div>`;
+  }
+
+  submitEditTx(){
+    let amount = parseFloat(this._editTxAmount);
+    if(isNaN(amount) || amount === 0){ this.toast('Introduce un importe válido'); return; }
+    amount = this._editTxSign === 'minus' ? -Math.abs(amount) : Math.abs(amount);
+    const isGen = this._editTxKind === 'bote';
+    const t = isGen ? this.generalTransactions.find(x => x.id === this._editTxId) : this.transactions.find(x => x.id === this._editTxId);
+    if(!t) return;
+    t.amount = amount;
+    t.reason = (this._editTxReason || '').trim();
+    t.matchType = this._editTxMatchType;
+    this.save();
+    this.closeModal();
+    this.toast('Movimiento actualizado');
   }
 
   updateSettleMatchUI() {
@@ -1067,4 +1304,4 @@ window.addEventListener('load', iniciarApp); setTimeout(iniciarApp, 500);
 document.addEventListener('click', function(e){ const t = e.target.closest('[data-open-add-player]'); if(t) app.openModal('addPlayer'); });
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
 window.addEventListener('online', ()=>{ if(window.app && window.app.githubSync && window.app.githubSyncStatus && !window.app.githubSyncStatus.ok){ window.app.pushToGithub(); } });
-// === FINn DE APP.JS ===
+// === FIN DEL ARCHIVO APP.JS ===
