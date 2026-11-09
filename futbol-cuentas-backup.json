@@ -652,6 +652,7 @@
     }
   ],
   "currentSeason": "2026/2027",
+  "customSeasons": [],
   "teamsMatchType": "F5",
   "teamsPresent": [
     "1790616929299341",
@@ -746,6 +747,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-09T08:31:54.006Z",
-  "version": "2.1"
+  "exportDate": "2026-11-09T08:54:41.474Z",
+  "version": "2.2"
 }
