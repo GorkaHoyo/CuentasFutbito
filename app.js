@@ -85,12 +85,60 @@ class App {
     this.transactions = safeArray('football-transactions');
     this.generalTransactions = safeArray('football-general-transactions');
     this.matches = safeArray('football-matches');
+    this.customSeasons = safeArray('football-seasons-list');
     this.currentSeason = localStorage.getItem('football-season') || '2026/2027';
+    if(!this.statSeasonFilter) this.statSeasonFilter = this.currentSeason;
+    if(!this._sealSeason) this._sealSeason = this.currentSeason;
     this.teamsMatchType = localStorage.getItem('football-teams-match') || 'F5';
     try { const parsed = JSON.parse(localStorage.getItem('football-teams-present')); this.teamsPresent = new Set(Array.isArray(parsed) ? parsed : []); } catch(e) { this.teamsPresent = new Set(); }
     try { const parsed = JSON.parse(localStorage.getItem('football-teams-guests')); this.teamsGuests = Array.isArray(parsed) ? parsed : []; } catch(e) { this.teamsGuests = []; }
     try { this.teamsResult = JSON.parse(localStorage.getItem('football-teams-result')); } catch(e) { this.teamsResult = null; }
     this.teamsSwapSel = null;
+  }
+
+  getAvailableSeasons() {
+    const set = new Set(this.customSeasons || []);
+    set.add('2026/2027');
+    if(this.currentSeason) set.add(this.currentSeason);
+    this.matches.forEach(m => { if(m.season) set.add(m.season); });
+    return Array.from(set).sort().reverse();
+  }
+
+  suggestNextSeason() {
+    const seasons = this.getAvailableSeasons();
+    const latest = seasons[0] || this.currentSeason || '2026/2027';
+    const match = latest.match(/^(\d{4})[\/\-](\d{4})$/);
+    if(match) {
+      const y1 = parseInt(match[1]) + 1;
+      const y2 = parseInt(match[2]) + 1;
+      return `${y1}/${y2}`;
+    }
+    return '';
+  }
+
+  handleSeasonSelect(val) {
+    if(val === '__NEW__') {
+      const sug = this.suggestNextSeason();
+      const name = prompt('Nombre de la nueva temporada (se marcará como la temporada activa para futuros partidos):', sug);
+      if(name && name.trim()) {
+        const clean = name.trim();
+        if(!this.customSeasons.includes(clean)) this.customSeasons.push(clean);
+        this.currentSeason = clean;
+        this.statSeasonFilter = clean;
+        this._sealSeason = clean;
+        this.save();
+        this.toast(`Temporada ${clean} activada`);
+      }
+      this.render();
+      return;
+    }
+    this.statSeasonFilter = val;
+    if(val !== 'ALL') {
+      this.currentSeason = val;
+      this._sealSeason = val;
+      this.saveLocalOnly();
+    }
+    this.render();
   }
 
   saveTeamsLocal() { 
@@ -107,6 +155,7 @@ class App {
     localStorage.setItem('football-general-transactions', JSON.stringify(this.generalTransactions)); 
     localStorage.setItem('football-matches', JSON.stringify(this.matches));
     localStorage.setItem('football-season', this.currentSeason);
+    localStorage.setItem('football-seasons-list', JSON.stringify(this.customSeasons));
   }
 
   save() { this.saveLocalOnly(); this.scheduleGithubPush(); }
@@ -145,7 +194,8 @@ class App {
       const data = await res.json(); this.githubSync.sha = data.sha; this.saveGithubConfig(this.githubSync);
       const json = JSON.parse(b64DecodeUnicode(data.content));
       this.players = json.players ?? []; this.transactions = json.transactions ?? []; this.generalTransactions = json.generalTransactions ?? []; this.matches = json.matches ?? [];
-      if (json.currentSeason) this.currentSeason = json.currentSeason;
+      if (Array.isArray(json.customSeasons)) this.customSeasons = json.customSeasons;
+      if (json.currentSeason) { this.currentSeason = json.currentSeason; this._sealSeason = json.currentSeason; if(this.statSeasonFilter !== 'ALL') this.statSeasonFilter = json.currentSeason; }
       if (json.teamsMatchType) this.teamsMatchType = json.teamsMatchType;
       if (json.teamsPresent) this.teamsPresent = new Set(json.teamsPresent);
       if (json.teamsGuests) this.teamsGuests = json.teamsGuests;
@@ -159,7 +209,7 @@ class App {
     if(this._isSyncing) { clearTimeout(this._pushTimer); this._pushTimer = setTimeout(()=>this.pushToGithub(), 1000); return; }
     this._isSyncing = true; const branch = this.githubSync.branch ?? 'main'; 
     try {
-      const payload = { players: this.players, transactions: this.transactions, generalTransactions: this.generalTransactions, matches: this.matches, currentSeason: this.currentSeason, teamsMatchType: this.teamsMatchType, teamsPresent: Array.from(this.teamsPresent), teamsGuests: this.teamsGuests, teamsResult: this.teamsResult, exportDate: new Date().toISOString(), version: '2.1' };
+      const payload = { players: this.players, transactions: this.transactions, generalTransactions: this.generalTransactions, matches: this.matches, currentSeason: this.currentSeason, customSeasons: this.customSeasons, teamsMatchType: this.teamsMatchType, teamsPresent: Array.from(this.teamsPresent), teamsGuests: this.teamsGuests, teamsResult: this.teamsResult, exportDate: new Date().toISOString(), version: '2.2' };
       const body = { message: 'Actualización app', content: b64EncodeUnicode(JSON.stringify(payload, null, 2)), branch };
       if(this.githubSync.sha) body.sha = this.githubSync.sha;
       const headers = { Authorization: `Bearer ${this.githubSync.token}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' };
@@ -197,8 +247,8 @@ class App {
   deleteGeneralTransaction(id){ if(!confirm('¿Eliminar?')) return; this.generalTransactions = this.generalTransactions.filter(t=>t.id!==id); this.save(); this.closeModal(); this.toast('Eliminado'); }
   settleDebt(playerId, matchType, amount){ this.addTransaction([playerId], amount, matchType, 'Saldar deuda'); }
 
-  exportBackup(){ const data = { players:this.players, transactions:this.transactions, generalTransactions:this.generalTransactions, matches:this.matches, exportDate:new Date().toISOString(), version:'2.1' }; const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); this.descargarOCompartir(blob, `futbol-backup-${new Date().toISOString().slice(0,10)}.json`); this.toast('Exportado'); }
-  importBackup(file){ const reader = new FileReader(); reader.onload = (e)=>{ try{ const data = JSON.parse(e.target.result); if(!confirm('¿Reemplazar datos?')) return; this.players = data.players || []; this.transactions = data.transactions || []; this.generalTransactions = data.generalTransactions || []; this.matches = data.matches || []; this.save(); this.render(); this.toast('Importado'); }catch(err){ alert('Archivo no válido.'); } }; reader.readAsText(file); }
+  exportBackup(){ const data = { players:this.players, transactions:this.transactions, generalTransactions:this.generalTransactions, matches:this.matches, currentSeason:this.currentSeason, customSeasons:this.customSeasons, exportDate:new Date().toISOString(), version:'2.2' }; const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); this.descargarOCompartir(blob, `futbol-backup-${new Date().toISOString().slice(0,10)}.json`); this.toast('Exportado'); }
+  importBackup(file){ const reader = new FileReader(); reader.onload = (e)=>{ try{ const data = JSON.parse(e.target.result); if(!confirm('¿Reemplazar datos?')) return; this.players = data.players || []; this.transactions = data.transactions || []; this.generalTransactions = data.generalTransactions || []; this.matches = data.matches || []; if(data.currentSeason) this.currentSeason = data.currentSeason; if(Array.isArray(data.customSeasons)) this.customSeasons = data.customSeasons; this.save(); this.render(); this.toast('Importado'); }catch(err){ alert('Archivo no válido.'); } }; reader.readAsText(file); }
 
   requiredTeamSizes(matchType){ return matchType === 'F5' ? [10,12] : [14, 16]; }
   findPresentPerson(id){ return this.players.find(x=>x.id===id) || this.teamsGuests.find(x=>x.id===id); }
@@ -214,7 +264,7 @@ class App {
       const byPos = {}; pool.forEach(p=>{ if(!byPos[p.position]) byPos[p.position] = []; byPos[p.position].push(p); });
       Object.values(byPos).forEach(group=>{ group.sort(()=>Math.random()-0.5); group.sort((a,b)=>b.weight-a.weight); group.forEach(pl=>{ if(sumRojo <= sumBlanco){ teamRojo.push(pl); sumRojo += pl.weight; } else { teamBlanco.push(pl); sumBlanco += pl.weight; } }); });
     } else { pool.sort(()=>Math.random()-0.5); pool.forEach(pl=>{ if(teamRojo.length <= teamBlanco.length){ teamRojo.push(pl); } else { teamBlanco.push(pl); } }); }
-    this.sortByPosition(teamRojo); this.sortByPosition(teamBlanco); this.teamsResult = { teamRojo, teamBlanco }; this.teamsSwapSel = null; this.saveTeamsLocal(); this.render();
+    this.sortByPosition(teamRojo); this.sortByPosition(teamBlanco); this.teamsResult = { teamRojo, teamBlanco }; this.teamsSwapSel = null; this._sealSeason = this.currentSeason; this.saveTeamsLocal(); this.render();
   }
   
   sortByPosition(list){ const order = { portero:0, defensa:1, medio:2, delantero:3, 'sin posición':4 }; return list.sort((a,b)=> (order[a.position] ?? 4) - (order[b.position] ?? 4)); }
@@ -229,9 +279,12 @@ class App {
 
   sellarPartidoOficial() {
     if(!this.teamsResult) return;
-    if(confirm('¿Sellar como partido oficial? Quedará pendiente de anotar resultado.')) {
-      const match = { id: 'match_' + uid(), date: new Date().toISOString(), season: this.currentSeason, matchType: this.teamsMatchType, teamRojo: this.teamsResult.teamRojo.map(p => ({ id: p.id, name: p.name })), teamBlanco: this.teamsResult.teamBlanco.map(p => ({ id: p.id, name: p.name })), scoreRojo: 0, scoreBlanco: 0, goals: {}, status: 'pending' };
-      this.matches.push(match); this.save(); this.toast('Partido sellado'); this.setPage('estadisticas'); this.statTab = 'partidos'; this.render();
+    const targetSeason = this._sealSeason || this.currentSeason;
+    if(confirm(`¿Sellar como partido oficial en la temporada ${targetSeason}? Quedará pendiente de anotar resultado.`)) {
+      this.currentSeason = targetSeason;
+      this.statSeasonFilter = targetSeason;
+      const match = { id: 'match_' + uid(), date: new Date().toISOString(), season: targetSeason, matchType: this.teamsMatchType, teamRojo: this.teamsResult.teamRojo.map(p => ({ id: p.id, name: p.name })), teamBlanco: this.teamsResult.teamBlanco.map(p => ({ id: p.id, name: p.name })), scoreRojo: 0, scoreBlanco: 0, goals: {}, status: 'pending' };
+      this.matches.push(match); this.save(); this.toast(`Sellado en ${targetSeason}`); this.setPage('estadisticas'); this.statTab = 'partidos'; this.render();
     }
   }
 
@@ -242,11 +295,11 @@ class App {
   
   getSortIcon(col) { return this.statSortBy === col ? (this.statSortDesc ? ' ▼' : ' ▲') : ''; }
 
-  getSortedClasificacion(season, matchTypeFilter = this.statMatchFilter) {
+  getSortedClasificacion(season = this.statSeasonFilter, matchTypeFilter = this.statMatchFilter) {
     const stats = {}; 
     this.players.forEach(p => { stats[p.id] = { p, pj:0, pg:0, pe:0, pp:0, goles:0, pts:0, gpp:0, gf:0, gc:0, dg:0, history:[], streak:0 }; });
     const matchesToCount = this.matches
-      .filter(m => m.status === 'completed' && m.season === season && (!matchTypeFilter || m.matchType === matchTypeFilter))
+      .filter(m => m.status === 'completed' && (season === 'ALL' || m.season === season) && (!matchTypeFilter || m.matchType === matchTypeFilter))
       .sort((a,b) => new Date(a.date) - new Date(b.date));
     
     matchesToCount.forEach(m => {
@@ -406,7 +459,8 @@ class App {
 
   async exportClasificacionImage(){
     await this.ensureFonts(); 
-    const clasificacion = this.getSortedClasificacion(this.currentSeason);
+    const seasonView = this.statSeasonFilter || this.currentSeason;
+    const clasificacion = this.getSortedClasificacion(seasonView);
     if(!clasificacion.length) { this.toast('No hay datos para exportar'); return; }
     const DPR = 2, W = 940, PAD = 28, rowH = 48, headerH = 260, H = headerH + (clasificacion.length * rowH) + 46;
     const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
@@ -419,7 +473,8 @@ class App {
 
     ctx.textAlign = 'left'; ctx.fillStyle = '#FFFFFF'; ctx.font = '800 30px Outfit'; 
     ctx.fillText(`🏆 CLASIFICACIÓN ${this.statMatchFilter ? this.statMatchFilter : 'GENERAL'}`, PAD, 46);
-    ctx.font = '600 15px Outfit'; ctx.fillStyle = '#FFC82C'; ctx.fillText(`TEMPORADA ${this.currentSeason}`, PAD, 72);
+    ctx.font = '600 15px Outfit'; ctx.fillStyle = '#FFC82C'; 
+    ctx.fillText(seasonView === 'ALL' ? '🌟 HISTÓRICO TOTAL (TODAS LAS TEMPORADAS)' : `TEMPORADA ${seasonView}`, PAD, 72);
     ctx.textAlign = 'right'; ctx.font = '600 14px Inter'; ctx.fillStyle = '#A3B8B0'; ctx.fillText(new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'}), W-PAD, 72);
 
     const pichichi = [...clasificacion].sort((a,b) => b.goles - a.goles || a.pj - b.pj)[0];
@@ -485,11 +540,13 @@ class App {
       ctx.font = '800 15px Inter'; ctx.fillStyle = '#071A14'; ctx.fillText(`${s.winrate}%`, W-20, y+30);
       y += rowH;
     });
-    canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `clasificacion-${this.currentSeason.replace('/','-')}.png`); }, 'image/png');
+    const fileTag = seasonView === 'ALL' ? 'historico' : seasonView.replace('/','-');
+    canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `clasificacion-${fileTag}.png`); }, 'image/png');
   }
 
   async exportCromoImage(playerId){
-    const s = this.getSortedClasificacion(this.currentSeason, '').find(x => x.p.id === playerId); if(!s) return; await this.ensureFonts();
+    const seasonView = this.statSeasonFilter || this.currentSeason;
+    const s = this.getSortedClasificacion(seasonView, '').find(x => x.p.id === playerId); if(!s) return; await this.ensureFonts();
     const DPR = 2, W = 420, H = 560;
     const canvas = document.createElement('canvas'); canvas.width = Math.ceil(W*DPR); canvas.height = Math.ceil(H*DPR);
     const ctx = canvas.getContext('2d'); ctx.scale(DPR, DPR);
@@ -499,10 +556,11 @@ class App {
     ctx.fillStyle = gradient; ctx.fillRect(0,0,W,H);
     rRect(10,10,W-20,H-20,18); ctx.strokeStyle = '#FFC82C'; ctx.lineWidth = 3; ctx.stroke();
 
-    ctx.textAlign = 'center'; ctx.fillStyle = '#FFC82C'; ctx.font = '800 34px Outfit'; ctx.fillText(s.p.name.toUpperCase(), W/2, 68);
+    ctx.textAlign = 'center'; ctx.fillStyle = '#FFC82C'; ctx.font = '800 34px Outfit'; ctx.fillText(s.p.name.toUpperCase(), W/2, 64);
     const posName = POSITION_LABEL[s.p.position] || 'SIN POSICIÓN';
-    rRect(W/2 - 110, 82, 220, 30, 15); ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fill();
-    ctx.fillStyle = '#FFFFFF'; ctx.font = '700 14px Outfit'; ctx.fillText(`${posName.toUpperCase()} · ${s.pts} PUNTOS`, W/2, 102);
+    const seasonLbl = seasonView === 'ALL' ? 'HISTÓRICO' : seasonView;
+    rRect(W/2 - 130, 78, 260, 30, 15); ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fill();
+    ctx.fillStyle = '#FFFFFF'; ctx.font = '700 13px Outfit'; ctx.fillText(`${posName.toUpperCase()} · ${s.pts} PTS (${seasonLbl})`, W/2, 98);
 
     ctx.fillStyle = 'rgba(255,200,44,0.08)'; ctx.beginPath(); ctx.arc(W/2, 215, 80, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = 'rgba(255,200,44,0.35)'; ctx.lineWidth = 2; ctx.stroke();
@@ -685,14 +743,35 @@ class App {
       const pList = list.length > 0 ? list.map((p,i)=>`<div class="team-player ${this.teamsSwapSel?.team===team && this.teamsSwapSel?.idx===i ? 'selected':''}" onclick="app.swapTeamPlayer('${team}', ${i})"><span>${escapeHtml(p.name)} <span class="lvl-badge" style="background:${POSITION_COLOR[p.position] || '#8A8A8A'};color:#fff">${POSITION_ABBR[p.position] || '-'}</span></span><span class="lvl-badge">★ ${p.weight}</span></div>`).join('') : '<div class="empty-state">Sin jugadores</div>';
       return `<div class="team-card" style="border-left:4px solid ${accent}"><h3><span>${label}</span><span class="mono" style="font-size:12px;color:var(--muted)">peso global ${average.toFixed(1)}</span></h3>${pList}</div>`;
     };
-    return `<div class="section-title" style="margin-top:22px">Equipos generados <span class="count">toca dos jugadores para intercambiarlos</span></div>${teamBlock('rojo', '🔴 Equipo Rojo', r.teamRojo, avg(r.teamRojo), '#C3423F')}${teamBlock('blanco', '🔵 Equipo Azul', r.teamBlanco, avg(r.teamBlanco), '#1E3A8A')}<div class="field-row" style="margin-top:6px"><button class="btn btn-sm btn-outline" onclick="app.exportTeamsImage()">${ICONS.download} Exportar</button><button class="btn btn-sm btn-gold" onclick="app.shareTeams()">${ICONS.share} Compartir</button></div><button class="btn btn-block" style="margin-top:12px; background:var(--pitch); color:#fff;" onclick="app.sellarPartidoOficial()">⚽ Sellar como Partido Oficial</button>`;
+    const seasons = this.getAvailableSeasons();
+    const selSeason = this._sealSeason || this.currentSeason;
+    const seasonOpts = seasons.map(s => `<option value="${escapeHtml(s)}" ${s===selSeason?'selected':''}>Temp. ${escapeHtml(s)}</option>`).join('');
+    return `<div class="section-title" style="margin-top:22px">Equipos generados <span class="count">toca dos jugadores para intercambiarlos</span></div>${teamBlock('rojo', '🔴 Equipo Rojo', r.teamRojo, avg(r.teamRojo), '#C3423F')}${teamBlock('blanco', '🔵 Equipo Azul', r.teamBlanco, avg(r.teamBlanco), '#1E3A8A')}<div class="field-row" style="margin-top:6px"><button class="btn btn-sm btn-outline" onclick="app.exportTeamsImage()">${ICONS.download} Exportar</button><button class="btn btn-sm btn-gold" onclick="app.shareTeams()">${ICONS.share} Compartir</button></div>
+    <div style="display:flex; gap:8px; align-items:stretch; margin-top:12px;">
+      <select onchange="app._sealSeason=this.value; app.render()" style="width:auto; min-width:135px; padding:10px 12px; font-weight:700; font-size:13px;">${seasonOpts}</select>
+      <button class="btn" style="flex:1; background:var(--pitch); color:#fff;" onclick="app.sellarPartidoOficial()">⚽ Sellar Partido Oficial</button>
+    </div>`;
   }
 
-  renderEstadisticas() { return `<div class="subtabs"><button class="chip ${this.statTab==='clasificacion'?'active':''}" style="flex:1" onclick="app.statTab='clasificacion';app.render()">Clasificación</button><button class="chip ${this.statTab==='partidos'?'active':''}" style="flex:1" onclick="app.statTab='partidos';app.render()">Partidos</button></div>${this.statTab==='clasificacion' ? this.renderClasificacion() : this.renderListaPartidos()}`; }
+  renderSeasonFilterBar() {
+    const seasons = this.getAvailableSeasons();
+    const cur = this.statSeasonFilter || this.currentSeason;
+    const opts = `<option value="ALL" ${cur==='ALL'?'selected':''}>🌟 Histórico (Todas)</option>` +
+      seasons.map(s => `<option value="${escapeHtml(s)}" ${cur===s?'selected':''}>${escapeHtml(s)}${s===this.currentSeason?' ⭐':''}</option>`).join('') +
+      `<option value="__NEW__">➕ Nueva temporada...</option>`;
+    return `<div class="field-row" style="align-items:flex-end; margin-bottom:14px;">
+      <div style="flex:1"><label style="margin-top:0">Temporada</label><select onchange="app.handleSeasonSelect(this.value)" style="font-family:'Inter', sans-serif; font-weight:700; padding:10px 12px;">${opts}</select></div>
+      <div><label style="margin-top:0">Modalidad</label><div class="filter-bar" style="margin-bottom:0"><button class="chip ${this.statMatchFilter===''?'active':''}" onclick="app.statMatchFilter='';app.render()">Todos</button><button class="chip ${this.statMatchFilter==='F5'?'active':''}" onclick="app.statMatchFilter='F5';app.render()">F5</button><button class="chip ${this.statMatchFilter==='F7'?'active':''}" onclick="app.statMatchFilter='F7';app.render()">F7</button></div></div>
+    </div>`;
+  }
+
+  renderEstadisticas() { 
+    return `<div class="subtabs"><button class="chip ${this.statTab==='clasificacion'?'active':''}" style="flex:1" onclick="app.statTab='clasificacion';app.render()">Clasificación</button><button class="chip ${this.statTab==='partidos'?'active':''}" style="flex:1" onclick="app.statTab='partidos';app.render()">Partidos</button></div>${this.renderSeasonFilterBar()}${this.statTab==='clasificacion' ? this.renderClasificacion() : this.renderListaPartidos()}`; 
+  }
   
   renderClasificacion() {
-    const data = this.getSortedClasificacion(this.currentSeason); 
-    let tableHtml = `<div class="empty-state">No hay partidos jugados en esta categoría.</div>`;
+    const data = this.getSortedClasificacion(this.statSeasonFilter); 
+    let tableHtml = `<div class="empty-state">No hay partidos jugados en esta selección.</div>`;
 
     if (data.length > 0) {
       const pichichi = [...data].sort((a,b) => b.goles - a.goles || a.pj - b.pj)[0];
@@ -730,22 +809,24 @@ class App {
           </tbody>
         </table>
       </div>
-      <button class="btn btn-block btn-outline" style="margin-top:16px" onclick="app.exportClasificacionImage()">📸 Exportar Clasificación General</button>`; 
+      <button class="btn btn-block btn-outline" style="margin-top:16px" onclick="app.exportClasificacionImage()">📸 Exportar Clasificación</button>`; 
     }
-    return `<div class="field-row" style="align-items:flex-end; margin-bottom:12px;">
-      <div style="flex:1"><label style="margin-top:0">Temporada</label><input type="text" value="${this.currentSeason}" onchange="app.currentSeason = this.value; app.save(); app.render();" placeholder="Ej: 2026/2027" style="font-family:'Inter', sans-serif; font-weight:700; text-align:center; padding:9px;" /></div>
-      <div><label style="margin-top:0">Modalidad</label><div class="filter-bar" style="margin-bottom:0"><button class="chip ${this.statMatchFilter===''?'active':''}" onclick="app.statMatchFilter='';app.render()">Todos</button><button class="chip ${this.statMatchFilter==='F5'?'active':''}" onclick="app.statMatchFilter='F5';app.render()">F5</button><button class="chip ${this.statMatchFilter==='F7'?'active':''}" onclick="app.statMatchFilter='F7';app.render()">F7</button></div></div>
-    </div>${tableHtml}`;
+    return tableHtml;
   }
 
   renderListaPartidos() {
-    let html = `<div class="section-title">Partidos de la Temporada ${this.currentSeason}</div>`; const partidosTemp = this.matches.filter(m => m.season === this.currentSeason).sort((a,b) => new Date(b.date) - new Date(a.date));
-    if (partidosTemp.length === 0) return html + '<div class="empty-state">No se han registrado partidos. Genera equipos y séllalos para empezar.</div>';
+    const seasonView = this.statSeasonFilter || this.currentSeason;
+    const titleTxt = seasonView === 'ALL' ? 'Todos los Partidos (Histórico)' : `Partidos Temporada ${seasonView}`;
+    let html = `<div class="section-title">${titleTxt}</div>`; 
+    const partidosTemp = this.matches
+      .filter(m => (seasonView === 'ALL' || m.season === seasonView) && (!this.statMatchFilter || m.matchType === this.statMatchFilter))
+      .sort((a,b) => new Date(b.date) - new Date(a.date));
+    if (partidosTemp.length === 0) return html + '<div class="empty-state">No hay partidos en esta selección. Genera equipos y séllalos para empezar.</div>';
     html += partidosTemp.map(m => {
       const isPending = m.status === 'pending'; const fecha = new Date(m.date).toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'});
       const boxStyle = isPending ? 'border-left-color:var(--gold); background:var(--gold-soft); cursor:pointer;' : 'border-left-color:var(--credit); cursor:pointer;';
       let resHtml = isPending ? `<span style="font-weight:700; color:#8a5a12; font-size:12px; text-transform:uppercase;">Anotar resultado ➔</span>` : `<div style="font-size:24px; font-weight:800; font-family:'Inter', sans-serif; color:var(--pitch)"><span style="color:var(--debt)">${m.scoreRojo}</span> - <span style="color:#1E3A8A">${m.scoreBlanco}</span></div>`;
-      return `<div class="ticket" style="${boxStyle}" onclick="app.openModal('resolveMatch', '${m.id}')"><div><div class="name">${m.matchType} · ${fecha}</div><div class="sub">${m.teamRojo.length} vs ${m.teamBlanco.length} jugadores</div></div><div>${resHtml}</div></div>`;
+      return `<div class="ticket" style="${boxStyle}" onclick="app.openModal('resolveMatch', '${m.id}')"><div><div class="name">${m.matchType} · ${fecha}</div><div class="sub">${m.teamRojo.length} vs ${m.teamBlanco.length} jugadores · Temp. ${escapeHtml(m.season || '')}</div></div><div>${resHtml}</div></div>`;
     }).join(''); return html;
   }
 
@@ -789,14 +870,18 @@ class App {
       body = `<h2>${p ? 'Editar jugador' : 'Nuevo jugador'}</h2><label>Nombre</label><input type="text" id="pName" value="${p ? escapeHtml(p.name) : ''}" placeholder="Nombre y apellido" /><label>Tipo</label><div class="chip-group" id="pTypeGroup">${['F5','F7','F5/F7'].map(t=>`<button class="chip ${(p?.type===t || (!p && t==='F5/F7')) ? 'active' : ''}" data-val="${t}" onclick="app.pickChip(this,'pTypeGroup')">${t}</button>`).join('')}</div><label>Habilidad Técnica</label><div class="chip-group" id="pSkillGroup">${Object.keys(SKILL_LABEL).map(s=>`<button class="chip ${(p?.skill===s || (!p && s==='medio')) ? 'active' : ''}" data-val="${s}" onclick="app.pickChip(this,'pSkillGroup')">${SKILL_LABEL[s]}</button>`).join('')}</div><label>Físico / Resistencia</label><div class="chip-group" id="pStaminaGroup">${Object.keys(STAMINA_LABEL).map(s=>`<button class="chip ${(p?.stamina===s || (!p && s==='medio')) ? 'active' : ''}" data-val="${s}" onclick="app.pickChip(this,'pStaminaGroup')">${STAMINA_LABEL[s]}</button>`).join('')}</div><label>Posición</label><div class="chip-group" id="pPosGroup"><button class="chip ${!p?.position ? 'active' : ''}" data-val="" onclick="app.pickChip(this,'pPosGroup')">-</button>${POSITIONS.map(pos=>`<button class="chip ${p?.position===pos ? 'active' : ''}" data-val="${pos}" onclick="app.pickChip(this,'pPosGroup')">${pos}</button>`).join('')}</div><label>Abonado Bilbao Kirolak</label><div class="chip-group" id="pBKGroup"><button class="chip ${p?.bilbaoKirolak ? 'active' : ''}" data-val="true" onclick="app.pickChip(this,'pBKGroup')">Sí</button><button class="chip ${!p?.bilbaoKirolak ? 'active' : ''}" data-val="false" onclick="app.pickChip(this,'pBKGroup')">No</button></div><label>Habitual</label><div class="chip-group" id="pRegGroup"><button class="chip ${p?.isRegular !== false ? 'active' : ''}" data-val="true" onclick="app.pickChip(this,'pRegGroup')">Sí</button><button class="chip ${p?.isRegular === false ? 'active' : ''}" data-val="false" onclick="app.pickChip(this,'pRegGroup')">Esporádico</button></div><button class="btn btn-primary btn-block" style="margin-top:18px" onclick="app.savePlayerForm(${saveArg})">Guardar</button>${delBtn}`;
     } else if(type==='resolveMatch'){
       const m = this.matches.find(x=>x.id===payload); if(!m) return '';
+      const seasons = this.getAvailableSeasons();
+      const sOpts = seasons.map(s => `<option value="${escapeHtml(s)}" ${m.season===s?'selected':''}>Temporada ${escapeHtml(s)}</option>`).join('');
       const renderTeamGoals = (team, color) => team.map(p => { const goles = m.goals[p.id] || 0; return `<div class="team-player"><span style="font-weight:600">${escapeHtml(p.name)}</span><div class="goal-counter"><button onclick="app.modGoal('${m.id}', '${p.id}', -1, '${color}')">-</button><span id="goal_val_${m.id}_${p.id}">${goles}</span><button onclick="app.modGoal('${m.id}', '${p.id}', 1, '${color}')">+</button></div></div>`; }).join('');
-      body = `<h2>${m.status === 'pending' ? 'Anotar Resultado' : 'Editar Partido'}</h2><div class="sub" style="margin-bottom:12px">Puedes poner el marcador arriba o sumar directamente los goles de cada jugador.</div><div class="score-input-group"><div style="text-align:center"><div style="color:var(--debt);font-weight:700;margin-bottom:4px">ROJO</div><input type="number" min="0" id="score_rojo_${m.id}" value="${m.scoreRojo}" oninput="app.modScore('${m.id}', 'rojo', this.value)" /></div><span>-</span><div style="text-align:center"><div style="color:#1E3A8A;font-weight:700;margin-bottom:4px">AZUL</div><input type="number" min="0" id="score_blanco_${m.id}" value="${m.scoreBlanco}" oninput="app.modScore('${m.id}', 'blanco', this.value)" /></div></div><div id="goal_diff_status_${m.id}">${this.renderGoalDiffStatus(m)}</div><div class="section-title">Goleadores Rojo 🔴</div><div class="team-card" style="border-left:4px solid var(--debt); padding: 4px 12px">${renderTeamGoals(m.teamRojo, 'rojo')}</div><div class="section-title">Goleadores Azul 🔵</div><div class="team-card" style="border-left:4px solid #1E3A8A; padding: 4px 12px">${renderTeamGoals(m.teamBlanco, 'blanco')}</div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.finishMatch('${m.id}')">💾 Guardar Partido</button><button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.deleteMatch('${m.id}')">🗑️ Eliminar</button>`;
+      body = `<h2>${m.status === 'pending' ? 'Anotar Resultado' : 'Editar Partido'}</h2><div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin:8px 0 12px;"><span class="sub" style="margin:0;">Temporada del partido:</span><select onchange="app.modMatchSeason('${m.id}', this.value)" style="width:auto; padding:6px 12px; font-weight:700; font-size:13px;">${sOpts}</select></div><div class="score-input-group"><div style="text-align:center"><div style="color:var(--debt);font-weight:700;margin-bottom:4px">ROJO</div><input type="number" min="0" id="score_rojo_${m.id}" value="${m.scoreRojo}" oninput="app.modScore('${m.id}', 'rojo', this.value)" /></div><span>-</span><div style="text-align:center"><div style="color:#1E3A8A;font-weight:700;margin-bottom:4px">AZUL</div><input type="number" min="0" id="score_blanco_${m.id}" value="${m.scoreBlanco}" oninput="app.modScore('${m.id}', 'blanco', this.value)" /></div></div><div id="goal_diff_status_${m.id}">${this.renderGoalDiffStatus(m)}</div><div class="section-title">Goleadores Rojo 🔴</div><div class="team-card" style="border-left:4px solid var(--debt); padding: 4px 12px">${renderTeamGoals(m.teamRojo, 'rojo')}</div><div class="section-title">Goleadores Azul 🔵</div><div class="team-card" style="border-left:4px solid #1E3A8A; padding: 4px 12px">${renderTeamGoals(m.teamBlanco, 'blanco')}</div><button class="btn btn-primary btn-block" style="margin-top:16px" onclick="app.finishMatch('${m.id}')">💾 Guardar Partido</button><button class="btn btn-danger btn-block" style="margin-top:8px" onclick="app.deleteMatch('${m.id}')">🗑️ Eliminar</button>`;
     } else if(type==='cromoPlayer'){
-      const dataStats = this.getSortedClasificacion(this.currentSeason, '');
+      const seasonView = this.statSeasonFilter || this.currentSeason;
+      const dataStats = this.getSortedClasificacion(seasonView, '');
       const s = dataStats.find(x => x.p.id === payload); if(!s) return '';
       const rachaTxt = s.streak > 0 ? ('🔥 +' + s.streak + 'V') : (s.last3.join('-') || '-');
       const dgCol = s.dg > 0 ? '#2ED573' : (s.dg < 0 ? '#FF6B6B' : 'var(--chalk)');
-      body = `<div class="cromo-preview" id="cromoCapture"><h3>${escapeHtml(s.p.name.toUpperCase())}</h3><div class="pos-badge">${POSITION_LABEL[s.p.position] || 'SIN POSICIÓN'} · ${s.pts} PTS</div><div class="cromo-grid"><div class="cromo-stat"><div class="val">${s.winrate}%</div><div class="lbl">Victoria (${s.pg}V-${s.pe}E-${s.pp}D)</div></div><div class="cromo-stat"><div class="val">${s.goles}</div><div class="lbl">Goles (${s.gpp.toFixed(2)} G/P)</div></div><div class="cromo-stat"><div class="val" style="color:${dgCol}">${fmtDG(s.dg)}</div><div class="lbl">Balance (${s.gf}GF-${s.gc}GC)</div></div><div class="cromo-stat"><div class="val">${rachaTxt}</div><div class="lbl">Racha (${s.pj} PJ)</div></div></div></div><button class="btn btn-gold btn-block" onclick="app.exportCromoImage('${s.p.id}')">📸 Exportar Cromo</button>`;
+      const seasonBadge = seasonView === 'ALL' ? 'HISTÓRICO' : seasonView;
+      body = `<div class="cromo-preview" id="cromoCapture"><h3>${escapeHtml(s.p.name.toUpperCase())}</h3><div class="pos-badge">${POSITION_LABEL[s.p.position] || 'SIN POSICIÓN'} · ${s.pts} PTS (${seasonBadge})</div><div class="cromo-grid"><div class="cromo-stat"><div class="val">${s.winrate}%</div><div class="lbl">Victoria (${s.pg}V-${s.pe}E-${s.pp}D)</div></div><div class="cromo-stat"><div class="val">${s.goles}</div><div class="lbl">Goles (${s.gpp.toFixed(2)} G/P)</div></div><div class="cromo-stat"><div class="val" style="color:${dgCol}">${fmtDG(s.dg)}</div><div class="lbl">Balance (${s.gf}GF-${s.gc}GC)</div></div><div class="cromo-stat"><div class="val">${rachaTxt}</div><div class="lbl">Racha (${s.pj} PJ)</div></div></div></div><button class="btn btn-gold btn-block" onclick="app.exportCromoImage('${s.p.id}')">📸 Exportar Cromo</button>`;
     } else if(type==='quickTx'){
       const p = this.players.find(x=>x.id===payload.playerId); const bal = this.getPlayerBalance(p.id, payload.matchType);
       const lastTxs = this.transactions.filter(t => t.playerIds.includes(p.id)).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 4);
@@ -828,6 +913,11 @@ class App {
     });
     const box = document.getElementById('smSummaryBox');
     if(box) box.innerHTML = `<div style="font-size:13px; color:var(--ink); width:100%">Recaudación (${countBK} BK + ${countNormal} Norm.): <b style="float:right">${fmtPlain(collectedTotal)}</b><br>Coste pista: <b style="float:right; color:var(--debt)">-${fmtPlain(cost)}</b><br><div style="border-top:1px solid var(--line); margin:6px 0 0 0; padding-top:6px; font-weight:600;">Sobrante al bote: <b style="float:right; color:${surplus>=0?'var(--credit)':'var(--debt)'}">${surplus>=0?'+':''}${fmtPlain(surplus)}</b></div></div>`;
+  }
+
+  modMatchSeason(matchId, newSeason) {
+    const m = this.matches.find(x => x.id === matchId);
+    if(m && newSeason) { m.season = newSeason; }
   }
 
   modScore(matchId, team, val) { 
