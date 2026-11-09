@@ -651,10 +651,8 @@
       "_manualBlanco": false
     }
   ],
-  "currentSeason": "2028/2029",
-  "customSeasons": [
-    "2028/2029"
-  ],
+  "currentSeason": "2026/2027",
+  "customSeasons": [],
   "teamsMatchType": "F5",
   "teamsPresent": [
     "1790616929299341",
@@ -749,6 +747,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-09T09:09:11.150Z",
+  "exportDate": "2026-11-09T09:09:17.117Z",
   "version": "2.2"
 }
