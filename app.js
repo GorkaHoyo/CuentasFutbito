@@ -807,12 +807,18 @@ class App {
     canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `cromo-${s.p.name}.png`); }, 'image/png');
   }
 
-  openModal(type, payload){ 
+openModal(type, payload){ 
+    // 🔒 BLINDAJE MODO ESPECTADOR: Si no es admin y el modal no es de exportar o info, se bloquea
+    if (!this.isAdmin && type !== 'export' && type !== 'info') {
+      alert("🔒 Modo Espectador: Solo los administradores pueden realizar acciones o modificaciones.");
+      return;
+    }
+
     if(type === 'settleMatch') { 
       const mt = this.teamsMatchType;
       this._smCost = localStorage.getItem(`sm_cost_${mt}`) || "19.55"; 
       this._smQuotaBK = localStorage.getItem(`sm_qbk_${mt}`) || "3.00"; 
-      this._smQuotaNormal = localStorage.getItem(`sm_qnorm_${mt}`) || "3.00"; 
+      this._smQuotaNormal = localStorage.getItem(`sm_qnorm_${mt}`) || "0.00"; 
       this._smPayer = 'bote'; 
       this._smSelected = new Set(); 
       this.teamsPresent.forEach(id => this._smSelected.add(id)); 
@@ -1148,7 +1154,7 @@ class App {
     return `<input type="search" id="histSearchInput" class="search-bar" placeholder="Buscar en historial..." value="${escapeHtml(this.histSearch)}" oninput="app.histSearch=this.value;app.histLimit=40;app.render()" /><div class="filter-bar"><button class="chip ${this.histMatchFilter===''?'active':''}" onclick="app.histMatchFilter='';app.histLimit=40;app.render()">Todos</button><button class="chip ${this.histMatchFilter==='F5'?'active':''}" onclick="app.histMatchFilter='F5';app.histLimit=40;app.render()">F5</button><button class="chip ${this.histMatchFilter==='F7'?'active':''}" onclick="app.histMatchFilter='F7';app.histLimit=40;app.render()">F7</button></div>${tList || '<div class="empty-state">Sin movimientos</div>'}${this.histLimit < totalItems ? `<button class="btn btn-outline btn-block" style="margin-top:16px" onclick="app.histLimit += 40; app.render()">Cargar más (${totalItems - this.histLimit})</button>` : ''}`;
   }
 
-  renderFab(){ return this.page==='resumen' ? `<button class="fab" onclick="app.setPage('movimientos')">${ICONS.plus}</button>` : (this.page==='jugadores' ? `<button class="fab" onclick="app.openModal('addPlayer')">${ICONS.plus}</button>` : ''); }
+  renderFab(){if (!this.isAdmin) return ''; return this.page==='resumen' ? `<button class="fab" onclick="app.setPage('movimientos')">${ICONS.plus}</button>` : (this.page==='jugadores' ? `<button class="fab" onclick="app.openModal('addPlayer')">${ICONS.plus}</button>` : ''); }
   renderBottomNav(){ return `<div class="bottom-nav">${[ {id:'resumen', label:'Resumen', icon:ICONS.home}, {id:'jugadores', label:'Jugadores', icon:ICONS.users}, {id:'movimientos', label:'Movim.', icon:ICONS.euro}, {id:'equipos', label:'Equipos', icon:ICONS.shirts}, {id:'estadisticas', label:'Estadísticas', icon:ICONS.chart}, {id:'ajustes', label:'Ajustes', icon:ICONS.gear} ].map(t=>`<button class="${this.page===t.id?'active':''}" onclick="app.setPage('${t.id}')">${t.icon}<span class="tab-label">${t.label}</span></button>`).join('')}</div>`; }
 
   renderGoalDiffStatus(m) {
