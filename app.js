@@ -879,13 +879,19 @@ class App {
   }
   renderTopbar() {
     const isA = this.isAdmin;
-    // Candado con proporciones reales y estilizadas (adiós bolsa de la compra)
+    
+    // Escudo minimalista: limpio en espectador, con check interior en modo admin
     const lockIcon = isA 
-      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="6" y="10" width="12" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>' 
-      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="6" y="10" width="12" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>' 
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
     
     const lockAction = isA ? "logoutAdmin()" : "promptAdminLogin()";
     const lockTitle = isA ? "Modo Admin Activo (Clic para bloquear)" : "Modo Espectador (Clic para introducir PIN)";
+    
+    // Un toque de color sutil si eres admin para que se distinga rápido
+    const btnStyle = isA 
+      ? 'background:rgba(46, 204, 113, 0.2); border:1px solid rgba(46, 204, 113, 0.4); color:#2ecc71;' 
+      : 'background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); color:#fff;';
 
     return `<div class="topbar">
       <div class="brand">
@@ -896,7 +902,7 @@ class App {
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
-        <button onclick="${lockAction}" title="${lockTitle}" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; transition:background 0.2s;">
+        <button onclick="${lockAction}" title="${lockTitle}" style="${btnStyle} border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;">
           ${lockIcon}
         </button>
         <div class="match-switch">
