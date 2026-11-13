@@ -828,18 +828,13 @@ async loadCloudData() {
 
     canvas.toBlob((blob)=>{ this.descargarOCompartir(blob, `cromo-${s.p.name}.png`); }, 'image/png');
   }
-
+  
 openModal(type, payload){ 
-  // Los espectadores solo pueden ver cromos (cromoPlayer/playerCard), exportar o info. 
+    // Los espectadores solo pueden ver cromos (cromoPlayer/playerCard), exportar o info. 
     // Cualquier otra acción de gestión (como quickTx) les mostrará el aviso de admin.
     if (!this.isAdmin && type !== 'export' && type !== 'info' && type !== 'cromoPlayer' && type !== 'playerCard') {
       alert("🔒 Modo Espectador: Solo los administradores pueden realizar acciones o modificaciones.");
       return;
-   // Permitir exportar, info y ver cromos de jugadores en modo espectador
-    if (!this.isAdmin && type !== 'export' && type !== 'info' && type !== 'cromoPlayer' && type !== 'playerCard') {
-      alert("🔒 Modo Espectador: Solo los administradores pueden realizar acciones o modificaciones.");
-      return;
-
     }
 
     if(type === 'settleMatch') { 
@@ -872,12 +867,24 @@ openModal(type, payload){
         m._manualRojo = (m.scoreRojo > sumR);
         m._manualBlanco = (m.scoreBlanco > sumB);
       }
-    
-    this.modal = {type, payload: payload || {}}; this.render(); 
-  }
-  closeModal(){ this.modal = null; this.render(); }
-  setPage(p){ this.page = p; this.modal = null; this.pageAnim = true; this.render(); this.pageAnim = false; }
+    } // <--- ¡Aquí cerramos el if(type === 'resolveMatch') que faltaba!
+      
+    this.modal = {type, payload: payload || {}}; 
+    this.render(); 
+  } // <--- ¡Y aquí cerramos la función openModal que faltaba!
 
+  closeModal(){ 
+    this.modal = null; 
+    this.render(); 
+  }
+
+  setPage(p){ 
+    this.page = p; 
+    this.modal = null; 
+    this.pageAnim = true; 
+    this.render(); 
+    this.pageAnim = false; 
+  }
   render(){
     const el = document.getElementById('app');
     if(!el) { console.error("No se ha encontrado el elemento <div id='app'> en tu index.html"); return; }
