@@ -376,7 +376,7 @@ async loadCloudData() {
       pool.sort(()=>Math.random()-0.5);
       pool.forEach(pl=>{ if(teamRojo.length < maxPerTeam){ teamRojo.push(pl); } else { teamBlanco.push(pl); } });
     }
-    this.sortByPosition(teamRojo); this.sortByPosition(teamBlanco); this.teamsResult = { teamRojo, teamBlanco }; this.teamsSwapSel = null; this._sealSeason = this.currentSeason; this.saveTeamsLocal(); this.render();
+    this.sortByPosition(teamRojo); this.sortByPosition(teamBlanco); this.teamsResult = { teamRojo, teamBlanco }; this.teamsSwapSel = null; this._sealSeason = this.currentSeason; this.save(); this.render();
   }
   
   sortByPosition(list){ const order = { portero:0, defensa:1, medio:2, delantero:3, 'sin posición':4 }; return list.sort((a,b)=> (order[a.position] ?? 4) - (order[b.position] ?? 4)); }
