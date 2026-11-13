@@ -830,6 +830,11 @@ async loadCloudData() {
   }
 
 openModal(type, payload){ 
+  // Los espectadores solo pueden ver cromos (cromoPlayer/playerCard), exportar o info. 
+    // Cualquier otra acción de gestión (como quickTx) les mostrará el aviso de admin.
+    if (!this.isAdmin && type !== 'export' && type !== 'info' && type !== 'cromoPlayer' && type !== 'playerCard') {
+      alert("🔒 Modo Espectador: Solo los administradores pueden realizar acciones o modificaciones.");
+      return;
    // Permitir exportar, info y ver cromos de jugadores en modo espectador
     if (!this.isAdmin && type !== 'export' && type !== 'info' && type !== 'cromoPlayer' && type !== 'playerCard') {
       alert("🔒 Modo Espectador: Solo los administradores pueden realizar acciones o modificaciones.");
@@ -955,24 +960,20 @@ openModal(type, payload){
     }
   }
 
-  renderResumen(){
+renderResumen(){
     const mt = this.matchFilter; 
     const {credit, neutral, debt} = this.classify(mt);
     
-    const row = (item, kind) => {
-      // Si es admin abre gestión rápida de saldo; si es espectador abre su cromo/tarjeta
-      const clickAction = this.isAdmin 
-        ? `app.openModal('quickTx', {playerId:'${item.p.id}', matchType:'${mt}'})`
-        : `app.openModal('playerCard', '${item.p.id}')`;
-
-      return `<div class="ticket ${kind}" onclick="${clickAction}">
-        <div>
-          <div class="name">${escapeHtml(item.p.name)}</div>
-          <div class="sub">${item.p.type}${item.p.isRegular ? ' · habitual' : ''}</div>
-        </div>
-        <div class="amt mono ${item.b>0?'pos':(item.b<0?'neg':'zero')}">${fmt(item.b)}</div>
-      </div>`;
-    };
+    // Dejamos que el clic llame a quickTx para todos:
+    // - Si es admin se abre el modal.
+    // - Si es espectador, openModal lo bloquea y salta el aviso de que no es admin.
+    const row = (item, kind) => `<div class="ticket ${kind}" onclick="app.openModal('quickTx', {playerId:'${item.p.id}', matchType:'${mt}'})">
+      <div>
+        <div class="name">${escapeHtml(item.p.name)}</div>
+        <div class="sub">${item.p.type}${item.p.isRegular ? ' · habitual' : ''}</div>
+      </div>
+      <div class="amt mono ${item.b>0?'pos':(item.b<0?'neg':'zero')}">${fmt(item.b)}</div>
+    </div>`;
 
     return `${this.renderScoreboard(mt)}
     <div class="field-row" style="margin-bottom:4px">
