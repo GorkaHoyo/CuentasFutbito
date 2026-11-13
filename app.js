@@ -232,7 +232,7 @@ async loadCloudData() {
     this.scheduleGithubPush(); 
   }
 
- saveLocalOnly() {
+saveLocalOnly() {
     localStorage.setItem('football-players', JSON.stringify(this.players)); 
     localStorage.setItem('football-transactions', JSON.stringify(this.transactions)); 
     localStorage.setItem('football-general-transactions', JSON.stringify(this.generalTransactions)); 
@@ -240,7 +240,7 @@ async loadCloudData() {
     localStorage.setItem('football-season', this.currentSeason);
     localStorage.setItem('football-seasons-list', JSON.stringify(this.customSeasons));
     
-    // 👇 AÑADE ESTA LÍNEA AQUÍ TAMBIÉN 👇
+    // 👇 AÑADE ESTA LÍNEA AQUÍ 👇
     localStorage.setItem('football-teams-result', JSON.stringify(this.teamsResult));
   }
 
@@ -1085,7 +1085,7 @@ renderResumen(){
 renderEquipos(){
     const mt = this.teamsMatchType; 
 
-    // === MODO ESPECTADOR: Ve exactamente lo mismo que el admin (si hay equipos generados, se muestran; si no, la vista de convocatoria/equipos actual) ===
+    // === MODO ESPECTADOR: Si hay equipos generados, los muestra; si no, muestra el aviso ===
     if (!this.isAdmin) {
       return `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
