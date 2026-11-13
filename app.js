@@ -879,12 +879,11 @@ class App {
   }
   renderTopbar() {
     const isA = this.isAdmin;
-    // Iconos limpios de candado real (cerrado o abierto)
+    // Candado con proporciones reales y estilizadas (adiós bolsa de la compra)
     const lockIcon = isA 
-      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a4 4 0 018 0v4"/></svg>' 
-      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>';
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="6" y="10" width="12" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>' 
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="6" y="10" width="12" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
     
-    // Llamada directa a las funciones globales que pusimos abajo
     const lockAction = isA ? "logoutAdmin()" : "promptAdminLogin()";
     const lockTitle = isA ? "Modo Admin Activo (Clic para bloquear)" : "Modo Espectador (Clic para introducir PIN)";
 
