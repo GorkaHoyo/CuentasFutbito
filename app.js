@@ -830,10 +830,8 @@ async loadCloudData() {
   }
 
 openModal(type, payload){ 
-      // 🔒 BLINDAJE MODO ESPECTADOR: Si no es admin y el modal no es de exportar o info, se bloquea
-
-  // Permitir exportar, info y ver cromos/tarjetas de jugadores en modo espectador
-    if (!this.isAdmin && type !== 'export' && type !== 'info' && type !== 'playerCard') {
+   // Permitir exportar, info y ver cromos de jugadores en modo espectador
+    if (!this.isAdmin && type !== 'export' && type !== 'info' && type !== 'cromoPlayer' && type !== 'playerCard') {
       alert("🔒 Modo Espectador: Solo los administradores pueden realizar acciones o modificaciones.");
       return;
 
@@ -1261,32 +1259,24 @@ openModal(type, payload){
 
   renderFab(){if (!this.isAdmin) return ''; return this.page==='resumen' ? `<button class="fab" onclick="app.setPage('movimientos')">${ICONS.plus}</button>` : (this.page==='jugadores' ? `<button class="fab" onclick="app.openModal('addPlayer')">${ICONS.plus}</button>` : ''); }
 renderBottomNav() {
+    // Si eres admin, tus 6 pestañas originales intactas
     if (this.isAdmin) {
-      return `<div class="bottom-nav">
-        <button class="${this.page==='resumen'?'active':''}" onclick="app.setPage('resumen')">${ICONS.home}<span>Resumen</span></button>
-        <button class="${this.page==='jugadores'?'active':''}" onclick="app.setPage('jugadores')">${ICONS.users}<span>Jugadores</span></button>
-        <button class="${this.page==='movimientos'?'active':''}" onclick="app.setPage('movimientos')">${ICONS.wallet}<span>Movim.</span></button>
-        <button class="${this.page==='equipos'?'active':''}" onclick="app.setPage('equipos')">${ICONS.shirt}<span>Equipos</span></button>
-        <button class="${this.page==='estadisticas'?'active':''}" onclick="app.setPage('estadisticas')">${ICONS.chart}<span>Estadísticas</span></button>
-        <button class="${this.page==='ajustes'?'active':''}" onclick="app.setPage('ajustes')">${ICONS.settings}<span>Ajustes</span></button>
-      </div>`;
-    } 
-    
-    // Modo Espectador limpio sin textos dinámicos defectuosos
-    return `<div class="bottom-nav">
-      <button class="${this.page==='resumen'?'active':''}" onclick="app.setPage('resumen')">
-        ${ICONS.wallet}
-        <span style="font-size:11px; display:block; line-height:1.2;">Cuentas</span>
-      </button>
-      <button class="${this.page==='estadisticas'?'active':''}" onclick="app.setPage('estadisticas')">
-        ${ICONS.chart}
-        <span style="font-size:11px; display:block; line-height:1.2;">Clasificación</span>
-      </button>
-      <button class="${this.page==='equipos'?'active':''}" onclick="app.setPage('equipos')">
-        ${ICONS.shirt}
-        <span style="font-size:11px; display:block; line-height:1.2;">Equipos</span>
-      </button>
-    </div>`;
+      return `<div class="bottom-nav">${[ 
+        {id:'resumen', label:'Resumen', icon:ICONS.home}, 
+        {id:'jugadores', label:'Jugadores', icon:ICONS.users}, 
+        {id:'movimientos', label:'Movim.', icon:ICONS.euro}, 
+        {id:'equipos', label:'Equipos', icon:ICONS.shirts}, 
+        {id:'estadisticas', label:'Estadísticas', icon:ICONS.chart}, 
+        {id:'ajustes', label:'Ajustes', icon:ICONS.gear} 
+      ].map(t=>`<button class="${this.page===t.id?'active':''}" onclick="app.setPage('${t.id}')">${t.icon}<span class="tab-label">${t.label}</span></button>`).join('')}</div>`;
+    }
+
+    // Si es espectador, barra limpia de solo 3 pestañas principales basadas en tu misma estructura
+    return `<div class="bottom-nav">${[ 
+      {id:'resumen', label:'Cuentas', icon:ICONS.wallet || ICONS.home}, 
+      {id:'estadisticas', label:'Clasificación', icon:ICONS.chart}, 
+      {id:'equipos', label:'Equipos', icon:ICONS.shirts} 
+    ].map(t=>`<button class="${this.page===t.id?'active':''}" onclick="app.setPage('${t.id}')">${t.icon}<span class="tab-label">${t.label}</span></button>`).join('')}</div>`;
   }
   renderGoalDiffStatus(m) {
     const sumR = m.teamRojo.reduce((s, p) => s + (m.goals[p.id] || 0), 0);
