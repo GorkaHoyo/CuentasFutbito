@@ -678,9 +678,9 @@
         "position": "defensa"
       },
       {
-        "id": "1790617380927257",
-        "name": "Juan g.",
-        "weight": 5,
+        "id": "1790617571023650",
+        "name": "Gorka",
+        "weight": 6,
         "position": "defensa"
       },
       {
@@ -690,8 +690,8 @@
         "position": "defensa"
       },
       {
-        "id": "1790940529084389",
-        "name": "Tojo",
+        "id": "1793722927577154",
+        "name": "Larri",
         "weight": 7,
         "position": "medio"
       },
@@ -716,9 +716,9 @@
         "position": "portero"
       },
       {
-        "id": "1790617571023650",
-        "name": "Gorka",
-        "weight": 6,
+        "id": "1790617380927257",
+        "name": "Juan g.",
+        "weight": 5,
         "position": "defensa"
       },
       {
@@ -734,8 +734,8 @@
         "position": "defensa"
       },
       {
-        "id": "1793722927577154",
-        "name": "Larri",
+        "id": "1790940529084389",
+        "name": "Tojo",
         "weight": 7,
         "position": "medio"
       },
@@ -747,6 +747,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-13T13:50:19.833Z",
+  "exportDate": "2026-11-13T13:50:49.797Z",
   "version": "2.5"
 }
