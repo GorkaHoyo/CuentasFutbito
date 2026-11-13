@@ -50,6 +50,10 @@ class App {
   constructor() {
     this.page = 'resumen';
     this.pageAnim = false;
+    // === NUEVO: Control de Modo Espectador y PIN de Admin ===
+    // Comprueba si este navegador ya metió el PIN de admin antes
+    this.isAdmin = localStorage.getItem('gorkaFutbitoAdmin') === 'true';
+    this.adminPin = '0808';
     this.matchFilter = 'F5';
     this.modal = null;
     this.toastMsg = null;
@@ -874,7 +878,33 @@ class App {
     }
   }
 
-  renderTopbar(){ return `<div class="topbar"><div class="brand">${ICONS.ball}<div><h1>Cuentas F5·F7</h1><div class="date">${todayStr()}</div></div></div><div class="match-switch"><button class="${this.matchFilter==='F5'?'active':''}" onclick="app.matchFilter='F5';app.render()">F5</button><button class="${this.matchFilter==='F7'?'active':''}" onclick="app.matchFilter='F7';app.render()">F7</button></div></div>`; }
+renderTopbar(){ 
+    const lockIcon = this.isAdmin 
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>` 
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><path d="M15 11V7a3 3 0 00-6 0v4"/></svg>`;
+    
+    const lockAction = this.isAdmin ? "app.logoutAdmin()" : "app.promptAdminLogin()";
+    const lockTitle = this.isAdmin ? "Modo Admin Activo (Pulsa para bloquear)" : "Modo Espectador (Pulsa para entrar como Admin)";
+
+    return `<div class="topbar">
+      <div class="brand">
+        ${ICONS.ball}
+        <div>
+          <h1>Cuentas F5·F7</h1>
+          <div class="date">${todayStr()}</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button onclick="${lockAction}" title="${lockTitle}" style="background:rgba(255,255,255,0.1); border:none; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer;">
+          ${lockIcon}
+        </button>
+        <div class="match-switch">
+          <button class="${this.matchFilter==='F5'?'active':''}" onclick="app.matchFilter='F5';app.render()">F5</button>
+          <button class="${this.matchFilter==='F7'?'active':''}" onclick="app.matchFilter='F7';app.render()">F7</button>
+        </div>
+      </div>
+    </div>`; 
+  }
   renderScoreboard(matchType){ const bote = this.getTotalPot(matchType); const {credit, debt} = this.classify(matchType); const jugadores = [...credit, ...debt].reduce((s,x)=>s+x.b,0); const balance = bote + jugadores; const cls = v => v>0.001?'pos':(v<-0.001?'neg':'neu'); return `<div class="scoreboard"><div class="cell"><div class="stat-label">Bote</div><div class="stat-value mono ${cls(bote)}">${fmtPlain(bote)}</div></div><div class="cell"><div class="stat-label">Jugadores</div><div class="stat-value mono ${cls(jugadores)}">${fmt(jugadores)}</div></div><div class="cell"><div class="stat-label">Balance</div><div class="stat-value mono ${cls(balance)}">${fmtPlain(balance)}</div></div></div>`; }
 
   renderPage(){
@@ -1283,7 +1313,26 @@ class App {
     }
   }
 }
+// === NUEVO: Función para desbloquear Modo Admin con PIN ===
+  promptAdminLogin() {
+    const pinIntroducido = prompt("Introduce el PIN de Administrador:");
+    if (pinIntroducido === this.adminPin) {
+      this.isAdmin = true;
+      localStorage.setItem('gorkaFutbitoAdmin', 'true');
+      alert("¡Modo Administrador activado con éxito en este dispositivo!");
+      this.render();
+    } else if (pinIntroducido !== null) {
+      alert("PIN incorrecto.");
+    }
+  }
 
+  // === NUEVO: Función opcional para bloquear de nuevo si se desea ===
+  logoutAdmin() {
+    this.isAdmin = false;
+    localStorage.removeItem('gorkaFutbitoAdmin');
+    alert("Modo Espectador activado.");
+    this.render();
+  }
 let appInstanciada = false;
 function iniciarApp() {
   if (appInstanciada) return;
