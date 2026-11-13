@@ -678,8 +678,8 @@
         "position": "portero"
       },
       {
-        "id": "1790617571023650",
-        "name": "Gorka",
+        "id": "1790616949341112",
+        "name": "Aiert",
         "weight": 6,
         "position": "defensa"
       },
@@ -702,16 +702,16 @@
         "position": "medio"
       },
       {
-        "id": "1790616929299341",
-        "name": "Txopi Aitor",
-        "weight": 8,
+        "id": "1790616908815312",
+        "name": "Hoyuki Ander",
+        "weight": 7,
         "position": "delantero"
       }
     ],
     "teamBlanco": [
       {
-        "id": "1790616949341112",
-        "name": "Aiert",
+        "id": "1790617571023650",
+        "name": "Gorka",
         "weight": 6,
         "position": "defensa"
       },
@@ -740,13 +740,13 @@
         "position": "medio"
       },
       {
-        "id": "1790616908815312",
-        "name": "Hoyuki Ander",
-        "weight": 7,
+        "id": "1790616929299341",
+        "name": "Txopi Aitor",
+        "weight": 8,
         "position": "delantero"
       }
     ]
   },
-  "exportDate": "2026-11-13T12:04:19.674Z",
+  "exportDate": "2026-11-13T12:31:53.032Z",
   "version": "2.5"
 }
