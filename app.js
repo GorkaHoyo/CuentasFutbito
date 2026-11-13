@@ -1213,7 +1213,7 @@ renderEquipos(){
     return `<div class="subtabs"><button class="chip ${this.statTab==='clasificacion'?'active':''}" style="flex:1" onclick="app.statTab='clasificacion';app.render()">Clasificación</button><button class="chip ${this.statTab==='partidos'?'active':''}" style="flex:1" onclick="app.statTab='partidos';app.render()">Partidos</button></div>${this.renderSeasonFilterBar()}${this.statTab==='clasificacion' ? this.renderClasificacion() : this.renderListaPartidos()}`; 
   }
   
-  renderClasificacion() {
+renderClasificacion() {
     const data = this.getSortedClasificacion(this.statSeasonFilter); 
     let tableHtml = `<div class="empty-state">No hay partidos jugados en esta selección.</div>`;
 
@@ -1223,11 +1223,14 @@ renderEquipos(){
       const muro = [...data].sort((a,b) => b.dg - a.dg || b.pts - a.pts)[0];
       const killer = [...data].sort((a,b) => b.gpp - a.gpp || b.goles - a.goles)[0];
 
+      // Si es admin permite abrir el cromo, si es espectador no hace nada al hacer clic
+      const clickAttr = (id) => this.isAdmin ? `onclick="app.openModal('cromoPlayer', '${id}')" style="cursor:pointer;"` : '';
+
       const leadersHtml = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
-        <div class="ticket credit" style="margin:0; padding:10px 12px; cursor:pointer;" onclick="app.openModal('cromoPlayer', '${pichichi.p.id}')"><div><div class="sub">⚽ PICHICHI</div><div class="name">${escapeHtml(pichichi.p.name)}</div></div><div class="amt mono pos">${pichichi.goles}G</div></div>
-        <div class="ticket credit" style="margin:0; padding:10px 12px; cursor:pointer;" onclick="app.openModal('cromoPlayer', '${mvp.p.id}')"><div><div class="sub">🏆 LÍDER PUNTOS</div><div class="name">${escapeHtml(mvp.p.name)}</div></div><div class="amt mono pos">${mvp.pts}p</div></div>
-        <div class="ticket ${muro.dg>=0?'credit':'debt'}" style="margin:0; padding:10px 12px; cursor:pointer;" onclick="app.openModal('cromoPlayer', '${muro.p.id}')"><div><div class="sub">🛡️ MEJOR BALANCE</div><div class="name">${escapeHtml(muro.p.name)}</div></div><div class="amt mono ${muro.dg>0?'pos':(muro.dg<0?'neg':'zero')}">${fmtDG(muro.dg)}</div></div>
-        <div class="ticket neutral" style="margin:0; padding:10px 12px; cursor:pointer;" onclick="app.openModal('cromoPlayer', '${killer.p.id}')"><div><div class="sub">🎯 MEDIA G/P</div><div class="name">${escapeHtml(killer.p.name)}</div></div><div class="amt mono">${killer.gpp.toFixed(2)}</div></div>
+        <div class="ticket credit" style="margin:0; padding:10px 12px; ${this.isAdmin?'cursor:pointer;':''}" ${clickAttr(pichichi.p.id)}><div><div class="sub">⚽ PICHICHI</div><div class="name">${escapeHtml(pichichi.p.name)}</div></div><div class="amt mono pos">${pichichi.goles}G</div></div>
+        <div class="ticket credit" style="margin:0; padding:10px 12px; ${this.isAdmin?'cursor:pointer;':''}" ${clickAttr(mvp.p.id)}><div><div class="sub">🏆 LÍDER PUNTOS</div><div class="name">${escapeHtml(mvp.p.name)}</div></div><div class="amt mono pos">${mvp.pts}p</div></div>
+        <div class="ticket ${muro.dg>=0?'credit':'debt'}" style="margin:0; padding:10px 12px; ${this.isAdmin?'cursor:pointer;':''}" ${clickAttr(muro.p.id)}><div><div class="sub">🛡️ MEJOR BALANCE</div><div class="name">${escapeHtml(muro.p.name)}</div></div><div class="amt mono ${muro.dg>0?'pos':(muro.dg<0?'neg':'zero')}">${fmtDG(muro.dg)}</div></div>
+        <div class="ticket neutral" style="margin:0; padding:10px 12px; ${this.isAdmin?'cursor:pointer;':''}" ${clickAttr(killer.p.id)}><div><div class="sub">🎯 MEDIA G/P</div><div class="name">${escapeHtml(killer.p.name)}</div></div><div class="amt mono">${killer.gpp.toFixed(2)}</div></div>
       </div>`;
 
       const badgeRacha = (last3) => last3.map(r => `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:2px;background:${r==='V'?'var(--credit)':(r==='E'?'var(--gold)':'var(--debt)')}"></span>`).join('');
@@ -1248,7 +1251,8 @@ renderEquipos(){
           <tbody>
             ${data.map((row, i) => {
               const dgColor = row.dg > 0 ? 'var(--credit)' : (row.dg < 0 ? 'var(--debt)' : 'var(--muted)');
-              return `<tr onclick="app.openModal('cromoPlayer', '${row.p.id}')" style="cursor:pointer; background:${i%2===0?'#fff':'#f9f9f9'}"><td><b>${i+1}.</b> ${escapeHtml(row.p.name)} <div style="margin-top:2px">${badgeRacha(row.last3)} <span style="font-size:10px;color:var(--muted)">${row.pg}V-${row.pe}E-${row.pp}D · ${row.gf}GF-${row.gc}GC</span></div></td><td class="num"><b>${row.pts}</b></td><td class="num">${row.pj}</td><td class="num" style="color:var(--pitch)"><b>${row.goles}</b></td><td class="num" style="color:${dgColor};font-weight:800;">${fmtDG(row.dg)}</td><td class="num" style="color:var(--muted)">${row.gpp.toFixed(2)}</td><td class="num"><b>${row.winrate}%</b></td></tr>`;
+              const rowClick = this.isAdmin ? `onclick="app.openModal('cromoPlayer', '${row.p.id}')" style="cursor:pointer; background:${i%2===0?'#fff':'#f9f9f9'}"` : `style="background:${i%2===0?'#fff':'#f9f9f9'}"`;
+              return `<tr ${rowClick}><td><b>${i+1}.</b> ${escapeHtml(row.p.name)} <div style="margin-top:2px">${badgeRacha(row.last3)} <span style="font-size:10px;color:var(--muted)">${row.pg}V-${row.pe}E-${row.pp}D · ${row.gf}GF-${row.gc}GC</span></div></td><td class="num"><b>${row.pts}</b></td><td class="num">${row.pj}</td><td class="num" style="color:var(--pitch)"><b>${row.goles}</b></td><td class="num" style="color:${dgColor};font-weight:800;">${fmtDG(row.dg)}</td><td class="num" style="color:var(--muted)">${row.gpp.toFixed(2)}</td><td class="num"><b>${row.winrate}%</b></td></tr>`;
             }).join('')}
           </tbody>
         </table>
@@ -1258,20 +1262,27 @@ renderEquipos(){
     return tableHtml;
   }
 
-  renderListaPartidos() {
+renderListaPartidos() {
     const seasonView = this.statSeasonFilter || this.currentSeason;
     const titleTxt = seasonView === 'ALL' ? 'Todos los Partidos (Histórico)' : `Partidos Temporada ${seasonView}`;
     let html = `<div class="section-title">${titleTxt}</div>`; 
     const partidosTemp = this.matches
       .filter(m => (seasonView === 'ALL' || m.season === seasonView) && (!this.statMatchFilter || m.matchType === this.statMatchFilter))
       .sort((a,b) => new Date(b.date) - new Date(a.date));
-    if (partidosTemp.length === 0) return html + '<div class="empty-state">No hay partidos en esta selección. Genera equipos y séllalos para empezar.</div>';
+    if (partidosTemp.length === 0) return html + '<div class="empty-state">No hay partidos en esta selección.</div>';
+    
     html += partidosTemp.map(m => {
-      const isPending = m.status === 'pending'; const fecha = new Date(m.date).toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'});
-      const boxStyle = isPending ? 'border-left-color:var(--gold); background:var(--gold-soft); cursor:pointer;' : 'border-left-color:var(--credit); cursor:pointer;';
-      let resHtml = isPending ? `<span style="font-weight:700; color:#8a5a12; font-size:12px; text-transform:uppercase;">Anotar resultado ➔</span>` : `<div style="font-size:24px; font-weight:800; font-family:'Inter', sans-serif; color:var(--pitch)"><span style="color:var(--debt)">${m.scoreRojo}</span> - <span style="color:#1E3A8A">${m.scoreBlanco}</span></div>`;
-      return `<div class="ticket" style="${boxStyle}" onclick="app.openModal('resolveMatch', '${m.id}')"><div><div class="name">${m.matchType} · ${fecha}</div><div class="sub">${m.teamRojo.length} vs ${m.teamBlanco.length} jugadores · Temp. ${escapeHtml(m.season || '')}</div></div><div>${resHtml}</div></div>`;
-    }).join(''); return html;
+      const isPending = m.status === 'pending'; 
+      const fecha = new Date(m.date).toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'});
+      
+      // Si es admin permite hacer clic para resolver, si es espectador no hace nada al pinchar
+      const ticketClick = this.isAdmin ? `onclick="app.openModal('resolveMatch', '${m.id}')" style="border-left-color:${isPending?'var(--gold); background:var(--gold-soft);':'var(--credit);'} cursor:pointer;"` : `style="border-left-color:${isPending?'var(--gold); background:var(--gold-soft);':'var(--credit);'}"`;
+      
+      let resHtml = isPending ? `<span style="font-weight:700; color:#8a5a12; font-size:12px; text-transform:uppercase;">${this.isAdmin ? 'Anotar resultado ➔' : 'Pendiente'}</span>` : `<div style="font-size:24px; font-weight:800; font-family:'Inter', sans-serif; color:var(--pitch)"><span style="color:var(--debt)">${m.scoreRojo}</span> - <span style="color:#1E3A8A">${m.scoreBlanco}</span></div>`;
+      
+      return `<div class="ticket" ${ticketClick}><div><div class="name">${m.matchType} · ${fecha}</div><div class="sub">${m.teamRojo.length} vs ${m.teamBlanco.length} jugadores · Temp. ${escapeHtml(m.season || '')}</div></div><div>${resHtml}</div></div>`;
+    }).join(''); 
+    return html;
   }
 
   renderGithubSyncBox(){
@@ -1309,8 +1320,7 @@ renderBottomNav() {
     // Si es espectador, barra limpia de solo 3 pestañas principales basadas en tu misma estructura
     return `<div class="bottom-nav">${[ 
       {id:'resumen', label:'Cuentas', icon:ICONS.wallet || ICONS.home}, 
-      {id:'estadisticas', label:'Clasificación', icon:ICONS.chart}, 
-      {id:'equipos', label:'Equipos', icon:ICONS.shirts} 
+      {id:'estadisticas', label:'Clasificación', icon:ICONS.chart}
     ].map(t=>`<button class="${this.page===t.id?'active':''}" onclick="app.setPage('${t.id}')">${t.icon}<span class="tab-label">${t.label}</span></button>`).join('')}</div>`;
   }
   renderGoalDiffStatus(m) {
