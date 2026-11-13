@@ -690,9 +690,9 @@
         "position": "defensa"
       },
       {
-        "id": "1793723109770437",
-        "name": "Carlos",
-        "weight": 4,
+        "id": "1793725159567774",
+        "name": "Gaizka",
+        "weight": 5,
         "position": "defensa"
       },
       {
@@ -716,9 +716,9 @@
         "position": "defensa"
       },
       {
-        "id": "1793725159567774",
-        "name": "Gaizka",
-        "weight": 5,
+        "id": "1793723109770437",
+        "name": "Carlos",
+        "weight": 4,
         "position": "defensa"
       },
       {
@@ -747,6 +747,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-13T13:58:01.504Z",
+  "exportDate": "2026-11-13T13:58:43.952Z",
   "version": "2.5"
 }
