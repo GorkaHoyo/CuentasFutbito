@@ -1058,6 +1058,27 @@ openModal(type, payload){
   submitGuest(){ const name = document.getElementById('guestName').value.trim(); if(!name){ this.toast('Falta nombre'); return; } const skill = document.querySelector('#guestSkillGroup .chip.active').dataset.val; const stamina = document.querySelector('#guestStaminaGroup .chip.active').dataset.val; const position = document.querySelector('#guestPosGroup .chip.active').dataset.val; const guest = { id:'guest_'+uid(), name, skill, stamina, position, bilbaoKirolak: false }; this.teamsGuests.push(guest); this.teamsPresent.add(guest.id); this.saveTeamsLocal(); this.closeModal(); this.toast('Invitado añadido'); }
 
   renderTeamsResult(r){
+    // Si no es admin, mostramos una versión limpia de los equipos sin botones de sellar ni avisos de intercambio
+    if (!this.isAdmin) {
+      return `
+        <div style="margin-top:16px;">
+          ${res.teams.map(t => `
+            <div class="team-card" style="border-left: 5px solid ${t.color === 'rojo' ? 'var(--debt)' : 'var(--pitch)'}; margin-bottom: 12px; background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-weight:700;">
+                <span style="text-transform:capitalize;">Equipo ${t.name}</span>
+                <span style="font-size:12px; color:var(--muted);">peso global ${t.pesoGlobal || ''}</span>
+              </div>
+              ${t.players.map(p => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #f0f0f0; font-size:14px;">
+                  <div>${escapeHtml(p.name)} <span class="lvl-badge" style="background:${p.position==='POR'?'var(--gold-soft)':(p.position==='DEF'?'var(--turf-soft)':'var(--debt-soft)')}; color:${p.position==='POR'?'#8a5a12':(p.position==='DEF'?'var(--credit)':'var(--debt)')}">${p.position || 'DEF'}</span></div>
+                  <!-- Sin estrellas ni valoraciones para espectadores -->
+                </div>
+              `).join('')}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
     const avg = list => list.length ? (list.reduce((s,p)=>s+p.weight,0)/list.length) : 0;
     const teamBlock = (team, label, list, average, accent) => {
       const pList = list.length > 0 ? list.map((p,i)=>`<div class="team-player ${this.teamsSwapSel?.team===team && this.teamsSwapSel?.idx===i ? 'selected':''}" onclick="app.swapTeamPlayer('${team}', ${i})"><span>${escapeHtml(p.name)} <span class="lvl-badge" style="background:${POSITION_COLOR[p.position] || '#8A8A8A'};color:#fff">${POSITION_ABBR[p.position] || '-'}</span></span><span class="lvl-badge">★ ${p.weight}</span></div>`).join('') : '<div class="empty-state">Sin jugadores</div>';
@@ -1174,7 +1195,6 @@ openModal(type, payload){
 
   renderFab(){if (!this.isAdmin) return ''; return this.page==='resumen' ? `<button class="fab" onclick="app.setPage('movimientos')">${ICONS.plus}</button>` : (this.page==='jugadores' ? `<button class="fab" onclick="app.openModal('addPlayer')">${ICONS.plus}</button>` : ''); }
 renderBottomNav() {
-    // Si eres Admin, ves todas las pestañas de gestión
     if (this.isAdmin) {
       return `<div class="bottom-nav">
         <button class="${this.page==='resumen'?'active':''}" onclick="app.setPage('resumen')">${ICONS.home}<span>Resumen</span></button>
@@ -1186,7 +1206,6 @@ renderBottomNav() {
       </div>`;
     } 
     
-    // Si es Espectador, barra ultra limpia de solo 3 pestañas principales
     return `<div class="bottom-nav">
       <button class="${this.page==='resumen'?'active':''}" onclick="app.setPage('resumen')">${ICONS.wallet}<span>Cuentas</span></button>
       <button class="${this.page==='estadisticas'?'active':''}" onclick="app.setPage('estadisticas')">${ICONS.chart}<span>Clasificación</span></button>
