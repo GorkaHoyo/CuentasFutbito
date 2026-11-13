@@ -1060,11 +1060,11 @@ renderResumen(){
     this.openModal('settleMatch');
   }
 
-  renderEquipos(){
+renderEquipos(){
     const mt = this.teamsMatchType; 
 
-    // === MODO ESPECTADOR: Vista ultra limpia (solo selector F5/F7 y resultado o aviso) ===
-if (!this.isAdmin) {
+    // === MODO ESPECTADOR: Ve exactamente lo mismo que el admin (si hay equipos generados, se muestran; si no, la vista de convocatoria/equipos actual) ===
+    if (!this.isAdmin) {
       return `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
           <h3 style="margin:0; font-size:16px;">Convocatoria ${mt}</h3>
@@ -1073,11 +1073,11 @@ if (!this.isAdmin) {
             <button class="chip ${mt==='F7'?'active':''}" onclick="app.teamsMatchType='F7';app.render()">F7</button>
           </div>
         </div>
-        ${this.teamsResult ? this.renderTeamsResult(this.teamsResult) : '<div class="empty-state" style="padding:40px 20px; text-align:center;"><div style="font-size:32px; margin-bottom:8px;">⏳</div><h3>Pendiente de convocatoria</h3><p style="color:var(--muted); font-size:14px;">Todavía no se han generado los equipos para esta jornada.</p></div>'}
+        ${this.teamsResult ? this.renderTeamsResult(this.teamsResult) : '<div class="empty-state" style="padding:40px 20px; text-align:center;"><div style="font-size:32px; margin-bottom:8px;">📋</div><h3>Sin equipos generados todavía</h3><p style="color:var(--muted); font-size:14px;">El administrador todavía no ha pulsado en equilibrar o aleatorio para esta modalidad.</p></div>'}
       `;
     }
 
-    // === MODO ADMIN: Todo el panel de gestión original intacto ===
+    // === MODO ADMIN: Todo tu panel de gestión original ===
     let players = this.getPlayersForMatch(mt);
     if(this.teamsSearch) { const q = this.teamsSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); players = players.filter(p=> p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)); }
     
