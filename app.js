@@ -1064,8 +1064,7 @@ renderResumen(){
     const mt = this.teamsMatchType; 
 
     // === MODO ESPECTADOR: Vista ultra limpia (solo selector F5/F7 y resultado o aviso) ===
-    if (!this.isAdmin) {
-      const hasResult = this.teamsResult;
+if (!this.isAdmin) {
       return `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
           <h3 style="margin:0; font-size:16px;">Convocatoria ${mt}</h3>
@@ -1074,7 +1073,7 @@ renderResumen(){
             <button class="chip ${mt==='F7'?'active':''}" onclick="app.teamsMatchType='F7';app.render()">F7</button>
           </div>
         </div>
-        ${hasResult ? this.renderTeamsResult(this.teamsResult) : '<div class="empty-state" style="padding:40px 20px; text-align:center;"><div style="font-size:32px; margin-bottom:8px;">⏳</div><h3>Pendiente de convocatoria</h3><p style="color:var(--muted); font-size:14px;">Todavía no se han publicado los equipos para esta jornada.</p></div>'}
+        ${this.teamsResult ? this.renderTeamsResult(this.teamsResult) : '<div class="empty-state" style="padding:40px 20px; text-align:center;"><div style="font-size:32px; margin-bottom:8px;">⏳</div><h3>Pendiente de convocatoria</h3><p style="color:var(--muted); font-size:14px;">Todavía no se han generado los equipos para esta jornada.</p></div>'}
       `;
     }
 
@@ -1169,13 +1168,19 @@ renderResumen(){
   renderSeasonFilterBar() {
     const seasons = this.getAvailableSeasons();
     const cur = this.statSeasonFilter || this.currentSeason;
-    const manageOpts = cur !== 'ALL'
-      ? `<option value="__RENAME__">✏️ Renombrar "${escapeHtml(cur)}"...</option><option value="__DELETE__">🗑️ Eliminar "${escapeHtml(cur)}"...</option>`
-      : '';
-    const opts = `<option value="ALL" ${cur==='ALL'?'selected':''}>🌟 Histórico (Todas)</option>` +
-      seasons.map(s => `<option value="${escapeHtml(s)}" ${cur===s?'selected':''}>${escapeHtml(s)}${s===this.currentSeason?' ⭐':''}</option>`).join('') +
-      `<option value="__NEW__">➕ Nueva temporada...</option>` +
-      manageOpts;
+    
+    // Las opciones base que ven TODOS (Histórico + las temporadas existentes)
+    let opts = `<option value="ALL" ${cur==='ALL'?'selected':''}>🌟 Histórico (Todas)</option>` +
+      seasons.map(s => `<option value="${escapeHtml(s)}" ${cur===s?'selected':''}>${escapeHtml(s)}${s===this.currentSeason?' ⭐':''}</option>`).join('');
+
+    // Si es administrador, añadimos las opciones de gestión al desplegable
+    if (this.isAdmin) {
+      const manageOpts = cur !== 'ALL'
+        ? `<option value="__RENAME__">✏️ Renombrar "${escapeHtml(cur)}"...</option><option value="__DELETE__">🗑️ Eliminar "${escapeHtml(cur)}"...</option>`
+        : '';
+      opts += `<option value="__NEW__">➕ Nueva temporada...</option>` + manageOpts;
+    }
+
     return `<div class="field-row" style="align-items:flex-end; margin-bottom:14px;">
       <div style="flex:1"><label style="margin-top:0">Temporada</label><select onchange="app.handleSeasonSelect(this.value)" style="font-family:'Inter', sans-serif; font-weight:700; padding:10px 12px;">${opts}</select></div>
       <div><label style="margin-top:0">Modalidad</label><div class="filter-bar" style="margin-bottom:0"><button class="chip ${this.statMatchFilter===''?'active':''}" onclick="app.statMatchFilter='';app.render()">Todos</button><button class="chip ${this.statMatchFilter==='F5'?'active':''}" onclick="app.statMatchFilter='F5';app.render()">F5</button><button class="chip ${this.statMatchFilter==='F7'?'active':''}" onclick="app.statMatchFilter='F7';app.render()">F7</button></div></div>
