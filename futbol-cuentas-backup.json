@@ -694,9 +694,9 @@
         "position": "defensa"
       },
       {
-        "id": "1793722927577154",
-        "name": "Larri",
-        "weight": 7,
+        "id": "1790939947763502",
+        "name": "Julio",
+        "weight": 5,
         "position": "medio"
       },
       {
@@ -732,9 +732,9 @@
         "position": "medio"
       },
       {
-        "id": "1790939947763502",
-        "name": "Julio",
-        "weight": 5,
+        "id": "1793722927577154",
+        "name": "Larri",
+        "weight": 7,
         "position": "medio"
       },
       {
@@ -745,6 +745,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-13T10:30:49.616Z",
+  "exportDate": "2026-11-13T10:30:54.046Z",
   "version": "2.5"
 }
