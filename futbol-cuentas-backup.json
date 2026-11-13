@@ -670,10 +670,10 @@
   "teamsResult": {
     "teamRojo": [
       {
-        "id": "1793723109770437",
-        "name": "Carlos",
-        "weight": 4,
-        "position": "defensa"
+        "id": "179372415012419",
+        "name": "Pablo txopo",
+        "weight": 6,
+        "position": "portero"
       },
       {
         "id": "1790616949341112",
@@ -708,10 +708,10 @@
     ],
     "teamBlanco": [
       {
-        "id": "179372415012419",
-        "name": "Pablo txopo",
-        "weight": 6,
-        "position": "portero"
+        "id": "1793723109770437",
+        "name": "Carlos",
+        "weight": 4,
+        "position": "defensa"
       },
       {
         "id": "1790617380927257",
@@ -745,6 +745,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-13T10:17:53.819Z",
+  "exportDate": "2026-11-13T10:30:36.547Z",
   "version": "2.5"
 }
