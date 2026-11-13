@@ -1313,26 +1313,25 @@ class App {
     }
   }
 }
-// === NUEVO: Función para desbloquear Modo Admin con PIN ===
-  promptAdminLogin() {
-    const pinIntroducido = prompt("Introduce el PIN de Administrador:");
-    if (pinIntroducido === this.adminPin) {
-      this.isAdmin = true;
-      localStorage.setItem('gorkaFutbitoAdmin', 'true');
-      alert("¡Modo Administrador activado con éxito en este dispositivo!");
-      this.render();
-    } else if (pinIntroducido !== null) {
-      alert("PIN incorrecto.");
-    }
+// === NUEVO: Funciones de Admin globales ===
+function promptAdminLogin() {
+  const pinIntroducido = prompt("Introduce el PIN de Administrador:");
+  if (pinIntroducido === window.app.adminPin) {
+    window.app.isAdmin = true;
+    localStorage.setItem('gorkaFutbitoAdmin', 'true');
+    alert("¡Modo Administrador activado con éxito en este dispositivo!");
+    window.app.render();
+  } else if (pinIntroducido !== null) {
+    alert("PIN incorrecto.");
   }
+}
 
-  // === NUEVO: Función opcional para bloquear de nuevo si se desea ===
-  logoutAdmin() {
-    this.isAdmin = false;
-    localStorage.removeItem('gorkaFutbitoAdmin');
-    alert("Modo Espectador activado.");
-    this.render();
-  }
+function logoutAdmin() {
+  window.app.isAdmin = false;
+  localStorage.removeItem('gorkaFutbitoAdmin');
+  alert("Modo Espectador activado.");
+  window.app.render();
+}
 let appInstanciada = false;
 function iniciarApp() {
   if (appInstanciada) return;
