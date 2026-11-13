@@ -78,6 +78,7 @@ class App {
     this._isSyncing = false;
     
     this.load(); 
+    this.loadCloudData();
     this.render();
     if(this.githubSync) this.pullFromGithub(true);
   }
@@ -101,7 +102,28 @@ class App {
     try { this.teamsResult = JSON.parse(localStorage.getItem('football-teams-result')); } catch(e) { this.teamsResult = null; }
     this.teamsSwapSel = null;
   }
-
+async loadCloudData() {
+    try {
+      const res = await fetch('./futbol-cuentas-backup.json?' + new Date().getTime());
+      if (res.ok) {
+        const data = await res.json();
+        // Si el localStorage está vacío (como en modo incógnito o primer acceso de un colega), cargamos el JSON
+        if (!localStorage.getItem('gorkaFutbitoLoaded')) {
+          if (data.players) localStorage.setItem('football-players', JSON.stringify(data.players));
+          if (data.transactions) localStorage.setItem('football-transactions', JSON.stringify(data.transactions));
+          if (data.generalTransactions) localStorage.setItem('football-general-transactions', JSON.stringify(data.generalTransactions));
+          if (data.matches) localStorage.setItem('football-matches', JSON.stringify(data.matches));
+          
+          localStorage.setItem('gorkaFutbitoLoaded', 'true');
+          console.log("Datos cargados desde el JSON de GitHub correctamente.");
+          this.load(); // Recarga los datos en memoria
+          this.render(); // Vuelve a pintar la app con los datos
+        }
+      }
+    } catch (e) {
+      console.log("Usando datos locales por defecto", e);
+    }
+  }
   getAvailableSeasons() {
     const set = new Set(this.customSeasons || []);
     if(this.currentSeason) set.add(this.currentSeason);
