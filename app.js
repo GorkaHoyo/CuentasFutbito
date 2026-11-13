@@ -872,7 +872,7 @@ openModal(type, payload){
         m._manualRojo = (m.scoreRojo > sumR);
         m._manualBlanco = (m.scoreBlanco > sumB);
       }
-    }
+    
     this.modal = {type, payload: payload || {}}; this.render(); 
   }
   closeModal(){ this.modal = null; this.render(); }
