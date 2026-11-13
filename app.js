@@ -232,13 +232,16 @@ async loadCloudData() {
     this.scheduleGithubPush(); 
   }
 
-  saveLocalOnly() {
+ saveLocalOnly() {
     localStorage.setItem('football-players', JSON.stringify(this.players)); 
     localStorage.setItem('football-transactions', JSON.stringify(this.transactions)); 
     localStorage.setItem('football-general-transactions', JSON.stringify(this.generalTransactions)); 
     localStorage.setItem('football-matches', JSON.stringify(this.matches));
     localStorage.setItem('football-season', this.currentSeason);
     localStorage.setItem('football-seasons-list', JSON.stringify(this.customSeasons));
+    
+    // 👇 AÑADE ESTA LÍNEA AQUÍ TAMBIÉN 👇
+    localStorage.setItem('football-teams-result', JSON.stringify(this.teamsResult));
   }
 
   save() { this.saveLocalOnly(); this.scheduleGithubPush(); }
