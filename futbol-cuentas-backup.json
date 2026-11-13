@@ -678,8 +678,8 @@
         "position": "portero"
       },
       {
-        "id": "1790616949341112",
-        "name": "Aiert",
+        "id": "1790617571023650",
+        "name": "Gorka",
         "weight": 6,
         "position": "defensa"
       },
@@ -690,28 +690,28 @@
         "position": "defensa"
       },
       {
-        "id": "1790943842367934",
-        "name": "Josemi totemi",
-        "weight": 3,
-        "position": "defensa"
-      },
-      {
         "id": "1793722927577154",
         "name": "Larri",
         "weight": 7,
         "position": "medio"
       },
       {
-        "id": "1790616929299341",
-        "name": "Txopi Aitor",
-        "weight": 8,
+        "id": "1790939947763502",
+        "name": "Julio",
+        "weight": 5,
+        "position": "medio"
+      },
+      {
+        "id": "1790616908815312",
+        "name": "Hoyuki Ander",
+        "weight": 7,
         "position": "delantero"
       }
     ],
     "teamBlanco": [
       {
-        "id": "1790617571023650",
-        "name": "Gorka",
+        "id": "1790616949341112",
+        "name": "Aiert",
         "weight": 6,
         "position": "defensa"
       },
@@ -728,25 +728,25 @@
         "position": "defensa"
       },
       {
+        "id": "1790943842367934",
+        "name": "Josemi totemi",
+        "weight": 3,
+        "position": "defensa"
+      },
+      {
         "id": "1790940529084389",
         "name": "Tojo",
         "weight": 7,
         "position": "medio"
       },
       {
-        "id": "1790939947763502",
-        "name": "Julio",
-        "weight": 5,
-        "position": "medio"
-      },
-      {
-        "id": "1790616908815312",
-        "name": "Hoyuki Ander",
-        "weight": 7,
+        "id": "1790616929299341",
+        "name": "Txopi Aitor",
+        "weight": 8,
         "position": "delantero"
       }
     ]
   },
-  "exportDate": "2026-11-13T12:35:54.322Z",
+  "exportDate": "2026-11-13T13:20:20.292Z",
   "version": "2.5"
 }
