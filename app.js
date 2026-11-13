@@ -998,7 +998,25 @@ openModal(type, payload){
   }
 
   renderEquipos(){
-    const mt = this.teamsMatchType; let players = this.getPlayersForMatch(mt);
+    const mt = this.teamsMatchType; 
+
+    // === MODO ESPECTADOR: Vista ultra limpia (solo selector F5/F7 y resultado o aviso) ===
+    if (!this.isAdmin) {
+      const hasResult = this.teamsResult;
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="margin:0; font-size:16px;">Convocatoria ${mt}</h3>
+          <div class="chip-group" style="margin:0">
+            <button class="chip ${mt==='F5'?'active':''}" onclick="app.teamsMatchType='F5';app.render()">F5</button>
+            <button class="chip ${mt==='F7'?'active':''}" onclick="app.teamsMatchType='F7';app.render()">F7</button>
+          </div>
+        </div>
+        ${hasResult ? this.renderTeamsResult(this.teamsResult) : '<div class="empty-state" style="padding:40px 20px; text-align:center;"><div style="font-size:32px; margin-bottom:8px;">⏳</div><h3>Pendiente de convocatoria</h3><p style="color:var(--muted); font-size:14px;">Todavía no se han publicado los equipos para esta jornada.</p></div>'}
+      `;
+    }
+
+    // === MODO ADMIN: Todo el panel de gestión original intacto ===
+    let players = this.getPlayersForMatch(mt);
     if(this.teamsSearch) { const q = this.teamsSearch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); players = players.filter(p=> p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)); }
     
     players.sort((a, b) => {
@@ -1155,8 +1173,26 @@ openModal(type, payload){
   }
 
   renderFab(){if (!this.isAdmin) return ''; return this.page==='resumen' ? `<button class="fab" onclick="app.setPage('movimientos')">${ICONS.plus}</button>` : (this.page==='jugadores' ? `<button class="fab" onclick="app.openModal('addPlayer')">${ICONS.plus}</button>` : ''); }
-  renderBottomNav(){ return `<div class="bottom-nav">${[ {id:'resumen', label:'Resumen', icon:ICONS.home}, {id:'jugadores', label:'Jugadores', icon:ICONS.users}, {id:'movimientos', label:'Movim.', icon:ICONS.euro}, {id:'equipos', label:'Equipos', icon:ICONS.shirts}, {id:'estadisticas', label:'Estadísticas', icon:ICONS.chart}, {id:'ajustes', label:'Ajustes', icon:ICONS.gear} ].map(t=>`<button class="${this.page===t.id?'active':''}" onclick="app.setPage('${t.id}')">${t.icon}<span class="tab-label">${t.label}</span></button>`).join('')}</div>`; }
-
+renderBottomNav() {
+    // Si eres Admin, ves todas las pestañas de gestión
+    if (this.isAdmin) {
+      return `<div class="bottom-nav">
+        <button class="${this.page==='resumen'?'active':''}" onclick="app.setPage('resumen')">${ICONS.home}<span>Resumen</span></button>
+        <button class="${this.page==='jugadores'?'active':''}" onclick="app.setPage('jugadores')">${ICONS.users}<span>Jugadores</span></button>
+        <button class="${this.page==='movimientos'?'active':''}" onclick="app.setPage('movimientos')">${ICONS.wallet}<span>Movim.</span></button>
+        <button class="${this.page==='equipos'?'active':''}" onclick="app.setPage('equipos')">${ICONS.shirt}<span>Equipos</span></button>
+        <button class="${this.page==='estadisticas'?'active':''}" onclick="app.setPage('estadisticas')">${ICONS.chart}<span>Estadísticas</span></button>
+        <button class="${this.page==='ajustes'?'active':''}" onclick="app.setPage('ajustes')">${ICONS.settings}<span>Ajustes</span></button>
+      </div>`;
+    } 
+    
+    // Si es Espectador, barra ultra limpia de solo 3 pestañas principales
+    return `<div class="bottom-nav">
+      <button class="${this.page==='resumen'?'active':''}" onclick="app.setPage('resumen')">${ICONS.wallet}<span>Cuentas</span></button>
+      <button class="${this.page==='estadisticas'?'active':''}" onclick="app.setPage('estadisticas')">${ICONS.chart}<span>Clasificación</span></button>
+      <button class="${this.page==='equipos'?'active':''}" onclick="app.setPage('equipos')">${ICONS.shirt}<span>Equipos</span></button>
+    </div>`;
+  }
   renderGoalDiffStatus(m) {
     const sumR = m.teamRojo.reduce((s, p) => s + (m.goals[p.id] || 0), 0);
     const sumB = m.teamBlanco.reduce((s, p) => s + (m.goals[p.id] || 0), 0);
