@@ -830,10 +830,13 @@ async loadCloudData() {
   }
 
 openModal(type, payload){ 
-    // 🔒 BLINDAJE MODO ESPECTADOR: Si no es admin y el modal no es de exportar o info, se bloquea
-    if (!this.isAdmin && type !== 'export' && type !== 'info') {
+      // 🔒 BLINDAJE MODO ESPECTADOR: Si no es admin y el modal no es de exportar o info, se bloquea
+
+  // Permitir exportar, info y ver cromos/tarjetas de jugadores en modo espectador
+    if (!this.isAdmin && type !== 'export' && type !== 'info' && type !== 'playerCard') {
       alert("🔒 Modo Espectador: Solo los administradores pueden realizar acciones o modificaciones.");
       return;
+
     }
 
     if(type === 'settleMatch') { 
@@ -955,9 +958,41 @@ openModal(type, payload){
   }
 
   renderResumen(){
-    const mt = this.matchFilter; const {credit, neutral, debt} = this.classify(mt);
-    const row = (item, kind) => `<div class="ticket ${kind}" onclick="app.openModal('quickTx', {playerId:'${item.p.id}', matchType:'${mt}'})"><div><div class="name">${escapeHtml(item.p.name)}</div><div class="sub">${item.p.type}${item.p.isRegular ? ' · habitual' : ''}</div></div><div class="amt mono ${item.b>0?'pos':(item.b<0?'neg':'zero')}">${fmt(item.b)}</div></div>`;
-    return `${this.renderScoreboard(mt)}<div class="field-row" style="margin-bottom:4px"><button class="btn btn-sm btn-outline" onclick="app.exportSummaryImage('${mt}')">${ICONS.download} Exportar imagen</button><button class="btn btn-sm btn-outline" onclick="app.copyMorososToClipboard('${mt}')">${ICONS.copy} Copiar deudas (${debt.length})</button></div><div class="section-title"><span class="dot" style="background:var(--credit)"></span>Con crédito<span class="count">${credit.length}</span></div>${credit.length ? credit.map(i=>row(i,'credit')).join('') : '<div class="empty-state">Nadie tiene crédito todavía</div>'}<div class="section-title"><span class="dot" style="background:var(--line)"></span>Al día<span class="count">${neutral.length}</span></div>${neutral.length ? neutral.map(i=>row(i,'neutral')).join('') : '<div class="empty-state">—</div>'}<div class="section-title"><span class="dot" style="background:var(--debt)"></span>Con deuda<span class="count">${debt.length}</span></div>${debt.length ? debt.map(i=>row(i,'debt')).join('') : '<div class="empty-state">Nadie tiene deudas 🎉</div>'}`;
+    const mt = this.matchFilter; 
+    const {credit, neutral, debt} = this.classify(mt);
+    
+    const row = (item, kind) => {
+      // Si es admin abre gestión rápida de saldo; si es espectador abre su cromo/tarjeta
+      const clickAction = this.isAdmin 
+        ? `app.openModal('quickTx', {playerId:'${item.p.id}', matchType:'${mt}'})`
+        : `app.openModal('playerCard', '${item.p.id}')`;
+
+      return `<div class="ticket ${kind}" onclick="${clickAction}">
+        <div>
+          <div class="name">${escapeHtml(item.p.name)}</div>
+          <div class="sub">${item.p.type}${item.p.isRegular ? ' · habitual' : ''}</div>
+        </div>
+        <div class="amt mono ${item.b>0?'pos':(item.b<0?'neg':'zero')}">${fmt(item.b)}</div>
+      </div>`;
+    };
+
+    return `${this.renderScoreboard(mt)}
+    <div class="field-row" style="margin-bottom:4px">
+      <button class="btn btn-sm btn-outline" onclick="app.exportSummaryImage('${mt}')">${ICONS.download} Exportar imagen</button>
+      <button class="btn btn-sm btn-outline" onclick="app.copyMorososToClipboard('${mt}')">${ICONS.copy} Copiar deudas (${debt.length})</button>
+    </div>
+    
+    <!-- 1. CON DEUDA (Arriba del todo) -->
+    <div class="section-title"><span class="dot" style="background:var(--debt)"></span>Con deuda<span class="count">${debt.length}</span></div>
+    ${debt.length ? debt.map(i=>row(i,'debt')).join('') : '<div class="empty-state">Nadie tiene deudas 🎉</div>'}
+    
+    <!-- 2. CON CRÉDITO (En medio) -->
+    <div class="section-title"><span class="dot" style="background:var(--credit)"></span>Con crédito<span class="count">${credit.length}</span></div>
+    ${credit.length ? credit.map(i=>row(i,'credit')).join('') : '<div class="empty-state">Nadie tiene crédito todavía</div>'}
+    
+    <!-- 3. AL DÍA (Abajo) -->
+    <div class="section-title"><span class="dot" style="background:var(--line)"></span>Al día<span class="count">${neutral.length}</span></div>
+    ${neutral.length ? neutral.map(i=>row(i,'neutral')).join('') : '<div class="empty-state">—</div>'}`;
   }
 
   renderJugadores(){
@@ -1237,19 +1272,19 @@ renderBottomNav() {
       </div>`;
     } 
     
-    // Modo Espectador: 3 botones limpios y sin variables raras que den undefined
+    // Modo Espectador limpio sin textos dinámicos defectuosos
     return `<div class="bottom-nav">
       <button class="${this.page==='resumen'?'active':''}" onclick="app.setPage('resumen')">
         ${ICONS.wallet}
-        <span>Cuentas</span>
+        <span style="font-size:11px; display:block; line-height:1.2;">Cuentas</span>
       </button>
       <button class="${this.page==='estadisticas'?'active':''}" onclick="app.setPage('estadisticas')">
         ${ICONS.chart}
-        <span>Clasificación</span>
+        <span style="font-size:11px; display:block; line-height:1.2;">Clasificación</span>
       </button>
       <button class="${this.page==='equipos'?'active':''}" onclick="app.setPage('equipos')">
         ${ICONS.shirt}
-        <span>Equipos</span>
+        <span style="font-size:11px; display:block; line-height:1.2;">Equipos</span>
       </button>
     </div>`;
   }
