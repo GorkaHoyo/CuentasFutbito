@@ -670,21 +670,21 @@
   "teamsResult": {
     "teamRojo": [
       {
+        "id": "1793723109770437",
+        "name": "Carlos",
+        "weight": 4,
+        "position": "defensa"
+      },
+      {
         "id": "1790616949341112",
         "name": "Aiert",
         "weight": 6,
         "position": "defensa"
       },
       {
-        "id": "1790617380927257",
-        "name": "Juan g.",
+        "id": "1793725159567774",
+        "name": "Gaizka",
         "weight": 5,
-        "position": "defensa"
-      },
-      {
-        "id": "1793723109770437",
-        "name": "Carlos",
-        "weight": 4,
         "position": "defensa"
       },
       {
@@ -694,9 +694,9 @@
         "position": "medio"
       },
       {
-        "id": "1790939947763502",
-        "name": "Julio",
-        "weight": 5,
+        "id": "1793722927577154",
+        "name": "Larri",
+        "weight": 7,
         "position": "medio"
       },
       {
@@ -714,15 +714,15 @@
         "position": "portero"
       },
       {
-        "id": "1790617571023650",
-        "name": "Gorka",
-        "weight": 6,
+        "id": "1790617380927257",
+        "name": "Juan g.",
+        "weight": 5,
         "position": "defensa"
       },
       {
-        "id": "1793725159567774",
-        "name": "Gaizka",
-        "weight": 5,
+        "id": "1790617571023650",
+        "name": "Gorka",
+        "weight": 6,
         "position": "defensa"
       },
       {
@@ -732,9 +732,9 @@
         "position": "defensa"
       },
       {
-        "id": "1793722927577154",
-        "name": "Larri",
-        "weight": 7,
+        "id": "1790939947763502",
+        "name": "Julio",
+        "weight": 5,
         "position": "medio"
       },
       {
@@ -745,6 +745,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-13T10:04:03.157Z",
+  "exportDate": "2026-11-13T10:04:05.755Z",
   "version": "2.5"
 }
