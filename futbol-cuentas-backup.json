@@ -702,9 +702,9 @@
         "position": "medio"
       },
       {
-        "id": "1790616908815312",
-        "name": "Hoyuki Ander",
-        "weight": 7,
+        "id": "1790616929299341",
+        "name": "Txopi Aitor",
+        "weight": 8,
         "position": "delantero"
       }
     ],
@@ -740,13 +740,13 @@
         "position": "medio"
       },
       {
-        "id": "1790616929299341",
-        "name": "Txopi Aitor",
-        "weight": 8,
+        "id": "1790616908815312",
+        "name": "Hoyuki Ander",
+        "weight": 7,
         "position": "delantero"
       }
     ]
   },
-  "exportDate": "2026-11-13T12:31:53.032Z",
+  "exportDate": "2026-11-13T12:35:54.322Z",
   "version": "2.5"
 }
