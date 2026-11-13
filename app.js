@@ -875,10 +875,8 @@ class App {
       }
     } catch(err) {
       el.innerHTML = `<div style="padding:20px;color:red;background:white;margin:20px;"><h3>🚨 Error</h3><pre>${err.message}</pre></div>`;
-    }
-  }
-
-renderTopbar(){ 
+    
+  renderTopbar(){ 
     const lockIcon = this.isAdmin 
       ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>` 
       : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><path d="M15 11V7a3 3 0 00-6 0v4"/></svg>`;
