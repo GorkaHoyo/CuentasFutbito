@@ -83,7 +83,7 @@ class App {
     if(this.githubSync) this.pullFromGithub(true);
   }
 
-  load() {
+load() {
     const safeArray = (key) => {
       try { const val = JSON.parse(localStorage.getItem(key)); return Array.isArray(val) ? val : []; } 
       catch(e) { return []; }
@@ -103,8 +103,10 @@ class App {
     // Carga de teamsResult mejorada
     try { 
       this.teamsResult = JSON.parse(localStorage.getItem('football-teams-result')); 
+      console.log("📥 [LOAD] teamsResult cargado:", this.teamsResult);
     } catch(e) { 
       this.teamsResult = null; 
+      console.log("⚠️ [LOAD] Error cargando teamsResult:", e);
     }
     this.teamsSwapSel = null;
   }
@@ -356,7 +358,7 @@ async loadCloudData() {
   findPresentPerson(id){ return this.players.find(x=>x.id===id) || this.teamsGuests.find(x=>x.id===id); }
   presentWithoutPosition(){ return Array.from(this.teamsPresent).map(id=>this.findPresentPerson(id)).filter(p=> p && !p.position); }
   
-  generateTeams(balanced){
+generateTeams(balanced){
     const ids = Array.from(this.teamsPresent); const required = this.requiredTeamSizes(this.teamsMatchType);
     if(!required.includes(ids.length)){ this.toast(`Hacen falta ${required.join(' o ')} jugadores`); return; }
     const missingPosition = this.presentWithoutPosition(); if(missingPosition.length > 0){ alert(`Asigna posición a:\n${missingPosition.map(p=>'· '+p.name).join('\n')}`); return; }
@@ -390,6 +392,7 @@ async loadCloudData() {
     
     // 👇 ESTA LÍNEA ES LA CLAVE PARA QUE SE GUARDE Y SE VEA FUERA DE TU SESIÓN DE ADMIN 👇
     localStorage.setItem('football-teams-result', JSON.stringify(this.teamsResult));
+    console.log("📤 [GENERATE] teamsResult guardado:", this.teamsResult);
     
     this.save(); 
     this.render();
