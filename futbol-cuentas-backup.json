@@ -678,50 +678,6 @@
         "position": "defensa"
       },
       {
-        "id": "1790617380927257",
-        "name": "Juan g.",
-        "weight": 5,
-        "position": "defensa"
-      },
-      {
-        "id": "1790943842367934",
-        "name": "Josemi totemi",
-        "weight": 3,
-        "position": "defensa"
-      },
-      {
-        "id": "1790940529084389",
-        "name": "Tojo",
-        "weight": 7,
-        "position": "medio"
-      },
-      {
-        "id": "1790939947763502",
-        "name": "Julio",
-        "weight": 5,
-        "position": "medio"
-      },
-      {
-        "id": "1790616929299341",
-        "name": "Txopi Aitor",
-        "weight": 8,
-        "position": "delantero"
-      }
-    ],
-    "teamBlanco": [
-      {
-        "id": "179372415012419",
-        "name": "Pablo txopo",
-        "weight": 6,
-        "position": "portero"
-      },
-      {
-        "id": "1790616949341112",
-        "name": "Aiert",
-        "weight": 6,
-        "position": "defensa"
-      },
-      {
         "id": "1793725159567774",
         "name": "Gaizka",
         "weight": 5,
@@ -740,13 +696,57 @@
         "position": "medio"
       },
       {
+        "id": "1790939947763502",
+        "name": "Julio",
+        "weight": 5,
+        "position": "medio"
+      },
+      {
         "id": "1790616908815312",
         "name": "Hoyuki Ander",
         "weight": 7,
         "position": "delantero"
       }
+    ],
+    "teamBlanco": [
+      {
+        "id": "179372415012419",
+        "name": "Pablo txopo",
+        "weight": 6,
+        "position": "portero"
+      },
+      {
+        "id": "1790616949341112",
+        "name": "Aiert",
+        "weight": 6,
+        "position": "defensa"
+      },
+      {
+        "id": "1790617380927257",
+        "name": "Juan g.",
+        "weight": 5,
+        "position": "defensa"
+      },
+      {
+        "id": "1790943842367934",
+        "name": "Josemi totemi",
+        "weight": 3,
+        "position": "defensa"
+      },
+      {
+        "id": "1790940529084389",
+        "name": "Tojo",
+        "weight": 7,
+        "position": "medio"
+      },
+      {
+        "id": "1790616929299341",
+        "name": "Txopi Aitor",
+        "weight": 8,
+        "position": "delantero"
+      }
     ]
   },
-  "exportDate": "2026-11-13T13:32:10.893Z",
+  "exportDate": "2026-11-13T13:40:15.593Z",
   "version": "2.5"
 }
