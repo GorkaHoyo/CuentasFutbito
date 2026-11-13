@@ -99,7 +99,13 @@ class App {
     this.teamsMatchType = localStorage.getItem('football-teams-match') || 'F5';
     try { const parsed = JSON.parse(localStorage.getItem('football-teams-present')); this.teamsPresent = new Set(Array.isArray(parsed) ? parsed : []); } catch(e) { this.teamsPresent = new Set(); }
     try { const parsed = JSON.parse(localStorage.getItem('football-teams-guests')); this.teamsGuests = Array.isArray(parsed) ? parsed : []; } catch(e) { this.teamsGuests = []; }
-    try { this.teamsResult = JSON.parse(localStorage.getItem('football-teams-result')); } catch(e) { this.teamsResult = null; }
+    
+    // Carga de teamsResult mejorada
+    try { 
+      this.teamsResult = JSON.parse(localStorage.getItem('football-teams-result')); 
+    } catch(e) { 
+      this.teamsResult = null; 
+    }
     this.teamsSwapSel = null;
   }
 async loadCloudData() {
@@ -376,7 +382,17 @@ async loadCloudData() {
       pool.sort(()=>Math.random()-0.5);
       pool.forEach(pl=>{ if(teamRojo.length < maxPerTeam){ teamRojo.push(pl); } else { teamBlanco.push(pl); } });
     }
-    this.sortByPosition(teamRojo); this.sortByPosition(teamBlanco); this.teamsResult = { teamRojo, teamBlanco }; this.teamsSwapSel = null; this._sealSeason = this.currentSeason; this.save(); this.render();
+    this.sortByPosition(teamRojo); 
+    this.sortByPosition(teamBlanco); 
+    this.teamsResult = { teamRojo, teamBlanco }; 
+    this.teamsSwapSel = null; 
+    this._sealSeason = this.currentSeason; 
+    
+    // 👇 ESTA LÍNEA ES LA CLAVE PARA QUE SE GUARDE Y SE VEA FUERA DE TU SESIÓN DE ADMIN 👇
+    localStorage.setItem('football-teams-result', JSON.stringify(this.teamsResult));
+    
+    this.save(); 
+    this.render();
   }
   
   sortByPosition(list){ const order = { portero:0, defensa:1, medio:2, delantero:3, 'sin posición':4 }; return list.sort((a,b)=> (order[a.position] ?? 4) - (order[b.position] ?? 4)); }
