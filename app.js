@@ -879,12 +879,14 @@ class App {
   }
   renderTopbar() {
     const isA = this.isAdmin;
+    // Iconos limpios de candado real (cerrado o abierto)
     const lockIcon = isA 
-      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>' 
-      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><path d="M15 11V7a3 3 0 00-6 0v4"/></svg>';
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a4 4 0 018 0v4"/></svg>' 
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>';
     
-    const lockAction = isA ? "app.logoutAdmin()" : "app.promptAdminLogin()";
-    const lockTitle = isA ? "Modo Admin Activo" : "Modo Espectador";
+    // Llamada directa a las funciones globales que pusimos abajo
+    const lockAction = isA ? "logoutAdmin()" : "promptAdminLogin()";
+    const lockTitle = isA ? "Modo Admin Activo (Clic para bloquear)" : "Modo Espectador (Clic para introducir PIN)";
 
     return `<div class="topbar">
       <div class="brand">
@@ -895,7 +897,7 @@ class App {
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
-        <button onclick="${lockAction}" title="${lockTitle}" style="background:rgba(255,255,255,0.1); border:none; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer;">
+        <button onclick="${lockAction}" title="${lockTitle}" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; transition:background 0.2s;">
           ${lockIcon}
         </button>
         <div class="match-switch">
