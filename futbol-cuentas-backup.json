@@ -690,8 +690,8 @@
         "position": "defensa"
       },
       {
-        "id": "1790940529084389",
-        "name": "Tojo",
+        "id": "1793722927577154",
+        "name": "Larri",
         "weight": 7,
         "position": "medio"
       },
@@ -734,8 +734,8 @@
         "position": "defensa"
       },
       {
-        "id": "1793722927577154",
-        "name": "Larri",
+        "id": "1790940529084389",
+        "name": "Tojo",
         "weight": 7,
         "position": "medio"
       },
@@ -747,6 +747,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-13T13:48:58.135Z",
+  "exportDate": "2026-11-13T13:49:40.232Z",
   "version": "2.5"
 }
