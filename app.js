@@ -1275,10 +1275,8 @@ renderListaPartidos() {
       const isPending = m.status === 'pending'; 
       const fecha = new Date(m.date).toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'});
       
-      // Si es admin puede editar/resolver al hacer clic; si es espectador solo lo ve sin molestarle
-      const ticketClick = this.isAdmin 
-        ? `onclick="app.openModal('resolveMatch', '${m.id}')" style="border-left-color:${isPending?'var(--gold); background:var(--gold-soft);':'var(--credit);'} cursor:pointer;"` 
-        : `style="border-left-color:${isPending?'var(--gold); background:var(--gold-soft);':'var(--credit);'}"`;
+      // ✅ ARREGLADO: El clic para abrir el modal funciona SIEMPRE para todos
+      const ticketClick = `onclick="app.openModal('resolveMatch', '${m.id}')" style="border-left-color:${isPending?'var(--gold); background:var(--gold-soft);':'var(--credit);'} cursor:pointer;"`;
       
       let resHtml = isPending 
         ? `<span style="font-weight:700; color:#8a5a12; font-size:12px; text-transform:uppercase;">${this.isAdmin ? 'Anotar resultado ➔' : 'Pendiente'}</span>` 
