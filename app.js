@@ -1226,7 +1226,7 @@ renderClasificacion() {
       const clickAttr = (id) => `onclick="app.openModal('cromoPlayer', '${id}')" style="cursor:pointer;"`;
 
       const leadersHtml = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
-        <div class="ticket credit" style="margin:0; padding:10px 12px; cursor:pointer;" ${clickAttr(pichichi.p.id)}><div><div class="sub">⚽ PICHICHI</div><div class="name">${escapeHtml(pichichi.p.name)}</div></div><div class="amt mono pos">${pichichi.goles}G</div></div>
+        <div class="ticket credit" style="margin:0; padding:10px 12px; cursor:pointer;" ${clickAttr(pichichi.p.id)}><div><div class="sub">⚽ PITXITXI</div><div class="name">${escapeHtml(pichichi.p.name)}</div></div><div class="amt mono pos">${pichichi.goles}G</div></div>
         <div class="ticket credit" style="margin:0; padding:10px 12px; cursor:pointer;" ${clickAttr(mvp.p.id)}><div><div class="sub">🏆 LÍDER PUNTOS</div><div class="name">${escapeHtml(mvp.p.name)}</div></div><div class="amt mono pos">${mvp.pts}p</div></div>
         <div class="ticket ${muro.dg>=0?'credit':'debt'}" style="margin:0; padding:10px 12px; cursor:pointer;" ${clickAttr(muro.p.id)}><div><div class="sub">🛡️ MEJOR BALANCE</div><div class="name">${escapeHtml(muro.p.name)}</div></div><div class="amt mono ${muro.dg>0?'pos':(muro.dg<0?'neg':'zero')}">${fmtDG(muro.dg)}</div></div>
         <div class="ticket neutral" style="margin:0; padding:10px 12px; cursor:pointer;" ${clickAttr(killer.p.id)}><div><div class="sub">🎯 MEDIA G/P</div><div class="name">${escapeHtml(killer.p.name)}</div></div><div class="amt mono">${killer.gpp.toFixed(2)}</div></div>
