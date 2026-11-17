@@ -48,6 +48,7 @@ function timeAgo(date){
 
 class App {
   constructor() {
+    this.initPwaInstall();
     this.page = 'resumen';
     this.pageAnim = false;
     // === NUEVO: Control de Modo Espectador y PIN de Admin ===
@@ -1503,7 +1504,68 @@ renderBottomNav() {
     if(surplus !== 0) this.generalTransactions.push({ id:uid(), amount: surplus, matchType: mt, reason: 'Sobrante partido', createdAt: now });
     this.save(); this.closeModal(); this.toast('Liquidado automáticamente');
   }
-  
+  initPwaInstall() {
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+      return;
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+      this.renderPwaBanner(true);
+    });
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      this.renderPwaBanner(false);
+    }
+  }
+
+  renderPwaBanner(showDirectButton) {
+    const bannerEl = document.getElementById('pwaInstallBanner');
+    if (!bannerEl) return;
+
+    bannerEl.style.display = 'block';
+
+    let actionHtml = '';
+    if (showDirectButton) {
+      actionHtml = `
+        <button onclick="app.installPwaApp()" style="background: var(--turf); color: white; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; margin-top: 8px; display: inline-flex; align-items: center; gap: 6px;">
+          📥 Instalar App en el móvil
+        </button>
+      `;
+    } else {
+      actionHtml = `
+        <div style="margin-top: 6px; font-size: 12px; color: var(--muted); line-height: 1.4;">
+          👉 En <b>iPhone (Safari)</b>: Pulsa el botón de <b>Compartir</b> <svg style="display:inline; width:12px; height:12px; vertical-align:middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg> y selecciona <b>"Añadir a pantalla de inicio"</b>.
+        </div>
+      `;
+    }
+
+    bannerEl.innerHTML = `
+      <div style="background: var(--gold-soft); border: 1px solid var(--gold); border-radius: 12px; padding: 12px 16px; margin: 12px 16px 0 16px;">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;">
+          <div style="font-size: 13px; color: var(--ink);">
+            📱 <b>¡Lleva las cuentas en la pantalla de inicio!</b><br>
+            Instala la app de la cuadrilla para acceder al instante.
+            ${actionHtml}
+          </div>
+          <button onclick="document.getElementById('pwaInstallBanner').style.display='none'" style="background: none; border: none; font-size: 16px; cursor: pointer; color: var(--muted); padding: 0;">✕</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async installPwaApp() {
+    if (!this.deferredPrompt) return;
+    this.deferredPrompt.prompt();
+    const { outcome } = await this.deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      document.getElementById('pwaInstallBanner').style.display = 'none';
+    }
+    this.deferredPrompt = null;
+  }
+
   descargarOCompartir(blob, filename) {
     const file = new File([blob], filename, { type: blob.type });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -1519,7 +1581,7 @@ renderBottomNav() {
       setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 150);
     }
   }
-}
+ }
 // === NUEVO: Funciones de Admin globales ===
 function promptAdminLogin() {
   const pinIntroducido = prompt("Introduce el PIN de Administrador:");
