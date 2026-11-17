@@ -852,9 +852,8 @@ generateTeams(balanced){
   }
   
 openModal(type, payload){ 
-    // Los espectadores solo pueden ver cromos (cromoPlayer/playerCard), exportar o info. 
-    // Cualquier otra acción de gestión (como quickTx) les mostrará el aviso de admin.
-    if (!this.isAdmin && type !== 'export' && type !== 'info' && type !== 'cromoPlayer' && type !== 'playerCard') {
+   // Los espectadores pueden ver cromos y los detalles/resultados de los partidos (resolveMatch) en modo lectura.
+    if (!this.isAdmin && type !== 'export' && type !== 'info' && type !== 'cromoPlayer' && type !== 'playerCard' && type !== 'resolveMatch') {
       alert("🔒 Modo Espectador: Solo los administradores pueden realizar acciones o modificaciones.");
       return;
     }
