@@ -292,6 +292,17 @@
       "position": "defensa",
       "bilbaoKirolak": true,
       "createdAt": "2026-11-21T19:02:37.908Z"
+    },
+    {
+      "id": "1795288186112917",
+      "name": "Brou",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "medio",
+      "stamina": "medio",
+      "position": "defensa",
+      "bilbaoKirolak": false,
+      "createdAt": "2026-11-21T19:09:46.112Z"
     }
   ],
   "transactions": [
@@ -677,6 +688,6 @@
   ],
   "teamsGuests": [],
   "teamsResult": null,
-  "exportDate": "2026-11-21T19:02:38.613Z",
+  "exportDate": "2026-11-21T19:09:46.814Z",
   "version": "2.5"
 }
