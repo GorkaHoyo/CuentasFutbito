@@ -281,6 +281,17 @@
       "position": "defensa",
       "bilbaoKirolak": true,
       "createdAt": "2026-11-03T16:59:19.567Z"
+    },
+    {
+      "id": "1795287757908832",
+      "name": "Iñaki Prieto",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "muy_bajo",
+      "stamina": "bajo",
+      "position": "defensa",
+      "bilbaoKirolak": true,
+      "createdAt": "2026-11-21T19:02:37.908Z"
     }
   ],
   "transactions": [
@@ -666,6 +677,6 @@
   ],
   "teamsGuests": [],
   "teamsResult": null,
-  "exportDate": "2026-11-21T11:47:49.771Z",
+  "exportDate": "2026-11-21T19:02:38.613Z",
   "version": "2.5"
 }
