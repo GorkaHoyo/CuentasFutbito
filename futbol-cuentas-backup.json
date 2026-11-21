@@ -314,6 +314,17 @@
       "position": "delantero",
       "bilbaoKirolak": false,
       "createdAt": "2026-11-21T19:12:06.533Z"
+    },
+    {
+      "id": "1795288364540858",
+      "name": "Raul ibañez",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "medio",
+      "stamina": "medio",
+      "position": "defensa",
+      "bilbaoKirolak": true,
+      "createdAt": "2026-11-21T19:12:44.540Z"
     }
   ],
   "transactions": [
@@ -699,6 +710,6 @@
   ],
   "teamsGuests": [],
   "teamsResult": null,
-  "exportDate": "2026-11-21T19:12:07.234Z",
+  "exportDate": "2026-11-21T19:12:45.241Z",
   "version": "2.5"
 }
