@@ -724,7 +724,84 @@
     "1795288364540858"
   ],
   "teamsGuests": [],
-  "teamsResult": null,
-  "exportDate": "2026-11-21T19:18:15.294Z",
+  "teamsResult": {
+    "teamRojo": [
+      {
+        "id": "1790617571023650",
+        "name": "Gorka",
+        "weight": 6,
+        "position": "defensa"
+      },
+      {
+        "id": "1790617380927257",
+        "name": "Juan g.",
+        "weight": 5,
+        "position": "defensa"
+      },
+      {
+        "id": "1793723109770437",
+        "name": "Carlos",
+        "weight": 4,
+        "position": "defensa"
+      },
+      {
+        "id": "1790628990483718",
+        "name": "Diego Recio",
+        "weight": 5,
+        "position": "medio"
+      },
+      {
+        "id": "1795288326533161",
+        "name": "Raul Basur",
+        "weight": 5,
+        "position": "delantero"
+      },
+      {
+        "id": "179528862241644",
+        "name": "Eneko kija",
+        "weight": 4,
+        "position": "delantero"
+      }
+    ],
+    "teamBlanco": [
+      {
+        "id": "1795288186112917",
+        "name": "Brou",
+        "weight": 5,
+        "position": "defensa"
+      },
+      {
+        "id": "1795288364540858",
+        "name": "Raul ibañez",
+        "weight": 5,
+        "position": "defensa"
+      },
+      {
+        "id": "1795287757908832",
+        "name": "Iñaki Prieto",
+        "weight": 2,
+        "position": "defensa"
+      },
+      {
+        "id": "1790943742374453",
+        "name": "Jon kijada",
+        "weight": 6,
+        "position": "medio"
+      },
+      {
+        "id": "1790939947763502",
+        "name": "Julio",
+        "weight": 5,
+        "position": "medio"
+      },
+      {
+        "id": "1790616908815312",
+        "name": "Hoyuki Ander",
+        "weight": 7,
+        "position": "delantero"
+      }
+    ]
+  },
+  "exportDate": "2026-11-21T19:18:33.702Z",
   "version": "2.5"
 }
