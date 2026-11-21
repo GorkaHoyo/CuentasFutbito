@@ -751,10 +751,10 @@
         "position": "medio"
       },
       {
-        "id": "1795288326533161",
-        "name": "Raul Basur",
+        "id": "1790939947763502",
+        "name": "Julio",
         "weight": 5,
-        "position": "delantero"
+        "position": "medio"
       },
       {
         "id": "179528862241644",
@@ -789,10 +789,10 @@
         "position": "medio"
       },
       {
-        "id": "1790939947763502",
-        "name": "Julio",
+        "id": "1795288326533161",
+        "name": "Raul Basur",
         "weight": 5,
-        "position": "medio"
+        "position": "delantero"
       },
       {
         "id": "1790616908815312",
@@ -802,6 +802,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-21T19:18:33.702Z",
+  "exportDate": "2026-11-21T19:18:52.395Z",
   "version": "2.5"
 }
