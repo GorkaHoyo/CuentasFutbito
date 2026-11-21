@@ -325,6 +325,17 @@
       "position": "defensa",
       "bilbaoKirolak": true,
       "createdAt": "2026-11-21T19:12:44.540Z"
+    },
+    {
+      "id": "179528862241644",
+      "name": "Eneko kija",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "bajo",
+      "stamina": "medio",
+      "position": "delantero",
+      "bilbaoKirolak": false,
+      "createdAt": "2026-11-21T19:17:02.419Z"
     }
   ],
   "transactions": [
@@ -710,6 +721,6 @@
   ],
   "teamsGuests": [],
   "teamsResult": null,
-  "exportDate": "2026-11-21T19:12:45.241Z",
+  "exportDate": "2026-11-21T19:17:03.121Z",
   "version": "2.5"
 }
