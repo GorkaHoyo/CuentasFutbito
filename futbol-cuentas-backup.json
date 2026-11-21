@@ -303,6 +303,17 @@
       "position": "defensa",
       "bilbaoKirolak": false,
       "createdAt": "2026-11-21T19:09:46.112Z"
+    },
+    {
+      "id": "1795288326533161",
+      "name": "Raul Basur",
+      "type": "F5/F7",
+      "isRegular": true,
+      "skill": "medio",
+      "stamina": "medio",
+      "position": "delantero",
+      "bilbaoKirolak": false,
+      "createdAt": "2026-11-21T19:12:06.533Z"
     }
   ],
   "transactions": [
@@ -688,6 +699,6 @@
   ],
   "teamsGuests": [],
   "teamsResult": null,
-  "exportDate": "2026-11-21T19:09:46.814Z",
+  "exportDate": "2026-11-21T19:12:07.234Z",
   "version": "2.5"
 }
