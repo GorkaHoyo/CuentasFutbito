@@ -704,6 +704,68 @@
       "status": "completed",
       "_manualRojo": false,
       "_manualBlanco": false
+    },
+    {
+      "id": "match_1795342616969390",
+      "date": "2026-11-22T10:16:56.969Z",
+      "season": "2026/2027",
+      "matchType": "F5",
+      "teamRojo": [
+        {
+          "id": "1790617571023650",
+          "name": "Gorka"
+        },
+        {
+          "id": "1790617380927257",
+          "name": "Juan g."
+        },
+        {
+          "id": "1793723109770437",
+          "name": "Carlos"
+        },
+        {
+          "id": "1790943742374453",
+          "name": "Jon kijada"
+        },
+        {
+          "id": "1790939947763502",
+          "name": "Julio"
+        },
+        {
+          "id": "179528862241644",
+          "name": "Eneko kija"
+        }
+      ],
+      "teamBlanco": [
+        {
+          "id": "1795288186112917",
+          "name": "Brou"
+        },
+        {
+          "id": "1795288364540858",
+          "name": "Raul ibañez"
+        },
+        {
+          "id": "1795287757908832",
+          "name": "Iñaki Prieto"
+        },
+        {
+          "id": "1790628990483718",
+          "name": "Diego Recio"
+        },
+        {
+          "id": "1795288326533161",
+          "name": "Raul Basur"
+        },
+        {
+          "id": "1790616908815312",
+          "name": "Hoyuki Ander"
+        }
+      ],
+      "scoreRojo": 0,
+      "scoreBlanco": 0,
+      "goals": {},
+      "status": "pending"
     }
   ],
   "currentSeason": "2026/2027",
@@ -802,6 +864,6 @@
       }
     ]
   },
-  "exportDate": "2026-11-21T19:19:05.694Z",
+  "exportDate": "2026-11-22T10:16:57.678Z",
   "version": "2.5"
 }
